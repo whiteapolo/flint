@@ -1,0 +1,6 @@
+command -> string+
+ampersand -> command ?&
+and_if -> command { && command }*
+pipe -> and_if { | and_if }*
+
+statment -> command | ampersand | and_if | pipe
