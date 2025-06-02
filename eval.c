@@ -1,6 +1,7 @@
 #include "eval.h"
 #include "builtins/builtin.h"
 #include "parser.h"
+#include <assert.h>
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -65,6 +66,49 @@ int evaluate_command_in_background(Parser_Node *node)
     return 0;
 }
 
+int evaluate_pipe(Parser_Node *node)
+{
+    Parser_Node *command = (Parser_Node *)node->binary.right;
+    Parser_Node *left = (Parser_Node *)node->binary.left;
+
+    if (left->type == NODE_TYPE_PIPE) {
+        assert(0 && "nesting pipes arent supported yet");
+    }
+
+    assert(left->type == NODE_TYPE_COMMAND);
+
+    int fd[2];
+    pipe(fd);
+
+    int pid1 = safe_fork();
+
+    if (pid1 == 0) {
+        dup2(fd[1], STDOUT_FILENO);
+        close(fd[0]);
+        close(fd[1]);
+        exit(evaluate_command(left));
+    }
+
+    int pid2 = safe_fork();
+
+    if (pid2 == 0) {
+        dup2(fd[0], STDIN_FILENO);
+        close(fd[0]);
+        close(fd[1]);
+        exit(evaluate_command(command));
+    }
+
+    close(fd[0]);
+    close(fd[1]);
+
+    int status1;
+    int status2;
+    waitpid(pid1, &status1, 0);
+    waitpid(pid2, &status2, 0);
+
+    return status2;
+}
+
 int evaluate_ast(Parser_Node *ast)
 {
     if (ast == NULL) {
@@ -82,15 +126,14 @@ int evaluate_ast(Parser_Node *ast)
             int status = evaluate_ast((Parser_Node *)ast->binary.left);
 
             if (status == 0) {
-                return evaluate_command((Parser_Node *)ast->binary.right);
+                return evaluate_ast((Parser_Node *)ast->binary.right);
             }
 
             return status;
         }
 
         case NODE_TYPE_PIPE:
-            // TODO
-            break;
+            return evaluate_pipe(ast);
     }
 
     return 0;

@@ -83,40 +83,9 @@ Parser_Node *parse_ampersand(Lexer *lexer)
     return command;
 }
 
-Parser_Node *parse_and_if(Lexer *lexer)
-{
-    Parser_Node *ast = parse_ampersand(lexer);
-
-    if (ast == NULL) {
-        if (lexer_peek(lexer).type == TOKEN_TYPE_AND_IF) {
-            fprintf(stderr, "Expected expression before '&&'\n");
-        }
-        return NULL;
-    }
-
-    if (lexer_peek(lexer).type == TOKEN_TYPE_AND_IF && ast->type == NODE_TYPE_AMPERSAND) {
-        fprintf(stderr, "Left side of '&&' must be a regular command without '&'\n");
-        return NULL;
-    }
-
-    while (lexer_peek(lexer).type == TOKEN_TYPE_AND_IF) {
-        lexer_next(lexer);
-        Parser_Node *right = parse_and_if(lexer);
-
-        if (right == NULL) {
-            fprintf(stderr, "Expected expression after '&&'\n");
-            return NULL;
-        }
-
-        ast = parser_node_new_binary(NODE_TYPE_AND_IF, ast, right);
-    }
-
-    return ast;
-}
-
 Parser_Node *parse_pipe(Lexer *lexer)
 {
-    Parser_Node *ast = parse_and_if(lexer);
+    Parser_Node *ast = parse_ampersand(lexer);
 
     if (ast == NULL) {
         if (lexer_peek(lexer).type == TOKEN_TYPE_PIPE) {
@@ -145,9 +114,41 @@ Parser_Node *parse_pipe(Lexer *lexer)
     return ast;
 }
 
+
+Parser_Node *parse_and_if(Lexer *lexer)
+{
+    Parser_Node *ast = parse_pipe(lexer);
+
+    if (ast == NULL) {
+        if (lexer_peek(lexer).type == TOKEN_TYPE_AND_IF) {
+            fprintf(stderr, "Expected expression before '&&'\n");
+        }
+        return NULL;
+    }
+
+    if (lexer_peek(lexer).type == TOKEN_TYPE_AND_IF && ast->type == NODE_TYPE_AMPERSAND) {
+        fprintf(stderr, "Left side of '&&' must be a regular command without '&'\n");
+        return NULL;
+    }
+
+    while (lexer_peek(lexer).type == TOKEN_TYPE_AND_IF) {
+        lexer_next(lexer);
+        Parser_Node *right = parse_and_if(lexer);
+
+        if (right == NULL) {
+            fprintf(stderr, "Expected expression after '&&'\n");
+            return NULL;
+        }
+
+        ast = parser_node_new_binary(NODE_TYPE_AND_IF, ast, right);
+    }
+
+    return ast;
+}
+
 Parser_Node *parse(Lexer *lexer)
 {
-    return parse_pipe(lexer);
+    return parse_and_if(lexer);
 }
 
 void parser_free(Parser_Node *node)
