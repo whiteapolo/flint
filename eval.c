@@ -84,20 +84,6 @@ void close_pipe(int fd[2])
     close(fd[1]);
 }
 
-int get_ast_height(Parser_Node *node)
-{
-    if (node->type == NODE_TYPE_COMMAND) {
-        return 1;
-    }
-
-    if (node->type == NODE_TYPE_AMPERSAND) {
-        return 1 + get_ast_height(node->child);
-    }
-
-    return max(get_ast_height(node->right), get_ast_height(node->left)) + 1;
-}
-
-#if 1
 int evaluate_pipe(Parser_Node *node)
 {
     int len = 0;
@@ -112,7 +98,6 @@ int evaluate_pipe(Parser_Node *node)
 
     commands = realloc(commands, sizeof(Parser_Node *) * (++len));
     commands[len - 1] = curr_node;
-
 
     // end formating array
 
@@ -170,64 +155,6 @@ int evaluate_pipe(Parser_Node *node)
 
     return status;
 }
-#else
-int evaluate_pipe(Parser_Node *node, int outfd)
-{
-    Parser_Node *right = (Parser_Node *)node->binary.right;
-    Parser_Node *left = (Parser_Node *)node->binary.left;
-
-    assert(left->type == NODE_TYPE_COMMAND);
-
-    // if (right->type == NODE_TYPE_PIPE) {
-    //     int fd[2];
-    //     pipe(fd);
-
-    //     if (safe_fork() == 0) {
-    //         dup2(fd[1], STDOUT_FILENO);
-    //         close(fd[0]);
-    //         close(fd[1]);
-    //         return evaluate_command_no_fork(right, fd[0]);
-    //     }
-
-    //     close(fd[0]);
-    //     close(fd[1]);
-    //     dup2(outfd, STDOUT_FILENO);
-
-    //     return evaluate_pipe(left, fd[0]);
-    // }
-
-    int fd[2];
-    pipe(fd);
-
-    int pid1 = safe_fork();
-
-    if (pid1 == 0) {
-        dup2(fd[1], outfd);
-        close(fd[0]);
-        close(fd[1]);
-        evaluate_command_no_fork(left);
-    }
-
-    int pid2 = safe_fork();
-
-    if (pid2 == 0) {
-        dup2(fd[0], STDIN_FILENO);
-        close(fd[0]);
-        close(fd[1]);
-        evaluate_command_no_fork(right);
-    }
-
-    close(fd[0]);
-    close(fd[1]);
-
-    int status1;
-    int status2;
-    waitpid(pid1, &status1, 0);
-    waitpid(pid2, &status2, 0);
-
-    return status2;
-}
-#endif
 
 int evaluate_ast(Parser_Node *ast)
 {
@@ -240,7 +167,7 @@ int evaluate_ast(Parser_Node *ast)
             return evaluate_command(ast);
 
         case NODE_TYPE_AMPERSAND:
-            return evaluate_command_in_background(ast->child);
+            return evaluate_command_in_background(ast);
 
         case NODE_TYPE_AND_IF: {
             int status = evaluate_ast((Parser_Node *)ast->left);

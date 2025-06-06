@@ -19,30 +19,30 @@
 #  define PATH_MAX 4096
 #endif
 
-static Z_String prompt;
+static String prompt;
 
 void update_prompt()
 {
     char pwd[PATH_MAX];
-    z_str_clear(&prompt);
+    str_clear(&prompt);
 
     if (getcwd(pwd, PATH_MAX) == NULL) {
-        z_str_pushf(&prompt, "couldn't retrive cwd > ");
+        str_pushf(&prompt, "couldn't retrive cwd > ");
         return;
     }
 
-    Z_String compressed_pwd = z_compress_path(Z_CSTR_TO_SV(pwd));
-    z_str_pushf(&prompt, Z_COLOR_MAGENTA);
-    z_str_push(&prompt, Z_STR_TO_SV(compressed_pwd));
-    z_str_pushf(&prompt, Z_COLOR_GREEN);
-    z_str_pushf(&prompt, " > ");
-    z_str_pushf(&prompt, Z_COLOR_RESET);
-    z_str_free(&compressed_pwd);
+    String compressed_pwd = compress_path(CSTR_TO_SV(pwd));
+    str_pushf(&prompt, COLOR_MAGENTA);
+    str_push(&prompt, STR_TO_SV(compressed_pwd));
+    str_pushf(&prompt, COLOR_GREEN);
+    str_pushf(&prompt, " > ");
+    str_pushf(&prompt, COLOR_RESET);
+    str_free(&compressed_pwd);
 }
 
 void init_repl()
 {
-    prompt = z_str_new("");
+    prompt = str_new("");
     update_prompt();
 }
 

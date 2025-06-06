@@ -7,40 +7,21 @@
 #include <stdbool.h>
 #include <string.h>
 
-Parser_Node *parser_node_new_command(char **argv)
-{
-    Parser_Node *node = malloc(sizeof(Parser_Node));
-    node->type = NODE_TYPE_COMMAND;
-    node->argv = argv;
-
-    return node;
-}
-
-Parser_Node *parser_node_new_binary(NODE_TYPE type, Parser_Node *left, Parser_Node *right)
+Parser_Node *parse_new_node(NODE_TYPE type, Parser_Node *left, Parser_Node *right, char **argv)
 {
     Parser_Node *node = malloc(sizeof(Parser_Node));
     node->type = type;
+    node->argv = argv;
     node->left = left;
     node->right = right;
 
     return node;
 }
 
-Parser_Node *parser_node_new_unary(NODE_TYPE type, Parser_Node *child)
-{
-    Parser_Node *node = malloc(sizeof(Parser_Node));
-    node->type = type;
-    node->child = child;
-
-    return node;
-}
-
 void free_argv(char **argv)
 {
-    char **curr = argv;
-
-    while (*curr) {
-        free(*(curr++));
+    for (char **curr = argv; *curr; curr++) {
+        free(*curr);
     }
 }
 
@@ -61,7 +42,7 @@ Parser_Node *parse_command(Lexer *lexer)
         return NULL;
     }
 
-    return parser_node_new_command(argv);
+    return parse_new_node(NODE_TYPE_COMMAND, NULL, NULL, argv);
 }
 
 Parser_Node *parse_ampersand(Lexer *lexer)
@@ -77,21 +58,10 @@ Parser_Node *parse_ampersand(Lexer *lexer)
 
     if (lexer_peek(lexer).type == TOKEN_TYPE_AMPERSAND) {
         lexer_next(lexer);
-        return parser_node_new_unary(NODE_TYPE_AMPERSAND, command);
+        command->type = NODE_TYPE_AMPERSAND;
     }
 
     return command;
-}
-
-void reverse_ast(Parser_Node *ast)
-{
-    if (ast->type == NODE_TYPE_PIPE || ast->type == NODE_TYPE_AND_IF) {
-        Parser_Node *tmp = (Parser_Node *)ast->right;
-        ast->right = ast->left;
-        ast->left = tmp;
-    } else if (ast->type == NODE_TYPE_AMPERSAND) {
-        reverse_ast(ast->child);
-    }
 }
 
 Parser_Node *parse_pipe(Lexer *lexer)
@@ -119,10 +89,8 @@ Parser_Node *parse_pipe(Lexer *lexer)
             return NULL;
         }
 
-        ast = parser_node_new_binary(NODE_TYPE_PIPE, ast, right);
+        ast = parse_new_node(NODE_TYPE_PIPE, ast, right, NULL);
     }
-
-    // reverse_ast(ast);
 
     return ast;
 }
@@ -153,7 +121,7 @@ Parser_Node *parse_and_if(Lexer *lexer)
             return NULL;
         }
 
-        ast = parser_node_new_binary(NODE_TYPE_AND_IF, ast, right);
+        ast = parse_new_node(NODE_TYPE_AND_IF, ast, right, NULL);
     }
 
     return ast;
@@ -176,6 +144,7 @@ void parser_free(Parser_Node *node)
 
     switch (node->type) {
         case NODE_TYPE_COMMAND:
+        case NODE_TYPE_AMPERSAND:
             free_argv(node->argv);
             break;
 
@@ -183,10 +152,6 @@ void parser_free(Parser_Node *node)
         case NODE_TYPE_AND_IF:
             parser_free((Parser_Node *)node->left);
             parser_free((Parser_Node *)node->right);
-            break;
-
-        case NODE_TYPE_AMPERSAND:
-            parser_free((Parser_Node *)node->child);
             break;
     }
 
