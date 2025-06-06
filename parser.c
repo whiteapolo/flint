@@ -23,6 +23,8 @@ void free_argv(char **argv)
     for (char **curr = argv; *curr; curr++) {
         free(*curr);
     }
+
+    free(argv);
 }
 
 
