@@ -1913,6 +1913,183 @@ void z_cmd_clear(Z_Cmd *cmd)
 #endif // end implementation
 #endif // end header
 
+#ifndef LIBZATAR_KEEP_PREFIX_GAURD
+#define LIBZATAR_KEEP_PREFIX_GAURD
+#ifndef LIBZATAR_KEEP_PREFIX
+
+// Utility
+#define DEFAULT_GROWTH_RATE Z_DEFAULT_GROWTH_RATE
+#define Ok Z_Ok
+#define Err Z_Err
+#define in_range z_in_range
+#define get_file_size z_get_file_size
+#define get_fmt_size z_get_fmt_size
+#define get_fmt_size_va z_get_fmt_size_va
+#define memdup z_memdup
+#define swap z_swap
+#define max z_max
+#define min z_min
+#define max3 z_max3
+#define min3 z_min3
+#define print_error z_print_error
+#define print_info z_print_info
+#define print_warning z_print_warning
+#define ensure_capacity z_ensure_capacity
+#define null_terminate z_null_terminate
+
+// Cursor
+#define COLOR_RESET Z_COLOR_RESET
+#define COLOR_RED Z_COLOR_RED
+#define COLOR_GREEN Z_COLOR_GREEN
+#define COLOR_YELLOW Z_COLOR_YELLOW
+#define COLOR_BLUE Z_COLOR_BLUE
+#define COLOR_MAGENTA Z_COLOR_MAGENTA
+#define COLOR_CYAN Z_COLOR_CYAN
+#define COLOR_WHITE Z_COLOR_WHITE
+#define COLOR_GRAY Z_COLOR_GRAY
+#define COLOR_BOLD_RED Z_COLOR_BOLD_RED
+#define COLOR_BOLD_GREEN Z_COLOR_BOLD_GREEN
+#define COLOR_BOLD_YELLOW Z_COLOR_BOLD_YELLOW
+#define COLOR_BOLD_BLUE Z_COLOR_BOLD_BLUE
+#define COLOR_BOLD_MAGENTA Z_COLOR_BOLD_MAGENTA
+#define COLOR_BOLD_CYAN Z_COLOR_BOLD_CYAN
+#define COLOR_BOLD_WHITE Z_COLOR_BOLD_WHITE
+#define COLOR_BOLD_GRAY Z_COLOR_BOLD_GRAY
+#define KEY_EMPTY Z_KEY_EMPTY
+#define KEY_ARROW_LEFT Z_KEY_ARROW_LEFT
+#define KEY_ARROW_RIGHT Z_KEY_ARROW_RIGHT
+#define KEY_ARROW_UP Z_KEY_ARROW_UP
+#define KEY_ARROW_DOWN Z_KEY_ARROW_DOWN
+#define KEY_PAGE_UP Z_KEY_PAGE_UP
+#define KEY_PAGE_DOWN Z_KEY_PAGE_DOWN
+#define KEY_DELETE Z_KEY_DELETE
+#define KEY_HOME Z_KEY_HOME
+#define KEY_END Z_KEY_END
+#define CURSOR_STYLE Z_CURSOR_STYLE
+#define CURSOR_STYLE_BLOCK_STEADY Z_CURSOR_STYLE_BLOCK_STEADY
+#define CURSOR_STYLE_BLOCK_BLINKING Z_CURSOR_STYLE_BLOCK_BLINKING
+#define CURSOR_STYLE_UNDERLINE_BLINKING Z_CURSOR_STYLE_UNDERLINE_BLINKING
+#define CURSOR_STYLE_UNDERLINE_STEADY Z_CURSOR_STYLE_UNDERLINE_STEADY
+#define CURSOR_STYLE_BEAM_STEADY Z_CURSOR_STYLE_BEAM_STEADY
+#define CURSOR_STYLE_BEAM_BLINKING Z_CURSOR_STYLE_BEAM_BLINKING
+#define set_cursor_style z_set_cursor_style
+#define disable_line_wrap z_disable_line_wrap
+#define enbale_line_wrap z_enbale_line_wrap
+#define hide_cursor z_hide_cursor
+#define show_cursor z_show_cursor
+#define set_cursor_pos z_set_cursor_pos
+#define set_cursor_x z_set_cursor_x
+#define cursor_up z_cursor_up
+#define cursor_down z_cursor_down
+#define cursor_right z_cursor_right
+#define cursor_left z_cursor_left
+#define save_cursor_pos z_save_cursor_pos
+#define restore_cursor_pos z_restore_cursor_pos
+#define enter_alternative_screen z_enter_alternative_screen
+#define exit_alternative_screen z_exit_alternative_screen
+#define clear_line z_clear_line
+#define clear_screen z_clear_screen
+#define update_screen z_update_screen
+#define enable_raw_mode z_enable_raw_mode
+#define disable_raw_mode z_disable_raw_mode
+#define get_cursor_pos z_get_cursor_pos
+#define get_screen_size_by_cursor z_get_screen_size_by_cursor
+#define get_screen_size_by_ioctl z_get_screen_size_by_ioctl
+#define get_screen_size z_get_screen_size
+#define register_change_in_window_size z_register_change_in_window_size
+#define enable_full_buffering z_enable_full_buffering
+#define wait_for_byte z_wait_for_byte
+#define read_escape_key z_read_escape_key
+#define read_key z_read_key
+
+// Vector
+#define VECTOR_DECLARE Z_VECTOR_DECLARE
+#define VECTOR_IMPLEMENT Z_VECTOR_IMPLEMENT
+
+// AVL Tree
+#define AVL_DECLARE Z_AVL_DECLARE
+#define AVL_IMPLEMENT Z_AVL_IMPLEMENT
+
+// Map
+#define MAP_DECLARE Z_MAP_DECLARE
+#define MAP_IMPLEMENT Z_MAP_IMPLEMENT
+
+// Matrix
+#define MAT_DECLARE Z_MAT_DECLARE
+#define MAT_AT Z_MAT_AT
+#define MAT_INIT Z_MAT_INIT
+#define MAT_RESIZE Z_MAT_RESIZE
+#define MAT_FREE Z_MAT_FREE
+
+// String
+#define String Z_String
+#define String_View Z_String_View
+#define String_Tokonizer Z_String_Tokonizer
+#define SV Z_SV
+#define STR_TO_SV Z_STR_TO_SV
+#define CSTR_TO_SV Z_CSTR_TO_SV
+#define EMPTY_SV Z_EMPTY_SV
+#define str_new z_str_new
+#define str_new_va z_str_new_va
+#define str_pushf z_str_pushf
+#define str_pushf_va z_str_pushf_va
+#define str_push z_str_push
+#define str_push_c z_str_push_c
+#define str_pop_c z_str_pop_c
+#define str_top_c z_str_top_c
+#define str_cmp z_str_cmp
+#define str_n_cmp z_str_n_cmp
+#define str_replace z_str_replace
+#define sv_to_cstr z_sv_to_cstr
+#define str_tok_init z_str_tok_init
+#define str_tok_next z_str_tok_next
+#define str_trim z_str_trim
+#define str_trim_cset z_str_trim_cset
+#define str_view_trim z_str_view_trim
+#define str_view_trim_cset z_str_view_trim_cset
+#define str_print z_str_print
+#define str_println z_str_println
+#define str_free z_str_free
+#define str_clear z_str_clear
+#define read_whole_file z_read_whole_file
+
+// Path
+#define Pipe_Mode Z_Pipe_Mode
+#define Pipe_Mode_Read Z_Pipe_Mode_Read
+#define Pipe_Mode_Write Z_Pipe_Mode_Write
+#define get_path_extention z_get_path_extention
+#define get_path_basename z_get_path_basename
+#define get_home_path z_get_home_path
+#define expand_path z_expand_path
+#define compress_path z_compress_path
+#define is_extention_equal z_is_extention_equal
+#define dir_traverse z_dir_traverse
+#define is_dir z_is_dir
+#define is_regular_file z_is_regular_file
+#define is_path_exists z_is_path_exists
+#define write_file z_write_file
+#define append_file z_append_file
+#define read_file z_read_file
+#define redirect_fd z_redirect_fd
+#define popen2 z_popen2
+#define mkdir z_mkdir
+
+// Cmd
+#define Cmd Z_Cmd
+#define should_rebuild z_should_rebuild
+#define should_rebuild_va z_should_rebuild_va
+#define rebuild_yourself z_rebuild_yourself
+#define cmd_init z_cmd_init
+#define cmd_append z_cmd_append
+#define cmd_append_va z_cmd_append_va
+#define cmd_run_async z_cmd_run_async
+#define run_async z_run_async
+#define cmd_free z_cmd_free
+#define cmd_clear z_cmd_clear
+
+#endif // LIBZATAR_KEEP_PREFIX
+#endif
+
 //   $       $       $       $       $       $       $        $        $
 //       $       $       $       $       $       $        $        $
 //   $       $       $       $       $       $       $        $        $

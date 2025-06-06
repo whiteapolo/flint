@@ -8,6 +8,7 @@
 #include <string.h>
 #include <sys/wait.h>
 #include <unistd.h>
+#include "libzatar.h"
 
 int safe_fork()
 {
@@ -29,9 +30,20 @@ void safe_execvp(const char *file, char *const argv[])
     exit(1);
 }
 
+void evaluate_command_no_fork(Parser_Node *node)
+{
+    char **argv = node->argv;
+
+    if (is_builtin(argv[0])) {
+        exit(execute_builtin(argv));
+    }
+
+    safe_execvp(argv[0], argv);
+}
+
 int evaluate_command(Parser_Node *node)
 {
-    char **argv = node->command.argv;
+    char **argv = node->argv;
 
     if (is_builtin(argv[0])) {
         return execute_builtin(argv);
@@ -66,16 +78,123 @@ int evaluate_command_in_background(Parser_Node *node)
     return 0;
 }
 
-int evaluate_pipe(Parser_Node *node)
+void close_pipe(int fd[2])
 {
-    Parser_Node *command = (Parser_Node *)node->binary.right;
-    Parser_Node *left = (Parser_Node *)node->binary.left;
+    close(fd[0]);
+    close(fd[1]);
+}
 
-    if (left->type == NODE_TYPE_PIPE) {
-        assert(0 && "nesting pipes arent supported yet");
+int get_ast_height(Parser_Node *node)
+{
+    if (node->type == NODE_TYPE_COMMAND) {
+        return 1;
     }
 
+    if (node->type == NODE_TYPE_AMPERSAND) {
+        return 1 + get_ast_height(node->child);
+    }
+
+    return max(get_ast_height(node->right), get_ast_height(node->left)) + 1;
+}
+
+#if 1
+int evaluate_pipe(Parser_Node *node)
+{
+    int len = 0;
+    Parser_Node **commands = NULL;
+
+    Parser_Node *curr_node = node;
+    while (curr_node->type != NODE_TYPE_COMMAND) {
+        commands = realloc(commands, sizeof(Parser_Node *) * (++len));
+        commands[len - 1] = curr_node->left;
+        curr_node = curr_node->right;
+    }
+
+    commands = realloc(commands, sizeof(Parser_Node *) * (++len));
+    commands[len - 1] = curr_node;
+
+
+    // end formating array
+
+    int *pid = malloc(sizeof(int) * len);
+
+    int prev[2];
+    int curr[2];
+
+    pipe(prev);
+
+    pid[0] = safe_fork();
+
+    if (pid[0] == 0) {
+        dup2(prev[1], STDOUT_FILENO);
+        close_pipe(prev);
+        evaluate_command_no_fork(commands[0]);
+    }
+
+    for (int i = 1; i < len - 1; i++) {
+        pipe(curr);
+
+        pid[i] = safe_fork();
+
+        if (pid[i] == 0) {
+            dup2(curr[1], STDOUT_FILENO);
+            dup2(prev[0], STDIN_FILENO);
+            close_pipe(prev);
+            close_pipe(curr);
+            evaluate_command_no_fork(commands[i]);
+        }
+
+        close_pipe(prev);
+        memcpy(prev, curr, sizeof(int) * 2);
+    }
+
+    pid[len - 1] = safe_fork();
+
+    if (pid[len - 1] == 0) {
+        dup2(prev[0], STDIN_FILENO);
+        close_pipe(prev);
+        evaluate_command_no_fork(commands[len - 1]);
+    }
+
+    close_pipe(prev);
+
+    for (int i = 0; i < len - 1; i++) {
+        waitpid(pid[i], NULL, 0);
+    }
+
+    int status;
+    waitpid(pid[len - 1], &status, 0);
+
+    free(pid);
+    free(commands);
+
+    return status;
+}
+#else
+int evaluate_pipe(Parser_Node *node, int outfd)
+{
+    Parser_Node *right = (Parser_Node *)node->binary.right;
+    Parser_Node *left = (Parser_Node *)node->binary.left;
+
     assert(left->type == NODE_TYPE_COMMAND);
+
+    // if (right->type == NODE_TYPE_PIPE) {
+    //     int fd[2];
+    //     pipe(fd);
+
+    //     if (safe_fork() == 0) {
+    //         dup2(fd[1], STDOUT_FILENO);
+    //         close(fd[0]);
+    //         close(fd[1]);
+    //         return evaluate_command_no_fork(right, fd[0]);
+    //     }
+
+    //     close(fd[0]);
+    //     close(fd[1]);
+    //     dup2(outfd, STDOUT_FILENO);
+
+    //     return evaluate_pipe(left, fd[0]);
+    // }
 
     int fd[2];
     pipe(fd);
@@ -83,10 +202,10 @@ int evaluate_pipe(Parser_Node *node)
     int pid1 = safe_fork();
 
     if (pid1 == 0) {
-        dup2(fd[1], STDOUT_FILENO);
+        dup2(fd[1], outfd);
         close(fd[0]);
         close(fd[1]);
-        exit(evaluate_command(left));
+        evaluate_command_no_fork(left);
     }
 
     int pid2 = safe_fork();
@@ -95,7 +214,7 @@ int evaluate_pipe(Parser_Node *node)
         dup2(fd[0], STDIN_FILENO);
         close(fd[0]);
         close(fd[1]);
-        exit(evaluate_command(command));
+        evaluate_command_no_fork(right);
     }
 
     close(fd[0]);
@@ -108,6 +227,7 @@ int evaluate_pipe(Parser_Node *node)
 
     return status2;
 }
+#endif
 
 int evaluate_ast(Parser_Node *ast)
 {
@@ -120,13 +240,13 @@ int evaluate_ast(Parser_Node *ast)
             return evaluate_command(ast);
 
         case NODE_TYPE_AMPERSAND:
-            return evaluate_command_in_background((Parser_Node *)ast->unary.child);
+            return evaluate_command_in_background(ast->child);
 
         case NODE_TYPE_AND_IF: {
-            int status = evaluate_ast((Parser_Node *)ast->binary.left);
+            int status = evaluate_ast((Parser_Node *)ast->left);
 
             if (status == 0) {
-                return evaluate_ast((Parser_Node *)ast->binary.right);
+                return evaluate_ast((Parser_Node *)ast->right);
             }
 
             return status;
