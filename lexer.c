@@ -56,6 +56,10 @@ static char peek(const Lexer *lexer)
 
 static bool match(Lexer *lexer, char expected)
 {
+    if (is_at_end(lexer)) {
+        return false;
+    }
+
     if (peek(lexer) == expected) {
         advance(lexer);
         return true;
@@ -73,6 +77,8 @@ Token eat_string(Lexer *lexer)
 {
     // TODO: add support for " "
 
+    lexer->start = lexer->curr;
+
     while (!is_at_end(lexer) && peek(lexer) != '\'') {
         advance(lexer);
     }
@@ -81,9 +87,9 @@ Token eat_string(Lexer *lexer)
         return create_error_token("unexpected EOF while looking for matching '''");
     }
 
+    Token token = create_token(lexer, TOKEN_TYPE_STRING);
     advance(lexer);
-
-    return create_token(lexer, TOKEN_TYPE_STRING);
+    return token;
 }
 
 Token eat_argument(Lexer *lexer)
@@ -118,13 +124,8 @@ Token lexer_next(Lexer *lexer)
         case '|':
             return create_token(lexer, TOKEN_TYPE_PIPE);
 
-        case '&': {
-            if (!is_at_end(lexer) && match(lexer, '&')) {
-                return create_token(lexer, TOKEN_TYPE_AND_IF);
-            }
-
-            return create_token(lexer, TOKEN_TYPE_AMPERSAND);
-        }
+        case '&':
+            return create_token(lexer, match(lexer, '&') ? TOKEN_TYPE_AND_IF : TOKEN_TYPE_AMPERSAND);
 
         case '\'':
             return eat_string(lexer);
@@ -134,10 +135,21 @@ Token lexer_next(Lexer *lexer)
     }
 }
 
-void lexer_expand_alias(Token_Vec *tokens)
+void expand_alias(Token key, Token_Vec *output)
 {
-    (void)tokens;
-#if 0
+    const char *value = get_alias(key.lexeme);
+
+    if (!value) {
+        z_da_append(output, key);
+    } else {
+        Token_Vec tmp = lexer_get_tokens(Z_CSTR_TO_SV(value));
+        z_da_append_da(output, &tmp);
+        free(tmp.ptr);
+    }
+}
+
+void expand_aliases(Token_Vec *tokens)
+{
     Token_Vec tmp = {0};
     bool is_command_start = true;
 
@@ -147,31 +159,17 @@ void lexer_expand_alias(Token_Vec *tokens)
         if (token.type != TOKEN_TYPE_STRING) {
             is_command_start = true;
             z_da_append(&tmp, token);
+        } else if (!is_command_start) {
+            z_da_append(&tmp, token);
         } else {
-            if (!is_command_start) {
-                z_da_append(&tmp, token);
-            } else {
-                const char *alias = get_alias(token.lexeme);
-
-                if (alias) {
-                    lexer_get_tokens(alias, strlen(alias), &tmp);
-                } else {
-                    z_da_append(&tmp, token);
-                }
-
-                is_command_start = false;
-            }
+            expand_alias(token, &tmp);
+            is_command_start = false;
         }
     }
 
     tokens->len = 0;
-
-    for (int i = 0; i < tmp.len; i++) {
-        z_da_append(tokens, tmp.ptr[i]);
-    }
-
+    z_da_append_da(tokens, &tmp);
     free(tmp.ptr);
-#endif
 }
 
 Token_Vec lexer_get_tokens(Z_String_View source)
@@ -186,7 +184,7 @@ Token_Vec lexer_get_tokens(Z_String_View source)
     }
 
     z_da_append(&tokens, token);
-    // lexer_expand_alias(tokens);
+    expand_aliases(&tokens);
 
     return tokens;
 }

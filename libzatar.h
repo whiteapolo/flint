@@ -76,6 +76,13 @@ void z_die_format(const char *fmt, ...);
         (da)->ptr[(da)->len++] = (item);           \
     } while (0)
 
+#define z_da_append_da(dest, source)                \
+    do {                                            \
+        for (int i = 0; i < (source)->len; i++) {   \
+            z_da_append((dest), (source)->ptr[i]);  \
+        }                                           \
+    } while (0)
+
 #define z_da_peek(da) ((da)->ptr[(da)->len - 1])
 #define z_da_pop(da) ((da)->ptr[--(da)->len])
 

@@ -44,6 +44,11 @@ void update_prompt()
 
 void execute_line(Z_String_View line)
 {
+
+#ifdef DEBUG_LEXER
+    lexer_print_tokens(line);
+#endif
+
     Token_Vec tokens = lexer_get_tokens(line);
     Parser_Node *ast = parse(&tokens);
     evaluate_ast(ast);

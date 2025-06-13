@@ -10,17 +10,17 @@
 static const Token_Vec *tokens;
 static int curr;
 
-Token eat()
+static Token eat()
 {
     return tokens->ptr[curr++];
 }
 
-Token peek()
+static Token peek()
 {
     return tokens->ptr[curr];
 }
 
-Parser_Node *parse_new_node(NODE_TYPE type, Parser_Node *left, Parser_Node *right, char **argv)
+Parser_Node *create_parser_node(NODE_TYPE type, Parser_Node *left, Parser_Node *right, char **argv)
 {
     Parser_Node *node = malloc(sizeof(Parser_Node));
     node->type = type;
@@ -31,13 +31,15 @@ Parser_Node *parse_new_node(NODE_TYPE type, Parser_Node *left, Parser_Node *righ
     return node;
 }
 
-void free_argv(char **argv)
+void free_string_array(char **s)
 {
-    for (char **curr = argv; *curr; curr++) {
-        free(*curr);
+    char **curr = s;
+
+    while (*curr) {
+        free(*(curr++));
     }
 
-    free(argv);
+    free(s);
 }
 
 
@@ -57,7 +59,7 @@ Parser_Node *parse_command()
         return NULL;
     }
 
-    return parse_new_node(NODE_TYPE_COMMAND, NULL, NULL, argv);
+    return create_parser_node(NODE_TYPE_COMMAND, NULL, NULL, argv);
 }
 
 Parser_Node *parse_ampersand()
@@ -104,7 +106,7 @@ Parser_Node *parse_pipe()
             return NULL;
         }
 
-        ast = parse_new_node(NODE_TYPE_PIPE, ast, right, NULL);
+        ast = create_parser_node(NODE_TYPE_PIPE, ast, right, NULL);
     }
 
     return ast;
@@ -136,7 +138,7 @@ Parser_Node *parse_and_if()
             return NULL;
         }
 
-        ast = parse_new_node(NODE_TYPE_AND_IF, ast, right, NULL);
+        ast = create_parser_node(NODE_TYPE_AND_IF, ast, right, NULL);
     }
 
     return ast;
@@ -159,7 +161,7 @@ void parser_free(Parser_Node *node)
     switch (node->type) {
         case NODE_TYPE_COMMAND:
         case NODE_TYPE_AMPERSAND:
-            free_argv(node->argv);
+            free_string_array(node->argv);
             break;
 
         case NODE_TYPE_PIPE:
