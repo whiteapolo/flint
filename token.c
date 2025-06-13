@@ -1,16 +1,6 @@
 #include "token.h"
+#include "libzatar.h"
 #include <stdio.h>
-
-Token new_token(TOKEN_TYPE type, const char *lexeme, int len)
-{
-    Token token = {
-        .type = type,
-        .lexeme = lexeme,
-        .len = len,
-    };
-
-    return token;
-}
 
 const char *token_type_to_string(TOKEN_TYPE type)
 {
@@ -29,9 +19,6 @@ void print_token(Token token)
 {
     const char *type_str = token_type_to_string(token.type);
 
-    printf("Token(%s, \"%.*s\", %d)\n",
-            type_str, token.len, token.lexeme, token.len);
-
-    // printf("Token(type=%s, lexeme=\"%.*s\", len=%d)\n",
-    //         type_str, token.len, token.lexeme, token.len);
+    printf("Token(%s, \"%.*s\")\n",
+            type_str, token.lexeme.len, token.lexeme.ptr);
 }

@@ -1,83 +1,129 @@
 #include "lexer.h"
 #include "token.h"
+#include "builtins/alias.h"
 #include <ctype.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
+#include "libzatar.h"
 
-void lexer_init(Lexer *lexer, const char *source, int len)
+Lexer create_lexer(Z_String_View source)
 {
-    lexer->source = source;
-    lexer->curr = source;
-    lexer->end = source + len;
+    Lexer lexer = {
+        .end = source.ptr + source.len,
+        .curr = source.ptr,
+        .start = source.ptr,
+    };
+
+    return lexer;
+}
+
+static Token create_error_token(const char *msg)
+{
+    Token token = {
+        .lexeme = Z_CSTR_TO_SV(msg),
+        .type = TOKEN_TYPE_ERROR,
+    };
+
+    return token;
+}
+
+static Token create_token(const Lexer *lexer, TOKEN_TYPE type)
+{
+    Token token = {
+        .lexeme = Z_SV(lexer->start, lexer->curr - lexer->start),
+        .type = type,
+    };
+
+    return token;
+}
+
+static bool is_at_end(const Lexer *lexer)
+{
+    return lexer->curr >= lexer->end;
+}
+
+static char advance(Lexer *lexer)
+{
+    return *(lexer->curr++);
+}
+
+static char peek(const Lexer *lexer)
+{
+    return *lexer->curr;
+}
+
+static bool match(Lexer *lexer, char expected)
+{
+    if (peek(lexer) == expected) {
+        advance(lexer);
+        return true;
+    }
+
+    return false;
+}
+
+static bool is_argument(char c)
+{
+    return !strchr(" &|;()", c);
 }
 
 Token eat_string(Lexer *lexer)
 {
     // TODO: add support for " "
-    lexer->curr++; // eat '
 
-    const char *lexeme = lexer->curr;
-
-    while (lexer->curr < lexer->end && *lexer->curr != '\'') {
-        lexer->curr++;
+    while (!is_at_end(lexer) && peek(lexer) != '\'') {
+        advance(lexer);
     }
 
-    if (lexer->curr >= lexer->end) {
-        const char *err_msg = "unexpected EOF while looking for matching '''";
-        return new_token(TOKEN_TYPE_ERROR, err_msg, strlen(err_msg));
+    if (is_at_end(lexer)) {
+        return create_error_token("unexpected EOF while looking for matching '''");
     }
 
-    lexer->curr++; // eat '
+    advance(lexer);
 
-    return new_token(TOKEN_TYPE_STRING, lexeme, lexer->curr - lexeme - 1);
-}
-
-bool is_argument(char c)
-{
-    return isalnum(c) || !strchr(" &|;()", c);
+    return create_token(lexer, TOKEN_TYPE_STRING);
 }
 
 Token eat_argument(Lexer *lexer)
 {
-    const char *lexeme = lexer->curr;
-
-    while (lexer->curr < lexer->end && is_argument(*lexer->curr)) {
-        lexer->curr++;
+    while (!is_at_end(lexer) && is_argument(peek(lexer))) {
+        advance(lexer);
     }
 
-    return new_token(TOKEN_TYPE_STRING, lexeme, lexer->curr - lexeme);
+    return create_token(lexer, TOKEN_TYPE_STRING);
 }
 
-Token lexer_peek(const Lexer *lexer)
+void skip_spaces(Lexer *lexer)
 {
-    Lexer cpy = *lexer;
+    while (!is_at_end(lexer) && isspace(peek(lexer))) {
+        advance(lexer);
+    }
 
-    return lexer_next(&cpy);
+    lexer->start = lexer->curr;
 }
 
 Token lexer_next(Lexer *lexer)
 {
-    while (lexer->curr < lexer->end && isspace(*lexer->curr)) {
-        lexer->curr++;
+    skip_spaces(lexer);
+
+    if (is_at_end(lexer)) {
+        return create_token(lexer, TOKEN_TYPE_EOD);
     }
 
-    if (lexer->curr >= lexer->end) {
-        return new_token(TOKEN_TYPE_EOD, NULL, 0);
-    }
+    char c = advance(lexer);
 
-    switch (*lexer->curr) {
+    switch (c) {
         case '|':
-            lexer->curr++;
-            return new_token(TOKEN_TYPE_PIPE, "|", 1);
+            return create_token(lexer, TOKEN_TYPE_PIPE);
 
         case '&': {
-            if (lexer->curr + 1 < lexer->end && lexer->curr[1] == '&') {
-                lexer->curr += 2;
-                return new_token(TOKEN_TYPE_AND_IF, "&&", 2);
+            if (!is_at_end(lexer) && match(lexer, '&')) {
+                return create_token(lexer, TOKEN_TYPE_AND_IF);
             }
 
-            lexer->curr++;
-            return new_token(TOKEN_TYPE_AMPERSAND, "&", 1);
+            return create_token(lexer, TOKEN_TYPE_AMPERSAND);
         }
 
         case '\'':
@@ -85,5 +131,71 @@ Token lexer_next(Lexer *lexer)
 
         default:
             return eat_argument(lexer);
+    }
+}
+
+void lexer_expand_alias(Token_Vec *tokens)
+{
+    (void)tokens;
+#if 0
+    Token_Vec tmp = {0};
+    bool is_command_start = true;
+
+    for (int i = 0; i < tokens->len; i++) {
+        Token token = tokens->ptr[i];
+
+        if (token.type != TOKEN_TYPE_STRING) {
+            is_command_start = true;
+            z_da_append(&tmp, token);
+        } else {
+            if (!is_command_start) {
+                z_da_append(&tmp, token);
+            } else {
+                const char *alias = get_alias(token.lexeme);
+
+                if (alias) {
+                    lexer_get_tokens(alias, strlen(alias), &tmp);
+                } else {
+                    z_da_append(&tmp, token);
+                }
+
+                is_command_start = false;
+            }
+        }
+    }
+
+    tokens->len = 0;
+
+    for (int i = 0; i < tmp.len; i++) {
+        z_da_append(tokens, tmp.ptr[i]);
+    }
+
+    free(tmp.ptr);
+#endif
+}
+
+Token_Vec lexer_get_tokens(Z_String_View source)
+{
+    Token_Vec tokens = {0};
+    Lexer lexer = create_lexer(source);
+    Token token = lexer_next(&lexer);
+
+    while (token.type != TOKEN_TYPE_EOD) {
+        z_da_append(&tokens, token);
+        token = lexer_next(&lexer);
+    }
+
+    z_da_append(&tokens, token);
+    // lexer_expand_alias(tokens);
+
+    return tokens;
+}
+
+void lexer_print_tokens(Z_String_View source)
+{
+    Token_Vec tokens = lexer_get_tokens(source);
+
+    for (int i = 0; i < tokens.len; i++) {
+        print_token(tokens.ptr[i]);
     }
 }

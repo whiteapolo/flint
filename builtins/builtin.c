@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
+#include "alias.h"
 
 int safe_fork();
 
@@ -19,6 +20,7 @@ typedef struct {
 static Builtin builtins[] = {
     { .name = "cd", .function = builtin_cd },
     { .name = "exit", .function = builtin_exit },
+    { .name = "alias", .function = builtin_alias },
 };
 
 function_t find_function(const char *name)

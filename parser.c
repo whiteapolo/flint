@@ -7,6 +7,19 @@
 #include <stdbool.h>
 #include <string.h>
 
+static const Token_Vec *tokens;
+static int curr;
+
+Token eat()
+{
+    return tokens->ptr[curr++];
+}
+
+Token peek()
+{
+    return tokens->ptr[curr];
+}
+
 Parser_Node *parse_new_node(NODE_TYPE type, Parser_Node *left, Parser_Node *right, char **argv)
 {
     Parser_Node *node = malloc(sizeof(Parser_Node));
@@ -28,15 +41,15 @@ void free_argv(char **argv)
 }
 
 
-Parser_Node *parse_command(Lexer *lexer)
+Parser_Node *parse_command()
 {
     char **argv = NULL;
     int len = 0;
 
-    while (lexer_peek(lexer).type == TOKEN_TYPE_STRING) {
-        Token token = lexer_next(lexer);
+    while (peek().type == TOKEN_TYPE_STRING) {
+        Token token = eat();
         argv = realloc(argv, sizeof(char *) * (++len + 1));
-        argv[len - 1] = strndup(token.lexeme, token.len);
+        argv[len - 1] = strndup(token.lexeme.ptr, token.lexeme.len);
         argv[len] = NULL;
     }
 
@@ -47,44 +60,44 @@ Parser_Node *parse_command(Lexer *lexer)
     return parse_new_node(NODE_TYPE_COMMAND, NULL, NULL, argv);
 }
 
-Parser_Node *parse_ampersand(Lexer *lexer)
+Parser_Node *parse_ampersand()
 {
-    Parser_Node *command = parse_command(lexer);
+    Parser_Node *command = parse_command();
 
     if (command == NULL) {
-        if (lexer_peek(lexer).type == TOKEN_TYPE_AMPERSAND) {
+        if (peek().type == TOKEN_TYPE_AMPERSAND) {
             fprintf(stderr, "Expected command before '&'\n");
         }
         return NULL;
     }
 
-    if (lexer_peek(lexer).type == TOKEN_TYPE_AMPERSAND) {
-        lexer_next(lexer);
+    if (peek().type == TOKEN_TYPE_AMPERSAND) {
+        eat();
         command->type = NODE_TYPE_AMPERSAND;
     }
 
     return command;
 }
 
-Parser_Node *parse_pipe(Lexer *lexer)
+Parser_Node *parse_pipe()
 {
-    Parser_Node *ast = parse_ampersand(lexer);
+    Parser_Node *ast = parse_ampersand();
 
     if (ast == NULL) {
-        if (lexer_peek(lexer).type == TOKEN_TYPE_PIPE) {
+        if (peek().type == TOKEN_TYPE_PIPE) {
             fprintf(stderr, "Expected command before '|'\n");
         }
         return NULL;
     }
 
-    if (lexer_peek(lexer).type == TOKEN_TYPE_PIPE && ast->type == NODE_TYPE_AMPERSAND) {
+    if (peek().type == TOKEN_TYPE_PIPE && ast->type == NODE_TYPE_AMPERSAND) {
         fprintf(stderr, "Left side of '|' must be a regular command without '&'\n");
         return NULL;
     }
 
-    while (lexer_peek(lexer).type == TOKEN_TYPE_PIPE) {
-        lexer_next(lexer);
-        Parser_Node *right = parse_pipe(lexer);
+    while (peek().type == TOKEN_TYPE_PIPE) {
+        eat();
+        Parser_Node *right = parse_pipe();
 
         if (right == NULL) {
             fprintf(stderr, "Expected command after '|'\n");
@@ -98,25 +111,25 @@ Parser_Node *parse_pipe(Lexer *lexer)
 }
 
 
-Parser_Node *parse_and_if(Lexer *lexer)
+Parser_Node *parse_and_if()
 {
-    Parser_Node *ast = parse_pipe(lexer);
+    Parser_Node *ast = parse_pipe();
 
     if (ast == NULL) {
-        if (lexer_peek(lexer).type == TOKEN_TYPE_AND_IF) {
+        if (peek().type == TOKEN_TYPE_AND_IF) {
             fprintf(stderr, "Expected expression before '&&'\n");
         }
         return NULL;
     }
 
-    if (lexer_peek(lexer).type == TOKEN_TYPE_AND_IF && ast->type == NODE_TYPE_AMPERSAND) {
+    if (peek().type == TOKEN_TYPE_AND_IF && ast->type == NODE_TYPE_AMPERSAND) {
         fprintf(stderr, "Left side of '&&' must be a regular command without '&'\n");
         return NULL;
     }
 
-    while (lexer_peek(lexer).type == TOKEN_TYPE_AND_IF) {
-        lexer_next(lexer);
-        Parser_Node *right = parse_and_if(lexer);
+    while (peek().type == TOKEN_TYPE_AND_IF) {
+        eat();
+        Parser_Node *right = parse_and_if();
 
         if (right == NULL) {
             fprintf(stderr, "Expected expression after '&&'\n");
@@ -129,13 +142,12 @@ Parser_Node *parse_and_if(Lexer *lexer)
     return ast;
 }
 
-Parser_Node *parse(Lexer *lexer)
+Parser_Node *parse(const Token_Vec *t)
 {
-    if (lexer_peek(lexer).type == TOKEN_TYPE_EOD) {
-        return NULL;
-    }
+    tokens = t;
+    curr = 0;
 
-    return parse_and_if(lexer);
+    return parse_and_if();
 }
 
 void parser_free(Parser_Node *node)

@@ -19,7 +19,7 @@ typedef struct Parser_Node {
     char **argv;
 } Parser_Node;
 
-Parser_Node *parse(Lexer *lexer);
+Parser_Node *parse(const Token_Vec *t);
 void parser_free(Parser_Node *node);
 
 #endif

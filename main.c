@@ -1,3 +1,7 @@
+#include <sys/ucontext.h>
+#define LIBZATAR_IMPLEMENTATION
+#include "libzatar.h"
+
 #include "lexer.h"
 #include "parser.h"
 #include "token.h"
@@ -11,88 +15,93 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-
-#define LIBZATAR_IMPLEMENTATION
-#include "libzatar.h"
+#include "builtins/alias.h"
 
 #ifndef PATH_MAX
 #  define PATH_MAX 4096
 #endif
 
-static String prompt;
+static Z_String prompt = {0};
 
 void update_prompt()
 {
     char pwd[PATH_MAX];
-    str_clear(&prompt);
+    z_str_clear(&prompt);
 
     if (getcwd(pwd, PATH_MAX) == NULL) {
-        str_pushf(&prompt, "couldn't retrive cwd > ");
+        z_str_append_format(&prompt, "couldn't retrive cwd > ");
         return;
     }
 
-    String compressed_pwd = compress_path(CSTR_TO_SV(pwd));
-    str_pushf(&prompt, COLOR_MAGENTA);
-    str_push(&prompt, STR_TO_SV(compressed_pwd));
-    str_pushf(&prompt, COLOR_GREEN);
-    str_pushf(&prompt, " > ");
-    str_pushf(&prompt, COLOR_RESET);
-    str_free(&compressed_pwd);
+    Z_String compressed_pwd = z_compress_path(Z_CSTR_TO_SV(pwd));
+    z_str_append_format(&prompt, Z_COLOR_MAGENTA);
+    z_str_append_str(&prompt, Z_STR_TO_SV(compressed_pwd));
+    z_str_append_format(&prompt, Z_COLOR_GREEN);
+    z_str_append_format(&prompt, " > ");
+    z_str_append_format(&prompt, Z_COLOR_RESET);
+    z_str_free(&compressed_pwd);
 }
 
-void init_repl()
+void execute_line(Z_String_View line)
 {
-    prompt = str_new("");
-    update_prompt();
+    Token_Vec tokens = lexer_get_tokens(line);
+    Parser_Node *ast = parse(&tokens);
+    evaluate_ast(ast);
+
+    parser_free(ast);
+    free(tokens.ptr);
 }
 
 void repl()
 {
-    init_repl();
-    Lexer lexer;
+    char *line;
+    update_prompt();
 
-    char *line = readline(prompt.ptr);
-    add_history(line);
-
-    while (line) {
-        lexer_init(&lexer, line, strlen(line));
-
-        if (lexer_peek(&lexer).type != TOKEN_TYPE_EOD) {
-            Parser_Node *ast = parse(&lexer);
-            evaluate_ast(ast);
-            parser_free(ast);
-        }
-
-        update_prompt();
-
-        free(line);
-        line = readline(prompt.ptr);
+    while ((line = readline(z_str_to_cstr(&prompt)))) {
         add_history(line);
+        execute_line(Z_CSTR_TO_SV(line));
+        update_prompt();
+        free(line);
+    }
+}
+
+void run_file_content(Z_String_View file_content)
+{
+    Z_String_View delim = Z_CSTR_TO_SV("\n");
+    Z_String_View line = z_str_tok_start(file_content, delim);
+
+    while (line.len > 0) {
+        execute_line(line);
+        line = z_str_tok_next(Z_STR_TO_SV(file_content), line, delim);
+    }
+}
+
+void execute_file_from_raw_path(const char *pathname)
+{
+    Z_String file_content = {0};
+
+    if (!z_read_whole_file(pathname, &file_content)) {
+        z_print_warning("No such file or directory: '%s'\n", pathname);
+        return;
     }
 
-    free(line);
+    run_file_content(Z_STR_TO_SV(file_content));
+    z_str_free(&file_content);
+}
+
+void execute_file(Z_String_View pathname)
+{
+    Z_String expanded_path = {0};
+    z_expand_path(pathname, &expanded_path);
+    execute_file_from_raw_path(z_str_to_cstr(&expanded_path));
+    z_str_free(&expanded_path);
 }
 
 int main(void)
 {
+    Z_String_View init_file = Z_CSTR_TO_SV("~/.config/flint/flint.rc");
+    execute_file(init_file);
+
     repl();
     return 0;
 }
-
-void print_tokens(const char *line)
-{
-    Lexer lexer;
-    lexer_init(&lexer, line, strlen(line));
-
-    Token token = lexer_next(&lexer);
-
-    while (token.type != TOKEN_TYPE_EOD && token.type != TOKEN_TYPE_ERROR) {
-        print_token(token);
-        token = lexer_next(&lexer);
-    }
-
-    if (token.type == TOKEN_TYPE_ERROR) {
-        printf("%.*s\n", token.len, token.lexeme);
-    }
-}
-
