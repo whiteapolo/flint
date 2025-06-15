@@ -6,18 +6,32 @@
 #include <stdbool.h>
 
 typedef enum {
-    NODE_TYPE_COMMAND,
-    NODE_TYPE_PIPE,
-    NODE_TYPE_AND_IF,
-    NODE_TYPE_AMPERSAND,
-} NODE_TYPE;
+    Parser_Node_Type_COMMAND,
+    Parser_Node_Type_BINARY,
+    Parser_Node_Type_UNARY,
+} Parser_Node_Type;
 
 typedef struct Parser_Node {
-    NODE_TYPE type;
-    struct Parser_Node *left;
-    struct Parser_Node *right;
-    char **argv;
+    Parser_Node_Type type;
 } Parser_Node;
+
+typedef struct {
+    Parser_Node_Type type;
+    char **argv;
+} Parser_Node_Command;
+
+typedef struct {
+    Parser_Node_Type type;
+    Token operator;
+    Parser_Node *child;
+} Parser_Node_Unary;
+
+typedef struct {
+    Parser_Node_Type type;
+    Token operator;
+    Parser_Node *left;
+    Parser_Node *right;
+} Parser_Node_Binary;
 
 Parser_Node *parse(const Token_Vec *t);
 void parser_free(Parser_Node *node);
