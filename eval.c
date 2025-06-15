@@ -1,6 +1,3 @@
-#include "eval.h"
-#include "builtins/builtin.h"
-#include "parser.h"
 #include <assert.h>
 #include <errno.h>
 #include <stdio.h>
@@ -10,6 +7,9 @@
 #include <unistd.h>
 #include "libzatar.h"
 #include "token.h"
+#include "eval.h"
+#include "builtins/builtin.h"
+#include "parser.h"
 
 int safe_fork()
 {
@@ -180,7 +180,7 @@ int evaluate_ampersand(Ast_Node_Unary *ast)
 int evaluate_unary(Ast_Node_Unary *ast)
 {
     switch (ast->operator.type) {
-        case TOKEN_TYPE_AMPERSAND:
+        case TOKEN_AMPERSAND:
             return evaluate_ampersand(ast);
         default:
             fprintf(stderr, "Unknown operator\n");
@@ -191,9 +191,9 @@ int evaluate_unary(Ast_Node_Unary *ast)
 int evaluate_binary(Ast_Node_Binary *ast)
 {
     switch (ast->operator.type) {
-        case TOKEN_TYPE_AND_IF:
+        case TOKEN_AND_IF:
             return evaluate_and_if(ast);
-        case TOKEN_TYPE_PIPE:
+        case TOKEN_PIPE:
             return evaluate_pipe(ast);
         default:
             fprintf(stderr, "Unknown operator\n");

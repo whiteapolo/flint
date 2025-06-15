@@ -23,13 +23,13 @@ static Token create_error_token(const char *msg)
 {
     Token token = {
         .lexeme = Z_CSTR_TO_SV(msg),
-        .type = TOKEN_TYPE_ERROR,
+        .type = TOKEN_ERROR,
     };
 
     return token;
 }
 
-static Token create_token(const Lexer *lexer, TOKEN_TYPE type)
+static Token create_token(const Lexer *lexer, Token_Type type)
 {
     Token token = {
         .lexeme = Z_SV(lexer->start, lexer->curr - lexer->start),
@@ -87,7 +87,7 @@ Token eat_string(Lexer *lexer)
         return create_error_token("unexpected EOF while looking for matching '''");
     }
 
-    Token token = create_token(lexer, TOKEN_TYPE_STRING);
+    Token token = create_token(lexer, TOKEN_STRING);
     advance(lexer);
     return token;
 }
@@ -98,7 +98,7 @@ Token eat_argument(Lexer *lexer)
         advance(lexer);
     }
 
-    return create_token(lexer, TOKEN_TYPE_STRING);
+    return create_token(lexer, TOKEN_STRING);
 }
 
 void skip_spaces(Lexer *lexer)
@@ -120,17 +120,17 @@ Token lexer_next(Lexer *lexer)
     skip_spaces(lexer);
 
     if (is_at_end(lexer)) {
-        return create_token(lexer, TOKEN_TYPE_EOD);
+        return create_token(lexer, TOKEN_EOD);
     }
 
     char c = advance(lexer);
 
     switch (c) {
         case '|':
-            return create_token(lexer, TOKEN_TYPE_PIPE);
+            return create_token(lexer, TOKEN_PIPE);
 
         case '&':
-            return create_token(lexer, match(lexer, '&') ? TOKEN_TYPE_AND_IF : TOKEN_TYPE_AMPERSAND);
+            return create_token(lexer, match(lexer, '&') ? TOKEN_AND_IF : TOKEN_AMPERSAND);
 
         case '\'':
             return eat_string(lexer);
@@ -166,7 +166,7 @@ void alias_expension(Token_Vec *tokens)
     for (int i = 0; i < tokens->len; i++) {
         Token token = tokens->ptr[i];
 
-        if (token.type != TOKEN_TYPE_STRING) {
+        if (token.type != TOKEN_STRING) {
             is_command_start = true;
             z_da_append(&tmp, token);
         } else if (!is_command_start) {
@@ -188,7 +188,7 @@ Token_Vec lexer_get_tokens(Z_String_View source)
     Lexer lexer = create_lexer(source);
     Token token = lexer_next(&lexer);
 
-    while (token.type != TOKEN_TYPE_EOD) {
+    while (token.type != TOKEN_EOD) {
         z_da_append(&tokens, token);
         token = lexer_next(&lexer);
     }

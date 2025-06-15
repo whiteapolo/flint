@@ -1,3 +1,1 @@
-echo bye
-#grep -rn 'Hello world'
-git branch
+find . -type f -name '*.c' -exec cat {} + | wc -l

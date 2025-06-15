@@ -23,21 +23,21 @@ static Token peek()
 
 // static bool is_at_end()
 // {
-//     return peek().type == TOKEN_TYPE_EOD;
+//     return peek().type == TOKEN_EOD;
 // }
 
-static bool check(TOKEN_TYPE type)
+static bool check(Token_Type type)
 {
     return peek().type == type;
 }
 
-// static bool match(TOKEN_TYPE type)
+// static bool match(Token_Type type)
 // {
 //     if (is_at_end()) return false;
 //     return peek().type == type;
 // }
 
-static bool check_node_operator(Ast_Node *node, TOKEN_TYPE expected)
+static bool check_node_operator(Ast_Node *node, Token_Type expected)
 {
     if (node->type == AST_NODE_BINARY) {
         return ((Ast_Node_Binary *)node)->operator.type == expected;
@@ -96,7 +96,7 @@ Ast_Node *parse_command()
     char **argv = NULL;
     int len = 0;
 
-    while (check(TOKEN_TYPE_STRING)) {
+    while (check(TOKEN_STRING)) {
         Token token = advance();
         argv = realloc(argv, sizeof(char *) * (++len + 1));
         argv[len - 1] = strndup(token.lexeme.ptr, token.lexeme.len);
@@ -115,13 +115,13 @@ Ast_Node *parse_ampersand()
     Ast_Node *command = parse_command();
 
     if (command == NULL) {
-        if (check(TOKEN_TYPE_AMPERSAND)) {
+        if (check(TOKEN_AMPERSAND)) {
             fprintf(stderr, "Expected command before '&'\n");
         }
         return NULL;
     }
 
-    if (check(TOKEN_TYPE_AMPERSAND)) {
+    if (check(TOKEN_AMPERSAND)) {
         return create_unary_node(advance(), command);
     }
 
@@ -133,18 +133,18 @@ Ast_Node *parse_pipe()
     Ast_Node *ast = parse_ampersand();
 
     if (ast == NULL) {
-        if (check(TOKEN_TYPE_PIPE)) {
+        if (check(TOKEN_PIPE)) {
             fprintf(stderr, "Expected command before '|'\n");
         }
         return NULL;
     }
 
-    if (check(TOKEN_TYPE_PIPE) && check_node_operator(ast, TOKEN_TYPE_AMPERSAND)) {
+    if (check(TOKEN_PIPE) && check_node_operator(ast, TOKEN_AMPERSAND)) {
         fprintf(stderr, "Left side of '|' must be a regular command without '&'\n");
         return NULL;
     }
 
-    while (check(TOKEN_TYPE_PIPE)) {
+    while (check(TOKEN_PIPE)) {
         Token pipe = advance();
         Ast_Node *right = parse_pipe();
 
@@ -164,18 +164,18 @@ Ast_Node *parse_and_if()
     Ast_Node *ast = parse_pipe();
 
     if (ast == NULL) {
-        if (check(TOKEN_TYPE_AND_IF)) {
+        if (check(TOKEN_AND_IF)) {
             fprintf(stderr, "Expected expression before '&&'\n");
         }
         return NULL;
     }
 
-    if (check(TOKEN_TYPE_AND_IF) && check_node_operator(ast, TOKEN_TYPE_AMPERSAND)) {
+    if (check(TOKEN_AND_IF) && check_node_operator(ast, TOKEN_AMPERSAND)) {
         fprintf(stderr, "Left side of '&&' must be a regular command without '&'\n");
         return NULL;
     }
 
-    while (check(TOKEN_TYPE_AND_IF)) {
+    while (check(TOKEN_AND_IF)) {
         Token and_if = advance();
         Ast_Node *right = parse_and_if();
 

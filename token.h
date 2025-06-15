@@ -4,16 +4,16 @@
 #include "libzatar.h"
 
 typedef enum {
-    TOKEN_TYPE_PIPE,
-    TOKEN_TYPE_AND_IF,
-    TOKEN_TYPE_AMPERSAND,
-    TOKEN_TYPE_STRING,
-    TOKEN_TYPE_ERROR,
-    TOKEN_TYPE_EOD,
-} TOKEN_TYPE;
+    TOKEN_PIPE,
+    TOKEN_AND_IF,
+    TOKEN_AMPERSAND,
+    TOKEN_STRING,
+    TOKEN_ERROR,
+    TOKEN_EOD,
+} Token_Type;
 
 typedef struct {
-    TOKEN_TYPE type;
+    Token_Type type;
     Z_String_View lexeme;
 } Token;
 
@@ -24,6 +24,6 @@ typedef struct {
 } Token_Vec;
 
 void print_token(Token token);
-const char *token_type_to_string(TOKEN_TYPE type);
+const char *token_type_to_string(Token_Type type);
 
 #endif
