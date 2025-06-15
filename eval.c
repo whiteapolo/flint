@@ -31,7 +31,7 @@ void safe_execvp(const char *file, char *const argv[])
     exit(1);
 }
 
-void evaluate_command_no_fork(Parser_Node_Command *node)
+void evaluate_command_no_fork(Ast_Node_Command *node)
 {
     char **argv = node->argv;
 
@@ -42,7 +42,7 @@ void evaluate_command_no_fork(Parser_Node_Command *node)
     safe_execvp(argv[0], argv);
 }
 
-int evaluate_command(Parser_Node_Command *node)
+int evaluate_command(Ast_Node_Command *node)
 {
     char **argv = node->argv;
 
@@ -62,7 +62,7 @@ int evaluate_command(Parser_Node_Command *node)
     return status;
 }
 
-int evaluate_command_in_background(Parser_Node_Command *node)
+int evaluate_command_in_background(Ast_Node_Command *node)
 {
     if (safe_fork() == 0) { // child
         int status = evaluate_command(node);
@@ -85,24 +85,24 @@ void close_pipe(int fd[2])
     close(fd[1]);
 }
 
-int evaluate_pipe(Parser_Node_Binary *node)
+int evaluate_pipe(Ast_Node_Binary *node)
 {
     typedef struct {
-        Parser_Node_Command **ptr;
+        Ast_Node_Command **ptr;
         int len;
         int capacity;
     } Command_Vec;
 
     Command_Vec commands = {0};
 
-    Parser_Node_Binary *curr_node = node;
+    Ast_Node_Binary *curr_node = node;
 
-    while (curr_node->type == Parser_Node_Type_BINARY) {
-        z_da_append(&commands, (Parser_Node_Command *)curr_node->left);
-        curr_node = (Parser_Node_Binary *)curr_node->right;
+    while (curr_node->type == AST_NODE_BINARY) {
+        z_da_append(&commands, (Ast_Node_Command *)curr_node->left);
+        curr_node = (Ast_Node_Binary *)curr_node->right;
     }
 
-    z_da_append(&commands, (Parser_Node_Command *)curr_node);
+    z_da_append(&commands, (Ast_Node_Command *)curr_node);
 
     // end formating array
 
@@ -161,7 +161,7 @@ int evaluate_pipe(Parser_Node_Binary *node)
     return status;
 }
 
-int evaluate_and_if(Parser_Node_Binary *ast)
+int evaluate_and_if(Ast_Node_Binary *ast)
 {
     int status = evaluate_ast(ast->left);
 
@@ -172,12 +172,12 @@ int evaluate_and_if(Parser_Node_Binary *ast)
     return status;
 }
 
-int evaluate_ampersand(Parser_Node_Unary *ast)
+int evaluate_ampersand(Ast_Node_Unary *ast)
 {
-    return evaluate_command_in_background((Parser_Node_Command *)ast->child);
+    return evaluate_command_in_background((Ast_Node_Command *)ast->child);
 }
 
-int evaluate_unary(Parser_Node_Unary *ast)
+int evaluate_unary(Ast_Node_Unary *ast)
 {
     switch (ast->operator.type) {
         case TOKEN_TYPE_AMPERSAND:
@@ -188,7 +188,7 @@ int evaluate_unary(Parser_Node_Unary *ast)
     }
 }
 
-int evaluate_binary(Parser_Node_Binary *ast)
+int evaluate_binary(Ast_Node_Binary *ast)
 {
     switch (ast->operator.type) {
         case TOKEN_TYPE_AND_IF:
@@ -201,21 +201,21 @@ int evaluate_binary(Parser_Node_Binary *ast)
     }
 }
 
-int evaluate_ast(Parser_Node *ast)
+int evaluate_ast(Ast_Node *ast)
 {
     if (ast == NULL) {
         return 0;
     }
 
     switch (ast->type) {
-        case Parser_Node_Type_COMMAND:
-            return evaluate_command((Parser_Node_Command *)ast);
+        case AST_NODE_COMMAND:
+            return evaluate_command((Ast_Node_Command *)ast);
 
-        case Parser_Node_Type_UNARY:
-            return evaluate_unary((Parser_Node_Unary *)ast);
+        case AST_NODE_UNARY:
+            return evaluate_unary((Ast_Node_Unary *)ast);
 
-        case Parser_Node_Type_BINARY:
-            return evaluate_binary((Parser_Node_Binary *)ast);
+        case AST_NODE_BINARY:
+            return evaluate_binary((Ast_Node_Binary *)ast);
     }
 
     return 0;

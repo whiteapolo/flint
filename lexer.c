@@ -110,6 +110,11 @@ void skip_spaces(Lexer *lexer)
     lexer->start = lexer->curr;
 }
 
+void skip_comment(Lexer *lexer)
+{
+    while (!is_at_end(lexer) && advance(lexer) != '\n') {}
+}
+
 Token lexer_next(Lexer *lexer)
 {
     skip_spaces(lexer);
@@ -129,6 +134,10 @@ Token lexer_next(Lexer *lexer)
 
         case '\'':
             return eat_string(lexer);
+
+        case '#':
+            skip_comment(lexer);
+            return lexer_next(lexer);
 
         default:
             return eat_argument(lexer);
@@ -189,11 +198,9 @@ Token_Vec lexer_get_tokens(Z_String_View source)
     return tokens;
 }
 
-void lexer_print_tokens(Z_String_View source)
+void lexer_print_tokens(const Token_Vec *tokens)
 {
-    Token_Vec tokens = lexer_get_tokens(source);
-
-    for (int i = 0; i < tokens.len; i++) {
-        print_token(tokens.ptr[i]);
+    for (int i = 0; i < tokens->len; i++) {
+        print_token(tokens->ptr[i]);
     }
 }

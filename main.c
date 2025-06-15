@@ -17,6 +17,8 @@
 #include <unistd.h>
 #include "builtins/alias.h"
 
+#define INIT_FILE_PATH "~/.config/flint/flint.rc"
+
 #ifndef PATH_MAX
 #  define PATH_MAX 4096
 #endif
@@ -44,15 +46,11 @@ void update_prompt()
 
 void execute_line(Z_String_View line)
 {
-
-#ifdef DEBUG_LEXER
-    lexer_print_tokens(line);
-#endif
-
     Token_Vec tokens = lexer_get_tokens(line);
-    Parser_Node *ast = parse(&tokens);
+    // lexer_print_tokens(tokens);
+    Ast_Node *ast = parse(&tokens);
+    // print_ast(ast);
     evaluate_ast(ast);
-
     parser_free(ast);
     free(tokens.ptr);
 }
@@ -102,11 +100,21 @@ void execute_file(Z_String_View pathname)
     z_str_free(&expanded_path);
 }
 
-int main(void)
+void execute_init_file()
 {
-    Z_String_View init_file = Z_CSTR_TO_SV("~/.config/flint/flint.rc");
+    Z_String_View init_file = Z_CSTR_TO_SV(INIT_FILE_PATH);
     execute_file(init_file);
+}
 
-    repl();
-    return 0;
+int main(int argc, char **argv)
+{
+    execute_init_file();
+
+    if (argc == 1) {
+        repl();
+    } else if (argc == 2) {
+        execute_file(Z_CSTR_TO_SV(argv[1]));
+    } else {
+        z_die_format("Usage: Flint <path>\n");
+    }
 }

@@ -1,5 +1,6 @@
 #include "parser.h"
 #include "lexer.h"
+#include "libzatar.h"
 #include "token.h"
 #include <assert.h>
 #include <stdio.h>
@@ -36,47 +37,47 @@ static bool check(TOKEN_TYPE type)
 //     return peek().type == type;
 // }
 
-static bool check_node_operator(Parser_Node *node, TOKEN_TYPE expected)
+static bool check_node_operator(Ast_Node *node, TOKEN_TYPE expected)
 {
-    if (node->type == Parser_Node_Type_BINARY) {
-        return ((Parser_Node_Binary *)node)->operator.type == expected;
+    if (node->type == AST_NODE_BINARY) {
+        return ((Ast_Node_Binary *)node)->operator.type == expected;
     }
 
-    if (node->type == Parser_Node_Type_UNARY) {
-        return ((Parser_Node_Unary *)node)->operator.type == expected;
+    if (node->type == AST_NODE_UNARY) {
+        return ((Ast_Node_Unary *)node)->operator.type == expected;
     }
 
     return false;
 }
 
-Parser_Node *create_binary_node(Parser_Node *left, Token operator, Parser_Node *right)
+Ast_Node *create_binary_node(Ast_Node *left, Token operator, Ast_Node *right)
 {
-    Parser_Node_Binary *node = malloc(sizeof(Parser_Node_Binary));
-    node->type = Parser_Node_Type_BINARY;
+    Ast_Node_Binary *node = malloc(sizeof(Ast_Node_Binary));
+    node->type = AST_NODE_BINARY;
     node->left = left;
     node->operator = operator;
     node->right = right;
 
-    return (Parser_Node *)node;
+    return (Ast_Node *)node;
 }
 
-Parser_Node *create_unary_node(Token operator, Parser_Node *child)
+Ast_Node *create_unary_node(Token operator, Ast_Node *child)
 {
-    Parser_Node_Unary *node = malloc(sizeof(Parser_Node_Unary));
-    node->type = Parser_Node_Type_UNARY;
+    Ast_Node_Unary *node = malloc(sizeof(Ast_Node_Unary));
+    node->type = AST_NODE_UNARY;
     node->operator = operator;
     node->child = child;
 
-    return (Parser_Node *)node;
+    return (Ast_Node *)node;
 }
 
-Parser_Node *create_command_node(char **argv)
+Ast_Node *create_command_node(char **argv)
 {
-    Parser_Node_Command *node = malloc(sizeof(Parser_Node_Command));
-    node->type = Parser_Node_Type_COMMAND;
+    Ast_Node_Command *node = malloc(sizeof(Ast_Node_Command));
+    node->type = AST_NODE_COMMAND;
     node->argv = argv;
 
-    return (Parser_Node *)node;
+    return (Ast_Node *)node;
 }
 
 void free_string_array(char **s)
@@ -90,7 +91,7 @@ void free_string_array(char **s)
     free(s);
 }
 
-Parser_Node *parse_command()
+Ast_Node *parse_command()
 {
     char **argv = NULL;
     int len = 0;
@@ -109,9 +110,9 @@ Parser_Node *parse_command()
     return create_command_node(argv);
 }
 
-Parser_Node *parse_ampersand()
+Ast_Node *parse_ampersand()
 {
-    Parser_Node *command = parse_command();
+    Ast_Node *command = parse_command();
 
     if (command == NULL) {
         if (check(TOKEN_TYPE_AMPERSAND)) {
@@ -127,9 +128,9 @@ Parser_Node *parse_ampersand()
     return command;
 }
 
-Parser_Node *parse_pipe()
+Ast_Node *parse_pipe()
 {
-    Parser_Node *ast = parse_ampersand();
+    Ast_Node *ast = parse_ampersand();
 
     if (ast == NULL) {
         if (check(TOKEN_TYPE_PIPE)) {
@@ -145,7 +146,7 @@ Parser_Node *parse_pipe()
 
     while (check(TOKEN_TYPE_PIPE)) {
         Token pipe = advance();
-        Parser_Node *right = parse_pipe();
+        Ast_Node *right = parse_pipe();
 
         if (right == NULL) {
             fprintf(stderr, "Expected command after '|'\n");
@@ -158,9 +159,9 @@ Parser_Node *parse_pipe()
     return ast;
 }
 
-Parser_Node *parse_and_if()
+Ast_Node *parse_and_if()
 {
-    Parser_Node *ast = parse_pipe();
+    Ast_Node *ast = parse_pipe();
 
     if (ast == NULL) {
         if (check(TOKEN_TYPE_AND_IF)) {
@@ -176,7 +177,7 @@ Parser_Node *parse_and_if()
 
     while (check(TOKEN_TYPE_AND_IF)) {
         Token and_if = advance();
-        Parser_Node *right = parse_and_if();
+        Ast_Node *right = parse_and_if();
 
         if (right == NULL) {
             fprintf(stderr, "Expected expression after '&&'\n");
@@ -189,12 +190,12 @@ Parser_Node *parse_and_if()
     return ast;
 }
 
-Parser_Node *parse_expression()
+Ast_Node *parse_expression()
 {
     return parse_and_if();
 }
 
-Parser_Node *parse(const Token_Vec *t)
+Ast_Node *parse(const Token_Vec *t)
 {
     tokens = t;
     curr = 0;
@@ -202,24 +203,77 @@ Parser_Node *parse(const Token_Vec *t)
     return parse_expression();
 }
 
-void parser_free(Parser_Node *node)
+void render_ast_binary(Ast_Node_Binary *ast, Z_String *output)
+{
+    z_str_append_format(output, "(");
+    z_str_append_str(output, ast->operator.lexeme);
+    z_str_append_format(output, " ");
+    render_ast(ast->left, output);
+    z_str_append_format(output, " ");
+    render_ast(ast->right, output);
+    z_str_append_format(output, ")");
+}
+
+void render_ast_unary(Ast_Node_Unary *ast, Z_String *output)
+{
+    z_str_append_format(output, "(");
+    z_str_append_str(output, ast->operator.lexeme);
+    z_str_append_format(output, " ");
+    render_ast(ast->child, output);
+    z_str_append_format(output, ")");
+}
+
+void render_ast_command(Ast_Node_Command *ast, Z_String *output)
+{
+    char **curr = ast->argv;
+    z_str_append_format(output, "(%s", *(curr++));
+
+    while (*curr) {
+        z_str_append_format(output, " %s", *(curr++));
+    }
+
+    z_str_append_format(output, ")");
+}
+
+void render_ast(Ast_Node *ast, Z_String *output)
+{
+    if (ast->type == AST_NODE_BINARY) {
+        render_ast_binary((Ast_Node_Binary *)ast, output);
+    } else if (ast->type == AST_NODE_UNARY) {
+        render_ast_unary((Ast_Node_Unary *)ast, output);
+    } else if (ast->type == AST_NODE_COMMAND) {
+        render_ast_command((Ast_Node_Command *)ast, output);
+    } else {
+        z_str_append_format(output, "(Unknown)");
+    }
+}
+
+void print_ast(Ast_Node *ast)
+{
+    Z_String s = {0};
+    render_ast(ast, &s);
+    z_str_println(Z_STR_TO_SV(s));
+    free(s.ptr);
+}
+
+void parser_free(Ast_Node *node)
 {
     if (node == NULL) {
         return;
     }
 
     switch (node->type) {
-        case Parser_Node_Type_COMMAND:
-            free_string_array(((Parser_Node_Command *)node)->argv);
+        case AST_NODE_COMMAND:
+            free_string_array(((Ast_Node_Command *)node)->argv);
             break;
 
-        case Parser_Node_Type_UNARY:
-            parser_free(((Parser_Node_Unary *)node)->child);
+        case AST_NODE_UNARY:
+            parser_free(((Ast_Node_Unary *)node)->child);
             break;
 
-        case Parser_Node_Type_BINARY:
-            parser_free(((Parser_Node_Binary *)node)->right);
-            parser_free(((Parser_Node_Binary *)node)->left);
+        case AST_NODE_BINARY:
+            parser_free(((Ast_Node_Binary *)node)->right);
+            parser_free(((Ast_Node_Binary *)node)->left);
             break;
     }
 

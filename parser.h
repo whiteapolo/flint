@@ -6,34 +6,36 @@
 #include <stdbool.h>
 
 typedef enum {
-    Parser_Node_Type_COMMAND,
-    Parser_Node_Type_BINARY,
-    Parser_Node_Type_UNARY,
-} Parser_Node_Type;
+    AST_NODE_COMMAND,
+    AST_NODE_BINARY,
+    AST_NODE_UNARY,
+} Ast_Node_Type;
 
-typedef struct Parser_Node {
-    Parser_Node_Type type;
-} Parser_Node;
+typedef struct Ast_Node {
+    Ast_Node_Type type;
+} Ast_Node;
 
 typedef struct {
-    Parser_Node_Type type;
+    Ast_Node_Type type;
     char **argv;
-} Parser_Node_Command;
+} Ast_Node_Command;
 
 typedef struct {
-    Parser_Node_Type type;
+    Ast_Node_Type type;
     Token operator;
-    Parser_Node *child;
-} Parser_Node_Unary;
+    Ast_Node *child;
+} Ast_Node_Unary;
 
 typedef struct {
-    Parser_Node_Type type;
+    Ast_Node_Type type;
     Token operator;
-    Parser_Node *left;
-    Parser_Node *right;
-} Parser_Node_Binary;
+    Ast_Node *left;
+    Ast_Node *right;
+} Ast_Node_Binary;
 
-Parser_Node *parse(const Token_Vec *t);
-void parser_free(Parser_Node *node);
+Ast_Node *parse(const Token_Vec *t);
+void parser_free(Ast_Node *node);
+void render_ast(Ast_Node *ast, Z_String *output);
+void print_ast(Ast_Node *ast);
 
 #endif

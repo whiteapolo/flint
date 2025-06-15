@@ -11,5 +11,7 @@ typedef struct {
 } Lexer;
 
 Token_Vec lexer_get_tokens(Z_String_View source);
+void lexer_print_tokens(const Token_Vec *tokens);
+
 
 #endif

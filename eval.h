@@ -3,6 +3,6 @@
 
 #include "parser.h"
 
-int evaluate_ast(Parser_Node *ast);
+int evaluate_ast(Ast_Node *ast);
 
 #endif
