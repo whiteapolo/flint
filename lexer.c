@@ -112,7 +112,7 @@ void skip_spaces(Lexer *lexer)
 
 void skip_comment(Lexer *lexer)
 {
-    while (!is_at_end(lexer) && advance(lexer) != '\n') {}
+    while (!is_at_end(lexer) && advance(lexer) != '\n') { }
 }
 
 Token lexer_next(Lexer *lexer)
@@ -153,11 +153,12 @@ void expand_alias(Token key, Token_Vec *output)
     } else {
         Token_Vec tmp = lexer_get_tokens(Z_CSTR_TO_SV(value));
         z_da_append_da(output, &tmp);
+        output->len--; // remove EOF token
         free(tmp.ptr);
     }
 }
 
-void expand_aliases(Token_Vec *tokens)
+void alias_expension(Token_Vec *tokens)
 {
     Token_Vec tmp = {0};
     bool is_command_start = true;
@@ -193,7 +194,6 @@ Token_Vec lexer_get_tokens(Z_String_View source)
     }
 
     z_da_append(&tokens, token);
-    expand_aliases(&tokens);
 
     return tokens;
 }

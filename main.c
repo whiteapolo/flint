@@ -47,7 +47,8 @@ void update_prompt()
 void execute_line(Z_String_View line)
 {
     Token_Vec tokens = lexer_get_tokens(line);
-    // lexer_print_tokens(tokens);
+    alias_expension(&tokens);
+    // lexer_print_tokens(&tokens);
     Ast_Node *ast = parse(&tokens);
     // print_ast(ast);
     evaluate_ast(ast);
