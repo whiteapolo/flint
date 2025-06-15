@@ -2,6 +2,7 @@
 #define TOKEN_H
 
 #include "libzatar.h"
+
 typedef enum {
     TOKEN_TYPE_PIPE,
     TOKEN_TYPE_AND_IF,

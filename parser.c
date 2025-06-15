@@ -10,7 +10,7 @@
 static const Token_Vec *tokens;
 static int curr;
 
-static Token eat()
+static Token advance()
 {
     return tokens->ptr[curr++];
 }
@@ -18,6 +18,22 @@ static Token eat()
 static Token peek()
 {
     return tokens->ptr[curr];
+}
+
+static bool is_at_end()
+{
+    return peek().type == TOKEN_TYPE_EOD;
+}
+
+static bool check(TOKEN_TYPE type)
+{
+    return peek().type == type;
+}
+
+static bool match(TOKEN_TYPE type)
+{
+    if (is_at_end()) return false;
+    return peek().type == type;
 }
 
 Parser_Node *create_parser_node(NODE_TYPE type, Parser_Node *left, Parser_Node *right, char **argv)
@@ -48,8 +64,8 @@ Parser_Node *parse_command()
     char **argv = NULL;
     int len = 0;
 
-    while (peek().type == TOKEN_TYPE_STRING) {
-        Token token = eat();
+    while (check(TOKEN_TYPE_STRING)) {
+        Token token = advance();
         argv = realloc(argv, sizeof(char *) * (++len + 1));
         argv[len - 1] = strndup(token.lexeme.ptr, token.lexeme.len);
         argv[len] = NULL;
@@ -67,14 +83,13 @@ Parser_Node *parse_ampersand()
     Parser_Node *command = parse_command();
 
     if (command == NULL) {
-        if (peek().type == TOKEN_TYPE_AMPERSAND) {
+        if (check(TOKEN_TYPE_AMPERSAND)) {
             fprintf(stderr, "Expected command before '&'\n");
         }
         return NULL;
     }
 
-    if (peek().type == TOKEN_TYPE_AMPERSAND) {
-        eat();
+    if (match(TOKEN_TYPE_AMPERSAND)) {
         command->type = NODE_TYPE_AMPERSAND;
     }
 
@@ -86,19 +101,18 @@ Parser_Node *parse_pipe()
     Parser_Node *ast = parse_ampersand();
 
     if (ast == NULL) {
-        if (peek().type == TOKEN_TYPE_PIPE) {
+        if (check(TOKEN_TYPE_PIPE)) {
             fprintf(stderr, "Expected command before '|'\n");
         }
         return NULL;
     }
 
-    if (peek().type == TOKEN_TYPE_PIPE && ast->type == NODE_TYPE_AMPERSAND) {
+    if (check(TOKEN_TYPE_PIPE) && ast->type == NODE_TYPE_AMPERSAND) {
         fprintf(stderr, "Left side of '|' must be a regular command without '&'\n");
         return NULL;
     }
 
-    while (peek().type == TOKEN_TYPE_PIPE) {
-        eat();
+    while (match(TOKEN_TYPE_PIPE)) {
         Parser_Node *right = parse_pipe();
 
         if (right == NULL) {
@@ -112,25 +126,23 @@ Parser_Node *parse_pipe()
     return ast;
 }
 
-
 Parser_Node *parse_and_if()
 {
     Parser_Node *ast = parse_pipe();
 
     if (ast == NULL) {
-        if (peek().type == TOKEN_TYPE_AND_IF) {
+        if (check(TOKEN_TYPE_AND_IF)) {
             fprintf(stderr, "Expected expression before '&&'\n");
         }
         return NULL;
     }
 
-    if (peek().type == TOKEN_TYPE_AND_IF && ast->type == NODE_TYPE_AMPERSAND) {
+    if (check(TOKEN_TYPE_AND_IF) && ast->type == NODE_TYPE_AMPERSAND) {
         fprintf(stderr, "Left side of '&&' must be a regular command without '&'\n");
         return NULL;
     }
 
-    while (peek().type == TOKEN_TYPE_AND_IF) {
-        eat();
+    while (match(TOKEN_TYPE_AND_IF)) {
         Parser_Node *right = parse_and_if();
 
         if (right == NULL) {
@@ -166,8 +178,8 @@ void parser_free(Parser_Node *node)
 
         case NODE_TYPE_PIPE:
         case NODE_TYPE_AND_IF:
-            parser_free((Parser_Node *)node->left);
-            parser_free((Parser_Node *)node->right);
+            parser_free(node->left);
+            parser_free(node->right);
             break;
     }
 
