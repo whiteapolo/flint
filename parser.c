@@ -10,6 +10,7 @@
 
 static const Token_Vec *tokens;
 static int curr;
+static bool had_error;
 
 static Token advance()
 {
@@ -21,21 +22,21 @@ static Token peek()
     return tokens->ptr[curr];
 }
 
-static bool is_at_end()
-{
-    return peek().type == TOKEN_EOD;
-}
+// static bool is_at_end()
+// {
+//     return peek().type == TOKEN_EOD;
+// }
 
 static bool check(Token_Type type)
 {
     return peek().type == type;
 }
 
-static bool match(Token_Type type)
-{
-    if (is_at_end()) return false;
-    return peek().type == type;
-}
+// static bool match(Token_Type type)
+// {
+//     if (is_at_end()) return false;
+//     return peek().type == type;
+// }
 
 static bool check_node_operator(Ast_Node *node, Token_Type expected)
 {
@@ -199,8 +200,15 @@ Ast_Node *parse(const Token_Vec *t)
 {
     tokens = t;
     curr = 0;
+    had_error = false;
 
-    return parse_expression();
+    Ast_Node *ast = parse_expression();
+
+    if (had_error) {
+        return NULL;
+    }
+
+    return ast;
 }
 
 void render_ast_binary(Ast_Node_Binary *ast, Z_String *output)

@@ -17,7 +17,7 @@
 #include <unistd.h>
 #include "builtins/alias.h"
 
-#define INIT_FILE_PATH "~/.config/flint/flint.rc"
+#define INIT_FILE_PATH "~/.config/flint/init.flint"
 
 #ifndef PATH_MAX
 #  define PATH_MAX 4096

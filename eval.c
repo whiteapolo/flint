@@ -53,9 +53,9 @@ int evaluate_command(Ast_Node_Command *node)
     int status = 0;
     int pid = safe_fork();
 
-    if (pid == 0) { // child
+    if (pid == 0) {
         safe_execvp(argv[0], argv);
-    } else { // parent
+    } else {
 		waitpid(pid, &status, 0);
     }
 
@@ -64,7 +64,7 @@ int evaluate_command(Ast_Node_Command *node)
 
 int evaluate_command_in_background(Ast_Node_Command *node)
 {
-    if (safe_fork() == 0) { // child
+    if (safe_fork() == 0) {
         int status = evaluate_command(node);
 
         if (status != 0) {
@@ -87,78 +87,36 @@ void close_pipe(int fd[2])
 
 int evaluate_pipe(Ast_Node_Binary *node)
 {
-    typedef struct {
-        Ast_Node_Command **ptr;
-        int len;
-        int capacity;
-    } Command_Vec;
+    Ast_Node_Command *command = (Ast_Node_Command *)node->left;
+    Ast_Node *right = node->right;
 
-    Command_Vec commands = {0};
+    int fd[2];
+    pipe(fd);
 
-    Ast_Node_Binary *curr_node = node;
+    int pid1 = safe_fork();
 
-    while (curr_node->type == AST_NODE_BINARY) {
-        z_da_append(&commands, (Ast_Node_Command *)curr_node->left);
-        curr_node = (Ast_Node_Binary *)curr_node->right;
+    if (pid1 == 0) {
+        dup2(fd[1], STDOUT_FILENO);
+        close_pipe(fd);
+        evaluate_command_no_fork(command);
     }
 
-    z_da_append(&commands, (Ast_Node_Command *)curr_node);
+    int pid2 = safe_fork();
 
-    // end formating array
-
-    int *pid = malloc(sizeof(int) * commands.len);
-
-    int prev[2];
-    int curr[2];
-
-    pipe(prev);
-
-    pid[0] = safe_fork();
-
-    if (pid[0] == 0) {
-        dup2(prev[1], STDOUT_FILENO);
-        close_pipe(prev);
-        evaluate_command_no_fork(commands.ptr[0]);
+    if (pid2 == 0) {
+        dup2(fd[0], STDIN_FILENO);
+        close_pipe(fd);
+        exit(evaluate_ast(right));
     }
 
-    for (int i = 1; i < commands.len - 1; i++) {
-        pipe(curr);
+    close_pipe(fd);
 
-        pid[i] = safe_fork();
+    int status1;
+    int status2;
+    waitpid(pid1, &status1, 0);
+    waitpid(pid2, &status2, 0);
 
-        if (pid[i] == 0) {
-            dup2(curr[1], STDOUT_FILENO);
-            dup2(prev[0], STDIN_FILENO);
-            close_pipe(prev);
-            close_pipe(curr);
-            evaluate_command_no_fork(commands.ptr[i]);
-        }
-
-        close_pipe(prev);
-        memcpy(prev, curr, sizeof(int) * 2);
-    }
-
-    pid[commands.len - 1] = safe_fork();
-
-    if (pid[commands.len - 1] == 0) {
-        dup2(prev[0], STDIN_FILENO);
-        close_pipe(prev);
-        evaluate_command_no_fork(commands.ptr[commands.len - 1]);
-    }
-
-    close_pipe(prev);
-
-    for (int i = 0; i < commands.len - 1; i++) {
-        waitpid(pid[i], NULL, 0);
-    }
-
-    int status;
-    waitpid(pid[commands.len - 1], &status, 0);
-
-    free(pid);
-    free(commands.ptr);
-
-    return status;
+    return status2;
 }
 
 int evaluate_and_if(Ast_Node_Binary *ast)
