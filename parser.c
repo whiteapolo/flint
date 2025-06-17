@@ -21,21 +21,21 @@ static Token peek()
     return tokens->ptr[curr];
 }
 
-// static bool is_at_end()
-// {
-//     return peek().type == TOKEN_EOD;
-// }
+static bool is_at_end()
+{
+    return peek().type == TOKEN_EOD;
+}
 
 static bool check(Token_Type type)
 {
     return peek().type == type;
 }
 
-// static bool match(Token_Type type)
-// {
-//     if (is_at_end()) return false;
-//     return peek().type == type;
-// }
+static bool match(Token_Type type)
+{
+    if (is_at_end()) return false;
+    return peek().type == type;
+}
 
 static bool check_node_operator(Ast_Node *node, Token_Type expected)
 {
@@ -144,7 +144,7 @@ Ast_Node *parse_pipe()
         return NULL;
     }
 
-    while (check(TOKEN_PIPE)) {
+    if (check(TOKEN_PIPE)) {
         Token pipe = advance();
         Ast_Node *right = parse_pipe();
 
@@ -175,7 +175,7 @@ Ast_Node *parse_and_if()
         return NULL;
     }
 
-    while (check(TOKEN_AND_IF)) {
+    if (check(TOKEN_AND_IF)) {
         Token and_if = advance();
         Ast_Node *right = parse_and_if();
 
