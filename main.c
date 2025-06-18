@@ -1,11 +1,7 @@
-#include <sys/ucontext.h>
 #define LIBZATAR_IMPLEMENTATION
 #include "libzatar.h"
 
-#include "lexer.h"
-#include "parser.h"
-#include "token.h"
-#include "eval.h"
+#include <sys/ucontext.h>
 #include <ctype.h>
 #include <linux/limits.h>
 #include <stdio.h>
@@ -15,6 +11,12 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+
+#include "lexer.h"
+#include "print_ast.h"
+#include "parser.h"
+#include "token.h"
+#include "eval.h"
 #include "builtins/alias.h"
 
 #define INIT_FILE_PATH "~/.config/flint/init.flint"
@@ -44,15 +46,15 @@ void update_prompt()
     z_str_free(&compressed_pwd);
 }
 
-void execute_line(Z_String_View line)
+void interpret(Z_String_View source)
 {
-    Token_Vec tokens = lexer_get_tokens(line);
+    Token_Vec tokens = lexer_get_tokens(source);
     alias_expension(&tokens);
     // lexer_print_tokens(&tokens);
-    Ast_Node *ast = parse(&tokens);
-    // print_ast(ast);
-    evaluate_ast(ast);
-    parser_free(ast);
+    Statement_Vec statements = parse(&tokens, source);
+    // print_statements(statements);
+    evaluate_statements(&statements);
+    parser_free(&statements);
     free(tokens.ptr);
 }
 
@@ -63,20 +65,9 @@ void repl()
 
     while ((line = readline(z_str_to_cstr(&prompt)))) {
         add_history(line);
-        execute_line(Z_CSTR_TO_SV(line));
+        interpret(Z_CSTR_TO_SV(line));
         update_prompt();
         free(line);
-    }
-}
-
-void run_file_content(Z_String_View file_content)
-{
-    Z_String_View delim = Z_CSTR_TO_SV("\n");
-    Z_String_View line = z_str_tok_start(file_content, delim);
-
-    while (line.len > 0) {
-        execute_line(line);
-        line = z_str_tok_next(Z_STR_TO_SV(file_content), line, delim);
     }
 }
 
@@ -85,11 +76,11 @@ void execute_file_from_raw_path(const char *pathname)
     Z_String file_content = {0};
 
     if (!z_read_whole_file(pathname, &file_content)) {
-        z_print_warning("No such file or directory: '%s'\n", pathname);
+        z_print_warning("No such file or directory: '%s'", pathname);
         return;
     }
 
-    run_file_content(Z_STR_TO_SV(file_content));
+    interpret(Z_STR_TO_SV(file_content));
     z_str_free(&file_content);
 }
 

@@ -3,6 +3,6 @@
 
 #include "parser.h"
 
-int evaluate_ast(Ast_Node *ast);
+void evaluate_statements(const Statement_Vec *statements);
 
 #endif

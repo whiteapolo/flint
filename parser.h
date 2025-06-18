@@ -6,36 +6,65 @@
 #include <stdbool.h>
 
 typedef enum {
-    AST_NODE_COMMAND,
-    AST_NODE_BINARY,
-    AST_NODE_UNARY,
-} Ast_Node_Type;
-
-typedef struct Ast_Node {
-    Ast_Node_Type type;
-} Ast_Node;
+    JOB_COMMAND,
+    JOB_BINARY,
+    JOB_UNARY,
+} Job_Type;
 
 typedef struct {
-    Ast_Node_Type type;
+    Job_Type type;
+} Job;
+
+typedef struct {
+    Job_Type type;
     char **argv;
-} Ast_Node_Command;
+} Job_Command;
 
 typedef struct {
-    Ast_Node_Type type;
+    Job_Type type;
     Token operator;
-    Ast_Node *child;
-} Ast_Node_Unary;
+    Job *child;
+} Job_Unary;
 
 typedef struct {
-    Ast_Node_Type type;
+    Job_Type type;
     Token operator;
-    Ast_Node *left;
-    Ast_Node *right;
-} Ast_Node_Binary;
+    Job *left;
+    Job *right;
+} Job_Binary;
 
-Ast_Node *parse(const Token_Vec *t);
-void parser_free(Ast_Node *node);
-void render_ast(Ast_Node *ast, Z_String *output);
-void print_ast(Ast_Node *ast);
+typedef enum {
+    // STATEMENT_FOR,
+    // STATEMENT_IF,
+    STATEMENT_JOB,
+} Statement_Type;
+
+typedef struct {
+    Statement_Type type;
+} Statement;
+
+typedef struct {
+    Statement **ptr;
+    int len;
+    int capacity;
+} Statement_Vec;
+
+typedef struct {
+    Statement_Type type;
+    Job *job;
+} Statement_Job;
+
+// typedef struct {
+//     Token token;
+//     Statement **statements;
+// } Statement_For;
+
+// typedef struct {
+//     Token token;
+//     Statement **statements;
+// } Statement_If;
+
+Statement_Vec parse(const Token_Vec *t, Z_String_View s);
+void parser_free(Statement_Vec *node);
 
 #endif

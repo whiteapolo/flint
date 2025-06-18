@@ -1,6 +1,12 @@
-command -> string+
-ampersand -> command ?&
-and_if -> command { && command }*
-pipe -> and_if { | and_if }*
+program: statement*
 
-statment -> command | ampersand | and_if | pipe
+statement: for_statement | if_statement | job
+
+for_statement: "for" WORD "in" WORD*; statement*; end
+if_statement: "if" job; statement*; end
+
+job: background_job
+background_job: and_if "&"
+and_if: pipeline { "&&" pipeline }*
+pipeline: simple_command { "|" simple_command }*
+simple_command: WORD+

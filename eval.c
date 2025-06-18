@@ -11,6 +11,8 @@
 #include "builtins/builtin.h"
 #include "parser.h"
 
+int evaluate_job(Job *job);
+
 int safe_fork()
 {
     int pid = fork();
@@ -31,9 +33,9 @@ void safe_execvp(const char *file, char *const argv[])
     exit(1);
 }
 
-void evaluate_command_no_fork(Ast_Node_Command *node)
+void evaluate_command_no_fork(Job_Command *job)
 {
-    char **argv = node->argv;
+    char **argv = job->argv;
 
     if (is_builtin(argv[0])) {
         exit(execute_builtin(argv));
@@ -42,9 +44,9 @@ void evaluate_command_no_fork(Ast_Node_Command *node)
     safe_execvp(argv[0], argv);
 }
 
-int evaluate_command(Ast_Node_Command *node)
+int evaluate_command(Job_Command *job)
 {
-    char **argv = node->argv;
+    char **argv = job->argv;
 
     if (is_builtin(argv[0])) {
         return execute_builtin(argv);
@@ -62,33 +64,16 @@ int evaluate_command(Ast_Node_Command *node)
     return status;
 }
 
-int evaluate_command_in_background(Ast_Node_Command *node)
-{
-    if (safe_fork() == 0) {
-        int status = evaluate_command(node);
-
-        if (status != 0) {
-            fprintf(stderr, "exit with status %d\n", status);
-        } else {
-            printf("done\n");
-        }
-
-        exit(status);
-    }
-
-    return 0;
-}
-
 void close_pipe(int fd[2])
 {
     close(fd[0]);
     close(fd[1]);
 }
 
-int evaluate_pipe(Ast_Node_Binary *node)
+int evaluate_pipe(Job_Binary *job)
 {
-    Ast_Node_Command *command = (Ast_Node_Command *)node->left;
-    Ast_Node *right = node->right;
+    Job_Command *command = (Job_Command *)job->left;
+    Job *right = job->right;
 
     int fd[2];
     pipe(fd);
@@ -106,7 +91,7 @@ int evaluate_pipe(Ast_Node_Binary *node)
     if (pid2 == 0) {
         dup2(fd[0], STDIN_FILENO);
         close_pipe(fd);
-        exit(evaluate_ast(right));
+        exit(evaluate_job(right));
     }
 
     close_pipe(fd);
@@ -119,62 +104,86 @@ int evaluate_pipe(Ast_Node_Binary *node)
     return status2;
 }
 
-int evaluate_and_if(Ast_Node_Binary *ast)
+int evaluate_and_if(Job_Binary *job)
 {
-    int status = evaluate_ast(ast->left);
+    int status = evaluate_job(job->left);
 
     if (status == 0) {
-        return evaluate_ast(ast->right);
+        return evaluate_job(job->right);
     }
 
     return status;
 }
 
-int evaluate_ampersand(Ast_Node_Unary *ast)
+int evaluate_ampersand(Job_Unary *job)
 {
-    return evaluate_command_in_background((Ast_Node_Command *)ast->child);
-}
+    if (safe_fork() == 0) {
+        int status = evaluate_job(job->child);
 
-int evaluate_unary(Ast_Node_Unary *ast)
-{
-    switch (ast->operator.type) {
-        case TOKEN_AMPERSAND:
-            return evaluate_ampersand(ast);
-        default:
-            fprintf(stderr, "Unknown operator\n");
-            return 0; // unreachable
-    }
-}
+        if (status != 0) {
+            fprintf(stderr, "exit with status %d\n", status);
+        } else {
+            printf("done\n");
+        }
 
-int evaluate_binary(Ast_Node_Binary *ast)
-{
-    switch (ast->operator.type) {
-        case TOKEN_AND_IF:
-            return evaluate_and_if(ast);
-        case TOKEN_PIPE:
-            return evaluate_pipe(ast);
-        default:
-            fprintf(stderr, "Unknown operator\n");
-            return 0; // unreachable
-    }
-}
-
-int evaluate_ast(Ast_Node *ast)
-{
-    if (ast == NULL) {
-        return 0;
-    }
-
-    switch (ast->type) {
-        case AST_NODE_COMMAND:
-            return evaluate_command((Ast_Node_Command *)ast);
-
-        case AST_NODE_UNARY:
-            return evaluate_unary((Ast_Node_Unary *)ast);
-
-        case AST_NODE_BINARY:
-            return evaluate_binary((Ast_Node_Binary *)ast);
+        exit(status);
     }
 
     return 0;
+}
+
+int evaluate_unary(Job_Unary *job)
+{
+    switch (job->operator.type) {
+        case TOKEN_AMPERSAND:
+            return evaluate_ampersand(job);
+        default:
+            fprintf(stderr, "Unknown operator\n");
+            return 0; // unreachable
+    }
+}
+
+int evaluate_binary(Job_Binary *job)
+{
+    switch (job->operator.type) {
+        case TOKEN_AND_IF:
+            return evaluate_and_if(job);
+        case TOKEN_PIPE:
+            return evaluate_pipe(job);
+        default:
+            fprintf(stderr, "Unknown operator\n");
+            return 0; // unreachable
+    }
+}
+
+int evaluate_job(Job *job)
+{
+    if (job == NULL) {
+        return 0;
+    }
+
+    switch (job->type) {
+        case JOB_COMMAND:
+            return evaluate_command((Job_Command *)job);
+
+        case JOB_UNARY:
+            return evaluate_unary((Job_Unary *)job);
+
+        case JOB_BINARY:
+            return evaluate_binary((Job_Binary *)job);
+    }
+
+    return 0;
+}
+
+int evaluate_statement(Statement *statement)
+{
+    return evaluate_job(((Statement_Job *)statement)->job);
+}
+
+void evaluate_statements(const Statement_Vec *statements)
+{
+    for (int i = 0; i < statements->len; i++) {
+        evaluate_statement(statements->ptr[i]);
+    }
 }

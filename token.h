@@ -9,12 +9,21 @@ typedef enum {
     TOKEN_AMPERSAND,
     TOKEN_STRING,
     TOKEN_ERROR,
+    TOKEN_STATEMENT_END,
     TOKEN_EOD,
+
+    // keywords
+    TOKEN_IF,
+    TOKEN_FOR,
+    TOKEN_IN,
+    TOKEN_FUN,
+    TOKEN_END,
 } Token_Type;
 
 typedef struct {
     Token_Type type;
     Z_String_View lexeme;
+    int line;
 } Token;
 
 typedef struct {

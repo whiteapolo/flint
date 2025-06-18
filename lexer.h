@@ -8,6 +8,7 @@ typedef struct {
     const char *end;
     const char *start;
     const char *curr;
+    int line;
 } Lexer;
 
 Token_Vec lexer_get_tokens(Z_String_View source);
