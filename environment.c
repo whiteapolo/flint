@@ -49,5 +49,5 @@ Z_String_View environment_get(const Environment *environment, Z_String_View name
     const char *value = environment_get_cstr(environment, _name);
     free(_name);
 
-    return value;
+    return Z_CSTR_TO_SV(value);
 }
