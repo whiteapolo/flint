@@ -37,7 +37,7 @@ void add_alias(Z_String_View key, Z_String_View value)
 int builtin_alias(int argc, char **argv)
 {
     if (argc != 3) {
-        fprintf(stderr, "alias: need 2 arguments\n");
+        fprintf(stderr, "Usage: alias <key> <value>\n");
         return 1;
     }
 

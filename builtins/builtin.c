@@ -7,6 +7,7 @@
 #include <stdio.h>
 #include <unistd.h>
 #include "alias.h"
+#include "export.h"
 
 int safe_fork();
 
@@ -21,6 +22,7 @@ static Builtin builtins[] = {
     { .name = "cd", .function = builtin_cd },
     { .name = "exit", .function = builtin_exit },
     { .name = "alias", .function = builtin_alias },
+    { .name = "export", .function = builtin_export },
 };
 
 function_t find_function(const char *name)
