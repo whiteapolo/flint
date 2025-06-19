@@ -25,11 +25,11 @@ void render_job_unary(Job_Unary *job, Z_String *output)
 
 void render_job_command(Job_Command *job, Z_String *output)
 {
-    char **curr = job->argv;
-    z_str_append_format(output, "(%s", *(curr++));
+    z_str_append_format(output, "(");
 
-    while (*curr) {
-        z_str_append_format(output, " %s", *(curr++));
+    for (int i = 1; i < job->argv.len; i++) {
+        Token token = job->argv.ptr[i];
+        z_str_append_format(output, " %.*s", token.lexeme.len, token.lexeme.ptr);
     }
 
     z_str_append_format(output, ")");

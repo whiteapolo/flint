@@ -83,7 +83,7 @@ Job *create_unary(Token operator, Job *child)
     return (Job *)node;
 }
 
-Job *create_command(char **argv)
+Job *create_command(Argv argv)
 {
     Job_Command *node = malloc(sizeof(Job_Command));
     node->type = JOB_COMMAND;
@@ -148,18 +148,11 @@ static void error(Token token, const char *msg)
 
 Job *parse_simple_command()
 {
-    typedef struct {
-        char **ptr;
-        int len;
-        int capacity;
-    } Argv;
-
     Argv argv = {0};
 
-    while (check(TOKEN_STRING)) {
+    while (check(TOKEN_WORD) || check(TOKEN_DQUOTED_STRING) || check(TOKEN_SQUOTED_STRING)) {
         Token token = advance();
-        z_da_append(&argv, strndup(token.lexeme.ptr, token.lexeme.len));
-        z_da_null_terminate(&argv);
+        z_da_append(&argv, token);
     }
 
     if (argv.len == 0) {
@@ -167,7 +160,7 @@ Job *parse_simple_command()
         return NULL;
     }
 
-    return create_command(argv.ptr);
+    return create_command(argv);
 }
 
 Job *parse_pipeline()
@@ -260,7 +253,7 @@ void free_job(Job *job)
 
     switch (job->type) {
         case JOB_COMMAND:
-            free_string_array(((Job_Command *)job)->argv);
+            free(((Job_Command *)job)->argv.ptr);
             break;
 
         case JOB_UNARY:

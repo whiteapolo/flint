@@ -50,11 +50,11 @@ void interpret(Z_String_View source)
 {
     Token_Vec tokens = lexer_get_tokens(source);
     alias_expension(&tokens);
-    // lexer_print_tokens(&tokens);
-    Statement_Vec statements = parse(&tokens, source);
+    lexer_print_tokens(&tokens);
+    // Statement_Vec statements = parse(&tokens, source);
     // print_statements(statements);
-    evaluate_statements(&statements);
-    parser_free(&statements);
+    // evaluate_statements(&statements);
+    // parser_free(&statements);
     free(tokens.ptr);
 }
 

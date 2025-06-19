@@ -5,6 +5,12 @@
 #include "token.h"
 #include <stdbool.h>
 
+typedef struct {
+    Token *ptr;
+    int len;
+    int capacity;
+} Argv;
+
 typedef enum {
     JOB_COMMAND,
     JOB_BINARY,
@@ -17,7 +23,7 @@ typedef struct {
 
 typedef struct {
     Job_Type type;
-    char **argv;
+    Argv argv;
 } Job_Command;
 
 typedef struct {

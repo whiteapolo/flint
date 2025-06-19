@@ -33,9 +33,38 @@ void safe_execvp(const char *file, char *const argv[])
     exit(1);
 }
 
+char **expand_argv(Argv argv)
+{
+    typedef struct {
+        char **ptr;
+        int len;
+        int capacity;
+    } String_Builder;
+
+    String_Builder expanded = {0};
+
+    for (int i = 0; i < argv.len; i++) {
+        Token arg = argv.ptr[i];
+
+        switch (arg.type) {
+            case TOKEN_WORD:
+
+            case TOKEN_DQUOTED_STRING:
+
+            case TOKEN_SQUOTED_STRING:
+                z_da_append(&expanded, strndup(arg.lexeme.ptr, arg.lexeme.len));
+                break;
+        }
+    }
+
+    z_da_null_terminate(&expanded);
+
+    return expanded.ptr;
+}
+
 void evaluate_command_no_fork(Job_Command *job)
 {
-    char **argv = job->argv;
+    char **argv = expand_argv(job->argv);
 
     if (is_builtin(argv[0])) {
         exit(execute_builtin(argv));
@@ -46,7 +75,7 @@ void evaluate_command_no_fork(Job_Command *job)
 
 int evaluate_command(Job_Command *job)
 {
-    char **argv = job->argv;
+    char **argv = expand_argv(job->argv);
 
     if (is_builtin(argv[0])) {
         return execute_builtin(argv);

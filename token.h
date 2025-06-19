@@ -7,10 +7,13 @@ typedef enum {
     TOKEN_PIPE,
     TOKEN_AND_IF,
     TOKEN_AMPERSAND,
-    TOKEN_STRING,
     TOKEN_ERROR,
     TOKEN_STATEMENT_END,
     TOKEN_EOD,
+
+    TOKEN_WORD,
+    TOKEN_DQUOTED_STRING,
+    TOKEN_SQUOTED_STRING,
 
     // keywords
     TOKEN_IF,

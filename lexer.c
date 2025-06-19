@@ -67,6 +67,11 @@ static char peek()
     return *curr;
 }
 
+static char previous()
+{
+    return curr[-1];
+}
+
 static bool match(char expected)
 {
     if (is_at_end()) {
@@ -86,41 +91,76 @@ static bool is_argument(char c)
     return !strchr(" &|;()\n", c);
 }
 
-Token string()
+void advance_utill(char c)
 {
-    // TODO: add support for " "
+    while (!is_at_end() && peek() != c) {
 
-    start = curr;
+        if (peek() == '\n') {
+            line++;
+        }
 
-    while (!is_at_end() && peek() != '\'') {
         advance();
     }
+}
+
+Token double_quoted_string()
+{
+    start = curr;
+
+    advance_utill('"');
 
     if (is_at_end()) {
-        return create_error_token("unexpected EOF while looking for matching '''");
+        return create_error_token("unexpected EOF while looking for matching '\"'");
     }
 
-    Token token = create_token(TOKEN_STRING);
+    Token token = create_token(TOKEN_DQUOTED_STRING);
     advance();
 
     return token;
 }
 
+Token single_quoted_string()
+{
+    start = curr;
+
+    advance_utill('\'');
+
+    if (is_at_end()) {
+        return create_error_token("unexpected EOF while looking for matching '''");
+    }
+
+    Token token = create_token(TOKEN_SQUOTED_STRING);
+    advance();
+
+    return token;
+}
+
+void advance_command_substitution()
+{
+    while (!is_at_end() && advance() != ')') { }
+}
+
 Token argument()
 {
-    while (!is_at_end() && is_argument(peek())) {
-        advance();
+    while (!is_at_end()) {
+        if (previous() == '$' && match('(')) {
+            advance_command_substitution();
+        } else if (is_argument(peek())) {
+            advance();
+        } else {
+            break;
+        }
     }
 
     Z_String_View arg = Z_SV(start, curr - start);
 
     for (int i = 0; i < (int)(sizeof(keywords) / sizeof(keywords[0])); i++) {
-        if (z_str_compare(arg, Z_CSTR_TO_SV(keywords[i].lexeme)) == 0) {
+        if (!z_str_compare(arg, Z_CSTR_TO_SV(keywords[i].lexeme))) {
             return create_token(keywords[i].type);
         }
     }
 
-    return create_token(TOKEN_STRING);
+    return create_token(TOKEN_WORD);
 }
 
 bool is_space(char c)
@@ -160,7 +200,10 @@ Token lexer_next()
             return create_token(match('&') ? TOKEN_AND_IF : TOKEN_AMPERSAND);
 
         case '\'':
-            return string();
+            return single_quoted_string();
+
+        case '"':
+            return double_quoted_string();
 
         case '#':
             skip_comment();
@@ -200,7 +243,7 @@ void alias_expension(Token_Vec *tokens)
     for (int i = 0; i < tokens->len; i++) {
         Token token = tokens->ptr[i];
 
-        if (token.type != TOKEN_STRING) {
+        if (token.type != TOKEN_WORD) {
             is_command_start = true;
             z_da_append(&tmp, token);
         } else if (!is_command_start) {
