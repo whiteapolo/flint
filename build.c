@@ -10,6 +10,7 @@ int main(int argc, char **argv)
     z_cmd_append(&cmd, "lexer.c", "token.c", "parser.c");
     z_cmd_append(&cmd, "eval.c");
     z_cmd_append(&cmd, "print_ast.c");
+    z_cmd_append(&cmd, "environment.c");
     z_cmd_append(&cmd, "builtins/cd.c", "builtins/builtin.c", "builtins/exit.c", "builtins/export.c");
     z_cmd_append(&cmd, "builtins/alias.c");
     z_cmd_append(&cmd, "-Wextra", "-Wall");

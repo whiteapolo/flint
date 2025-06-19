@@ -496,13 +496,6 @@ void prefix##_order_traverse(type_name *root,                                 \
     prefix##_order_traverse(root->right, action, arg);                             \
 }                                                                             \
                                                                               \
-void print_char_n_times(char c, int n)                                        \
-{                                                                             \
-    for (int i = 0; i < n; i++) {                                             \
-        putchar(c);                                                           \
-    }                                                                         \
-}                                                                             \
-                                                                              \
 void prefix##_print(type_name *root,                                          \
                     void print(K key, V value, void *arg),                    \
                     void *arg, int padding)                                   \
@@ -511,10 +504,10 @@ void prefix##_print(type_name *root,                                          \
         return;                                                               \
     }                                                                         \
                                                                               \
-    print_char_n_times(' ', padding);                                         \
+    printf("%*c", padding, ' ');                                              \
     print(root->key, root->value, arg);                                       \
-    prefix##_print(root->right, print, arg, padding + 4);                          \
-    prefix##_print(root->left, print, arg, padding + 4);                           \
+    prefix##_print(root->right, print, arg, padding + 4);                     \
+    prefix##_print(root->left, print, arg, padding + 4);                      \
 }                                                                             \
                                                                               \
 void prefix##_free(type_name *root,                                           \
