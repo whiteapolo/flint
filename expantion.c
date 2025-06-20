@@ -104,6 +104,10 @@ void expand_dqouted_string(Token token, String_Vec *output)
 
     Z_String exapnded = {0};
 
+    if (match(&scanner, '~')) {
+        z_str_append_str(&exapnded, z_get_home_path());
+    }
+
     while (!is_at_end(&scanner)) {
         if (match(&scanner, '$')) {
             if (match(&scanner, '(')) {
