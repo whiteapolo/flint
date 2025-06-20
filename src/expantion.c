@@ -3,6 +3,7 @@
 #include "environment.h"
 #include "interpreter.h"
 #include "libzatar.h"
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -84,6 +85,19 @@ void command_substitution(Scanner *scanner, Z_String *output)
     interpret_to(Z_SV(start, len), output);
 }
 
+void braced_variable(Scanner *scanner, Z_String *output)
+{
+    const char *start = scanner->curr;
+    int len = 0;
+
+    while (!is_at_end(scanner) && advance(scanner) != '}') {
+        len++;
+    }
+
+    extern Environment environment;
+    z_str_append_str(output, environment_get(&environment, Z_SV(start, len)));
+}
+
 void variable(Scanner *scanner, Z_String *output)
 {
     const char *start = scanner->curr;
@@ -112,6 +126,8 @@ void expand_dqouted_string(Token token, String_Vec *output)
         if (match(&scanner, '$')) {
             if (match(&scanner, '(')) {
                 command_substitution(&scanner, &exapnded);
+            } else if (match(&scanner, '{')) {
+                braced_variable(&scanner, &exapnded);
             } else {
                 variable(&scanner, &exapnded);
             }

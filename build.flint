@@ -1,0 +1,14 @@
+#!./flint
+
+set EXECUTABLE_NAME "exe"
+set CFLAGS "-Wextra -Wall -lreadline -g -O0"
+set SRC "$(find src -type f -name '*.c' | tr '\n' ' ')" # get all .c files
+
+set GREEN '\033[32m'
+set RESET '\033[0m'
+
+set COMMAND "cc $SRC -o $EXECUTABLE_NAME $CFLAGS"
+
+echo -e "[${GREEN}CMD${RESET}] $COMMAND"
+
+$COMMAND
