@@ -62,7 +62,7 @@ void execute_file_from_raw_path(const char *pathname)
     Z_String file_content = {0};
 
     if (!z_read_whole_file(pathname, &file_content)) {
-        z_print_warning("No such file or directory: '%s'", pathname);
+        z_print_warning("Flint: No such file or directory: '%s'", pathname);
         return;
     }
 
@@ -94,6 +94,6 @@ int main(int argc, char **argv)
     } else if (argc == 2) {
         execute_file(Z_CSTR_TO_SV(argv[1]));
     } else {
-        z_die_format("Usage: Flint <path>\n");
+        z_die_format("Flint: Usage: Flint <path>\n");
     }
 }
