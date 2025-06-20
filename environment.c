@@ -10,11 +10,12 @@ static void free_string(char *s)
     free(s);
 }
 
-Environment *environment_new(Environment *parent)
+Environment environment_new(Environment *parent)
 {
-    Environment *environment = malloc(sizeof(Environment));
-    environment->parent = parent;
-    var_map_init(&environment->values, strcmp);
+    Environment environment = {
+        .parent = parent,
+        .values = { .root = NULL, .cmp_keys = strcmp },
+    };
 
     return environment;
 }
@@ -31,12 +32,12 @@ const char *environment_get_cstr(const Environment *environment, const char *nam
 {
     if (environment == NULL) {
         char *value = getenv(name);
-        return value ? "" : value;
+        return value ? value : "";
     }
 
     char *value;
 
-    if (!var_map_find(&environment->values, name, &value)) {
+    if (var_map_find(&environment->values, name, &value)) {
         return value;
     }
 

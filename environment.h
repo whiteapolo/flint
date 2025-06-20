@@ -12,5 +12,6 @@ typedef struct Environment {
 
 Z_String_View environment_get(const Environment *environment, Z_String_View name);
 void environment_set(Environment *environment, Z_String_View name, Z_String_View value);
+Environment environment_new(Environment *parent);
 
 #endif

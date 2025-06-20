@@ -12,12 +12,8 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "lexer.h"
-#include "print_ast.h"
-#include "parser.h"
-#include "token.h"
-#include "eval.h"
-#include "builtins/alias.h"
+#include "environment.h"
+#include "interpreter.h"
 
 #define INIT_FILE_PATH "~/.config/flint/init.flint"
 
@@ -26,6 +22,8 @@
 #endif
 
 static Z_String prompt = {0};
+
+Environment environment;
 
 void update_prompt()
 {
@@ -44,18 +42,6 @@ void update_prompt()
     z_str_append_format(&prompt, " > ");
     z_str_append_format(&prompt, Z_COLOR_RESET);
     z_str_free(&compressed_pwd);
-}
-
-void interpret(Z_String_View source)
-{
-    Token_Vec tokens = lexer_get_tokens(source);
-    alias_expension(&tokens);
-    lexer_print_tokens(&tokens);
-    // Statement_Vec statements = parse(&tokens, source);
-    // print_statements(statements);
-    // evaluate_statements(&statements);
-    // parser_free(&statements);
-    free(tokens.ptr);
 }
 
 void repl()
@@ -100,6 +86,7 @@ void execute_init_file()
 
 int main(int argc, char **argv)
 {
+    environment = environment_new(NULL);
     execute_init_file();
 
     if (argc == 1) {

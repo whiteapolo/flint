@@ -8,7 +8,6 @@
 #include <stdbool.h>
 #include "libzatar.h"
 
-static const char *source;
 static const char *end;
 static const char *start;
 static const char *curr;
@@ -259,12 +258,11 @@ void alias_expension(Token_Vec *tokens)
     free(tmp.ptr);
 }
 
-Token_Vec lexer_get_tokens(Z_String_View _source)
+Token_Vec lexer_get_tokens(Z_String_View source)
 {
-    source = _source.ptr;
-    end = _source.ptr + _source.len;
-    start = source;
-    curr = source;
+    end = source.ptr + source.len;
+    start = source.ptr;
+    curr = source.ptr;
     had_error = false;
     line = 0;
 

@@ -1,3 +1,4 @@
+#include "libzatar.h"
 #include "parser.h"
 #include "print_ast.h"
 
@@ -26,6 +27,8 @@ void render_job_unary(Job_Unary *job, Z_String *output)
 void render_job_command(Job_Command *job, Z_String *output)
 {
     z_str_append_format(output, "(");
+
+    z_str_append_str(output, job->argv.ptr[0].lexeme);
 
     for (int i = 1; i < job->argv.len; i++) {
         Token token = job->argv.ptr[i];

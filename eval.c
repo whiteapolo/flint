@@ -5,11 +5,14 @@
 #include <string.h>
 #include <sys/wait.h>
 #include <unistd.h>
+
+#include "environment.h"
 #include "libzatar.h"
 #include "token.h"
 #include "eval.h"
 #include "builtins/builtin.h"
 #include "parser.h"
+#include "expantion.h"
 
 int evaluate_job(Job *job);
 
@@ -33,34 +36,6 @@ void safe_execvp(const char *file, char *const argv[])
     exit(1);
 }
 
-char **expand_argv(Argv argv)
-{
-    typedef struct {
-        char **ptr;
-        int len;
-        int capacity;
-    } String_Builder;
-
-    String_Builder expanded = {0};
-
-    for (int i = 0; i < argv.len; i++) {
-        Token arg = argv.ptr[i];
-
-        switch (arg.type) {
-            case TOKEN_WORD:
-
-            case TOKEN_DQUOTED_STRING:
-
-            case TOKEN_SQUOTED_STRING:
-                z_da_append(&expanded, strndup(arg.lexeme.ptr, arg.lexeme.len));
-                break;
-        }
-    }
-
-    z_da_null_terminate(&expanded);
-
-    return expanded.ptr;
-}
 
 void evaluate_command_no_fork(Job_Command *job)
 {
