@@ -1,6 +1,7 @@
 #include "libzatar.h"
 #include "parser.h"
 #include "print_ast.h"
+#include <stdio.h>
 
 void render_job(Job *job, Z_String *output);
 
@@ -32,7 +33,7 @@ void render_job_command(Job_Command *job, Z_String *output)
 
     for (int i = 1; i < job->argv.len; i++) {
         Token token = job->argv.ptr[i];
-        z_str_append_format(output, " %.*s", token.lexeme.len, token.lexeme.ptr);
+        z_str_append_format(output, " \"%.*s\"", token.lexeme.len, token.lexeme.ptr);
     }
 
     z_str_append_format(output, ")");
@@ -65,9 +66,31 @@ void print_job(Job *job)
     free(s.ptr);
 }
 
+void print_statement_job(Statement_Job *statement)
+{
+    print_job(statement->job);
+}
+
+void print_statement_if(Statement_If *statement)
+{
+    printf("if (");
+    print_job(statement->condition);
+    printf(")");
+    print_statements(statement->ifBranch);
+}
+
 void print_statement(Statement *statement)
 {
-    print_job(((Statement_Job*)(statement))->job);
+    switch (statement->type) {
+        case STATEMENT_JOB:
+            print_statement_job((Statement_Job *)statement);
+            break;
+
+        case STATEMENT_IF:
+            print_statement_if((Statement_If *)statement);
+            break;
+    }
+
 }
 
 void print_statements(Statement_Vec statements)

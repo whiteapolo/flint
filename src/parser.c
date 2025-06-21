@@ -9,6 +9,11 @@
 #include <string.h>
 
 void free_job(Job *job);
+void free_if_statement(Statement_If *statement);
+void free_job_statement(Statement_Job *statement);
+void free_statement(Statement *statement);
+void free_statements(Statement_Vec *statements);
+Statement *parse_statement();
 
 static const Token_Vec *tokens;
 static int curr;
@@ -39,19 +44,110 @@ static bool check(Token_Type type)
     return peek().type == type;
 }
 
-// static bool match(Token_Type type)
-// {
-//     if (had_error) {
-//         return false;
-//     }
+static bool check_keyword()
+{
+    return check(TOKEN_IF)
+            || check(TOKEN_FOR)
+            || check(TOKEN_IN)
+            || check(TOKEN_FUN)
+            || check(TOKEN_END);
+}
 
-//     if (check(type)) {
-//         advance();
-//         return true;
-//     }
+static bool check_string()
+{
+    return check(TOKEN_WORD)
+            || check(TOKEN_DQUOTED_STRING)
+            || check(TOKEN_SQUOTED_STRING)
+            || check_keyword();
+}
 
-//     return false;
-// }
+static bool match(Token_Type type)
+{
+    if (had_error) {
+        return false;
+    }
+
+    if (check(type)) {
+        advance();
+        return true;
+    }
+
+    return false;
+}
+
+Z_String_View get_token_line(Token token)
+{
+    const char *start = token.lexeme.ptr - 1;
+    const char *end = token.lexeme.ptr;
+
+    while (*start != '\n' && start > source.ptr) {
+        start--;
+    }
+
+    if (*start == '\n') {
+        start++;
+    }
+
+    while (end < source.ptr + source.len && *end != '\n') {
+        end++;
+    }
+
+    return Z_SV(start, end - start);
+}
+
+void print_str_without_tabs(Z_String_View s)
+{
+    for (int i = 0; i < s.len; i++) {
+        fprintf(stderr, "%c", s.ptr[i] == '\t' ? ' ' : s.ptr[i]);
+    }
+}
+
+static void error(Token token, const char *msg)
+{
+    if (token.type == TOKEN_EOD || token.type == TOKEN_STATEMENT_END) {
+        fprintf(stderr, "Error at end: %s\n", msg);
+    } else {
+        fprintf(stderr, "Error at '%.*s': %s\n", token.lexeme.len, token.lexeme.ptr, msg);
+    }
+
+    Z_String_View line = get_token_line(token);
+
+    fprintf(stderr, "%5d | ", token.line);
+    print_str_without_tabs(line);
+    fprintf(stderr, "\n      | %*s^\n", (int)(token.lexeme.ptr - line.ptr), "");
+    had_error = true;
+}
+
+Token consume(Token_Type type, const char *msg)
+{
+    if (check(type)) {
+        return advance();
+    }
+
+    error(peek(), msg);
+    return peek();
+}
+
+void syncronize()
+{
+    match(TOKEN_STATEMENT_END);
+    while (!is_at_end() && advance().type != TOKEN_STATEMENT_END) {}
+}
+
+void skip_empty_statements()
+{
+    while (!is_at_end() && match(TOKEN_STATEMENT_END)) { }
+}
+
+Statement *create_statement_if(Job *condition, Statement_Vec ifBranch)
+{
+    Statement_If *node = malloc(sizeof(Statement_If));
+    node->type = STATEMENT_IF;
+    node->condition = condition;
+    node->ifBranch = ifBranch;
+
+    return (Statement *)node;
+}
 
 Statement *create_statement_job(Job *job)
 {
@@ -103,54 +199,11 @@ void free_string_array(char **s)
     free(s);
 }
 
-Z_String_View get_token_line(Token token)
-{
-    const char *start = token.lexeme.ptr - 1;
-    const char *end = token.lexeme.ptr;
-
-    while (*start != '\n' && start > source.ptr) {
-        start--;
-    }
-
-    if (*start == '\n') {
-        start++;
-    }
-
-    while (end < source.ptr + source.len && *end != '\n') {
-        end++;
-    }
-
-    return Z_SV(start, end - start);
-}
-
-void print_str_without_tabs(Z_String_View s)
-{
-    for (int i = 0; i < s.len; i++) {
-        fprintf(stderr, "%c", s.ptr[i] == '\t' ? ' ' : s.ptr[i]);
-    }
-}
-
-static void error(Token token, const char *msg)
-{
-    if (token.type == TOKEN_EOD || token.type == TOKEN_STATEMENT_END) {
-        fprintf(stderr, "Error at end: %s\n", msg);
-    } else {
-        fprintf(stderr, "Error at '%.*s': %s\n", token.lexeme.len, token.lexeme.ptr, msg);
-    }
-
-    Z_String_View line = get_token_line(token);
-
-    fprintf(stderr, "%5d | ", token.line);
-    print_str_without_tabs(line);
-    fprintf(stderr, "\n      | %*s^\n", (int)(token.lexeme.ptr - line.ptr), "");
-    had_error = true;
-}
-
 Job *parse_simple_command()
 {
     Argv argv = {0};
 
-    while (check(TOKEN_WORD) || check(TOKEN_DQUOTED_STRING) || check(TOKEN_SQUOTED_STRING)) {
+    while (check_string()) {
         Token token = advance();
         z_da_append(&argv, token);
     }
@@ -206,9 +259,57 @@ Job *parse_job()
     return parse_background_job();
 }
 
-void syncronize()
+Statement *parse_job_statement()
 {
-    while (!is_at_end() && advance().type != TOKEN_STATEMENT_END) {}
+    Job *job = parse_job();
+
+    return (Statement *)create_statement_job(job);
+}
+
+Statement_Vec parse_block()
+{
+    Statement_Vec statements = {0};
+    skip_empty_statements();
+
+    while (!is_at_end() && !check(TOKEN_END)) {
+
+        Statement *statement = parse_statement();
+
+        if (statement == NULL) {
+            syncronize();
+        } else {
+            z_da_append(&statements, statement);
+        }
+
+        skip_empty_statements();
+    }
+
+    consume(TOKEN_END, "Expected 'end' after if statement");
+
+    return statements;
+}
+
+Statement *parse_if_statement()
+{
+    Job *condition = parse_job();
+
+    if (condition == NULL) {
+        return NULL;
+    }
+
+    consume(TOKEN_STATEMENT_END, "expected new line or ';' after condition");
+    Statement_Vec ifBranch = parse_block();
+
+    return create_statement_if(condition, ifBranch);
+}
+
+Statement *parse_statement()
+{
+    if (match(TOKEN_IF)) {
+        return parse_if_statement();
+    }
+
+    return parse_job_statement();
 }
 
 Statement_Vec parse(const Token_Vec *t, Z_String_View s)
@@ -219,25 +320,22 @@ Statement_Vec parse(const Token_Vec *t, Z_String_View s)
     source = s;
 
     Statement_Vec statements = {0};
+    skip_empty_statements();
 
     while (!is_at_end()) {
+        Statement *statement = parse_statement();
 
-        if (peek().type == TOKEN_STATEMENT_END) {
-            advance();
-            continue;
-        }
-
-        Job *job = parse_job();
-
-        if (had_error) {
+        if (statement == NULL) {
             syncronize();
-            free_job(job);
         } else {
-            z_da_append(&statements, create_statement_job(job));
+            z_da_append(&statements, statement);
         }
+
+        skip_empty_statements();
     }
 
     if (had_error) {
+        parser_free(&statements);
         return (Statement_Vec){0};
     }
 
@@ -269,20 +367,42 @@ void free_job(Job *job)
     free(job);
 }
 
+void free_if_statement(Statement_If *statement)
+{
+    free_statements(&statement->ifBranch);
+    free(statement);
+}
+
+void free_job_statement(Statement_Job *statement)
+{
+    Job *job = statement->job;
+    free_job(job);
+    free(statement);
+}
+
 void free_statement(Statement *statement)
 {
-    if (statement->type == STATEMENT_JOB) {
-        Job *job = ((Statement_Job *)(statement))->job;
-        free_job(job);
-        free(statement);
+    switch (statement->type) {
+        case STATEMENT_JOB:
+            free_job_statement((Statement_Job *)statement);
+            break;
+
+        case STATEMENT_IF:
+            free_if_statement((Statement_If *)statement);
+            break;
     }
 }
 
-void parser_free(Statement_Vec *statements)
+void free_statements(Statement_Vec *statements)
 {
     for (int i = 0; i < statements->len; i++) {
         free_statement(statements->ptr[i]);
     }
 
     free(statements->ptr);
+}
+
+void parser_free(Statement_Vec *statements)
+{
+    free_statements(statements);
 }

@@ -56,14 +56,18 @@ static bool is_at_end()
     return curr >= end;
 }
 
-static char advance()
-{
-    return *(curr++);
-}
-
 static char peek()
 {
     return *curr;
+}
+
+static char advance()
+{
+    if (peek() == '\n') {
+        line++;
+    }
+
+    return *(curr++);
 }
 
 static char previous()
@@ -212,7 +216,6 @@ Token lexer_next()
             return create_token(TOKEN_STATEMENT_END);
 
         case '\n':
-            line++;
             return create_token(TOKEN_STATEMENT_END);
 
         default:
@@ -269,12 +272,13 @@ Token_Vec lexer_get_tokens(Z_String_View source)
     Token_Vec tokens = {0};
     Token token = lexer_next();
 
-    while (token.type != TOKEN_EOD) {
+    while (!is_at_end()) {
         z_da_append(&tokens, token);
         token = lexer_next();
     }
 
     z_da_append(&tokens, token);
+    z_da_append(&tokens, lexer_next());
 
     return tokens;
 }

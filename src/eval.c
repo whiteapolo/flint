@@ -41,6 +41,10 @@ void evaluate_command_no_fork(Job_Command *job)
 {
     char **argv = expand_argv(job->argv);
 
+    if (argv[0] == NULL) {
+        return;
+    }
+
     if (is_builtin(argv[0])) {
         exit(execute_builtin(argv));
     }
@@ -51,6 +55,10 @@ void evaluate_command_no_fork(Job_Command *job)
 int evaluate_command(Job_Command *job)
 {
     char **argv = expand_argv(job->argv);
+
+    if (argv[0] == NULL) {
+        return 0;
+    }
 
     if (is_builtin(argv[0])) {
         return execute_builtin(argv);
@@ -180,9 +188,26 @@ int evaluate_job(Job *job)
     return 0;
 }
 
+void evaluate_if(Statement_If *statement)
+{
+    if (!evaluate_job(statement->condition)) {
+        evaluate_statements(&statement->ifBranch);
+    }
+}
+
 int evaluate_statement(Statement *statement)
 {
-    return evaluate_job(((Statement_Job *)statement)->job);
+    switch (statement->type) {
+        case STATEMENT_JOB:
+            return evaluate_job(((Statement_Job *)statement)->job);
+
+        case STATEMENT_IF:
+            evaluate_if(((Statement_If *)statement));
+            return 0;
+
+        default:
+            return 0;
+    }
 }
 
 void evaluate_statements(const Statement_Vec *statements)

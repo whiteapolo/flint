@@ -173,10 +173,8 @@ char **expand_argv(Argv argv)
                 break;
 
             case TOKEN_SQUOTED_STRING:
-                z_da_append(&expanded, strndup(arg.lexeme.ptr, arg.lexeme.len));
-                break;
-
             default:
+                z_da_append(&expanded, strndup(arg.lexeme.ptr, arg.lexeme.len));
                 break;
         }
     }
