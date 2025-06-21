@@ -6,12 +6,13 @@ int main(int argc, char **argv)
     z_rebuild_yourself(__FILE__, argv);
 
     Z_Cmd cmd = {0};
-    z_cmd_append(&cmd, "cc", "src/main.c", "-o", "flint");
+    z_cmd_append(&cmd, "cc", "src/main.c", "-o", "exe");
     z_cmd_append(&cmd, "src/lexer.c", "src/token.c", "src/parser.c");
     z_cmd_append(&cmd, "src/eval.c", "src/print_ast.c", "src/environment.c");
     z_cmd_append(&cmd, "src/expantion.c", "src/interpreter.c");
     z_cmd_append(&cmd, "src/builtins/cd.c", "src/builtins/builtin.c", "src/builtins/exit.c");
-    z_cmd_append(&cmd, "src/builtins/alias.c", "src/builtins/set.c", "src/builtins/export.c");
+    z_cmd_append(&cmd, "src/builtins/alias.c", "src/builtins/mut.c", "src/builtins/export.c");
+    z_cmd_append(&cmd, "src/builtins/let.c");
     z_cmd_append(&cmd, "-Wextra", "-Wall");
     z_cmd_append(&cmd, "-lreadline");
     z_cmd_append(&cmd, "-g");

@@ -87,7 +87,7 @@ static bool match(char expected)
 
 static bool is_argument(char c)
 {
-    return !strchr(" &|;()\n", c);
+    return !strchr(" &|;()\n\"'", c);
 }
 
 void advance_utill(char c)

@@ -1,5 +1,6 @@
 #include "environment.h"
 #include "libzatar.h"
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -20,12 +21,25 @@ Environment environment_new(Environment *parent)
     return environment;
 }
 
-void environment_set(Environment *environment, Z_String_View name, Z_String_View value)
+int environment_mut_variable(Environment *environment, const char *name, const char *value)
 {
-    char *_name = strndup(name.ptr, name.len);
-    char *_value = strndup(value.ptr, value.len);
+    if (environment == NULL) {
+        return 1;
+    }
 
-    var_map_put(&environment->values, _name, _value, free_string, free_string);
+    char *tmp;
+
+    if (var_map_find(&environment->values, name, &tmp)) {
+        var_map_put(&environment->values, strdup(name), strdup(value), free_string, free_string);
+        return 0;
+    }
+
+    return environment_mut_variable(environment->parent, name, value);
+}
+
+void environment_create_variable(Environment *environment, const char *name, const char *value)
+{
+    var_map_put(&environment->values, strdup(name), strdup(value), free_string, free_string);
 }
 
 const char *environment_get_cstr(const Environment *environment, const char *name)

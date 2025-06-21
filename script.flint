@@ -1,1 +1,7 @@
-find . -type f -name '*.c' -exec cat {} + | wc -l
+#find . -type f -name '*.c' -exec cat {} + | wc -l
+
+set x 'Hello world
+bye world
+forth line'
+
+echo "$x"
