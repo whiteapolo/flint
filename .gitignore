@@ -2,3 +2,4 @@ exe
 build
 flint
 POSIX-Shell.ebnf
+src/tags
