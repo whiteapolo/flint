@@ -16,13 +16,22 @@
 
 int evaluate_job(Job *job);
 
+void free_string_array(char **s)
+{
+    for (char **curr = s; *curr; curr++) {
+        free(*curr);
+    }
+
+    free(s);
+}
+
 int safe_fork()
 {
     int pid = fork();
 
     if (pid < 0) {
-        fprintf(stderr, "Fork failed\n");
-        fprintf(stderr, "Exisiting...\n");
+        fprintf(stderr, "Fork failed: %s\n", strerror(errno));
+        fprintf(stderr, "Exit...\n");
         exit(1);
     }
 
@@ -36,26 +45,15 @@ void safe_execvp(const char *file, char *const argv[])
     exit(1);
 }
 
-
-void evaluate_command_no_fork(Job_Command *job)
+void set_last_status_code(int status)
 {
-    char **argv = expand_argv(job->argv);
-
-    if (argv[0] == NULL) {
-        return;
-    }
-
-    if (is_builtin(argv[0])) {
-        exit(execute_builtin(argv));
-    }
-
-    safe_execvp(argv[0], argv);
+    char buf[16];
+    snprintf(buf, 16, "%d", status);
+    setenv("?", buf, 1);
 }
 
-int evaluate_command(Job_Command *job)
+int exec_command(char **argv)
 {
-    char **argv = expand_argv(job->argv);
-
     if (argv[0] == NULL) {
         return 0;
     }
@@ -72,6 +70,18 @@ int evaluate_command(Job_Command *job)
     } else {
 		waitpid(pid, &status, 0);
     }
+
+    set_last_status_code(status);
+
+    return status;
+}
+
+int evaluate_command(Job_Command *job)
+{
+    char **argv = expand_argv(job->argv);
+    int status = exec_command(argv);
+
+    free_string_array(argv);
 
     return status;
 }
@@ -95,7 +105,7 @@ int evaluate_pipe(Job_Binary *job)
     if (pid1 == 0) {
         dup2(fd[1], STDOUT_FILENO);
         close_pipe(fd);
-        evaluate_command_no_fork(command);
+        exit(evaluate_command(command));
     }
 
     int pid2 = safe_fork();

@@ -257,8 +257,7 @@ Job *parse_job()
 Statement *parse_job_statement()
 {
     Job *job = parse_job();
-
-    return (Statement *)create_statement_job(job);
+    return job ? create_statement_job(job) : NULL;
 }
 
 Statement_Vec parse_if_block()

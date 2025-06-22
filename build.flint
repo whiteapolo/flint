@@ -5,10 +5,11 @@ let CFLAGS "-Wextra -Wall -lreadline -g -O0"
 let SRC "$(find src -type f -name '*.c' | tr '\n' ' ')" # get all .c files
 
 let GREEN '\033[32m'
+let RED '\033[31m'
 let RESET '\033[0m'
 
 let COMMAND "cc $SRC -o $EXECUTABLE_NAME $CFLAGS"
 
 echo -e "[${GREEN}CMD${RESET}] $COMMAND"
 
-$COMMAND
+$COMMAND || echo -e "${RED}exited abnormally${RESET} with code ${RED}${?}${GREEN}"

@@ -3,6 +3,7 @@
 #include "environment.h"
 #include "interpreter.h"
 #include "libzatar.h"
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -98,12 +99,17 @@ void braced_variable(Scanner *scanner, Z_String *output)
     z_str_append_str(output, environment_get(&environment, Z_SV(start, len)));
 }
 
+bool is_variable_char(char c)
+{
+    return is_alpha(c) || c == '?';
+}
+
 void variable(Scanner *scanner, Z_String *output)
 {
     const char *start = scanner->curr;
     int len = 0;
 
-    while (!is_at_end(scanner) && is_alpha(peek(scanner))) {
+    while (!is_at_end(scanner) && is_variable_char(peek(scanner))) {
         advance(scanner);
         len++;
     }
