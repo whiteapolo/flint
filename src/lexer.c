@@ -198,7 +198,7 @@ Token lexer_next()
 
     switch (c) {
         case '|':
-            return create_token(match('|') ? TOKEN_OR : TOKEN_AND);
+            return create_token(match('|') ? TOKEN_OR : TOKEN_PIPE);
 
         case '&':
             return create_token(match('&') ? TOKEN_AND : TOKEN_AMPERSAND);
