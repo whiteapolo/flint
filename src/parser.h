@@ -69,7 +69,7 @@ typedef struct {
     Statement_Type type;
     Job *condition;
     Statement_Vec ifBranch;
-    // Statement_Vec elseBranch;
+    Statement_Vec elseBranch;
 } Statement_If;
 
 Statement_Vec parse(const Token_Vec *t, Z_String_View s);

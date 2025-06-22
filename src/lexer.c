@@ -25,6 +25,7 @@ static Keyword keywords[] = {
     { .type = TOKEN_END, .lexeme = "end" },
     { .type = TOKEN_IN, .lexeme = "in" },
     { .type = TOKEN_FUN, .lexeme = "fun" },
+    { .type = TOKEN_ELSE, .lexeme = "else" },
 };
 
 static Token create_error_token(const char *msg)

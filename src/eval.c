@@ -192,6 +192,8 @@ void evaluate_if(Statement_If *statement)
 {
     if (!evaluate_job(statement->condition)) {
         evaluate_statements(&statement->ifBranch);
+    } else {
+        evaluate_statements(&statement->elseBranch);
     }
 }
 

@@ -139,12 +139,13 @@ void skip_empty_statements()
     while (!is_at_end() && match(TOKEN_STATEMENT_END)) { }
 }
 
-Statement *create_statement_if(Job *condition, Statement_Vec ifBranch)
+Statement *create_statement_if(Job *condition, Statement_Vec ifBranch, Statement_Vec elseBranch)
 {
     Statement_If *node = malloc(sizeof(Statement_If));
     node->type = STATEMENT_IF;
     node->condition = condition;
     node->ifBranch = ifBranch;
+    node->elseBranch = elseBranch;
 
     return (Statement *)node;
 }
@@ -289,6 +290,28 @@ Statement_Vec parse_block()
     return statements;
 }
 
+Statement_Vec parse_if_block()
+{
+    Statement_Vec statements = {0};
+    skip_empty_statements();
+
+    while (!is_at_end() && !check(TOKEN_END) && !check(TOKEN_ELSE)) {
+
+        Statement *statement = parse_statement();
+
+        if (statement == NULL) {
+            syncronize();
+        } else {
+            z_da_append(&statements, statement);
+        }
+
+        skip_empty_statements();
+    }
+
+    return statements;
+}
+
+
 Statement *parse_if_statement()
 {
     Job *condition = parse_job();
@@ -298,9 +321,20 @@ Statement *parse_if_statement()
     }
 
     consume(TOKEN_STATEMENT_END, "expected new line or ';' after condition");
-    Statement_Vec ifBranch = parse_block();
+    Statement_Vec ifBranch = parse_if_block();
+    Statement_Vec elseBranch = {0};
 
-    return create_statement_if(condition, ifBranch);
+    skip_empty_statements();
+
+    if (match(TOKEN_ELSE)) {
+        elseBranch = parse_if_block();
+    }
+
+    skip_empty_statements();
+
+    consume(TOKEN_END, "Expected 'end' after if statement");
+
+    return create_statement_if(condition, ifBranch, elseBranch);
 }
 
 Statement *parse_statement()

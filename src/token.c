@@ -16,6 +16,7 @@ const char *token_type_to_string(Token_Type type)
         case TOKEN_IN:              return "IN";
         case TOKEN_FUN:             return "FUN";
         case TOKEN_END:             return "END";
+        case TOKEN_ELSE:            return "ELSE";
 
         case TOKEN_WORD:            return "TOKEN_WORD";
         case TOKEN_DQUOTED_STRING:  return "TOKEN_DQUOTED_STRING";

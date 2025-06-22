@@ -21,6 +21,7 @@ typedef enum {
     TOKEN_IN,
     TOKEN_FUN,
     TOKEN_END,
+    TOKEN_ELSE,
 } Token_Type;
 
 typedef struct {
