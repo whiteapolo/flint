@@ -22,11 +22,13 @@ static Z_String_View source;
 
 static Token advance()
 {
+    assert(curr < tokens->len);
     return tokens->ptr[curr++];
 }
 
 static Token peek()
 {
+    assert(curr < tokens->len);
     return tokens->ptr[curr];
 }
 
@@ -44,21 +46,11 @@ static bool check(Token_Type type)
     return peek().type == type;
 }
 
-static bool check_keyword()
-{
-    return check(TOKEN_IF)
-            || check(TOKEN_FOR)
-            || check(TOKEN_IN)
-            || check(TOKEN_FUN)
-            || check(TOKEN_END);
-}
-
 static bool check_string()
 {
     return check(TOKEN_WORD)
             || check(TOKEN_DQUOTED_STRING)
-            || check(TOKEN_SQUOTED_STRING)
-            || check_keyword();
+            || check(TOKEN_SQUOTED_STRING);
 }
 
 static bool match(Token_Type type)
@@ -128,7 +120,7 @@ Token consume(Token_Type type, const char *msg)
     return peek();
 }
 
-void syncronize()
+void synchronize()
 {
     match(TOKEN_STATEMENT_END);
     while (!is_at_end() && advance().type != TOKEN_STATEMENT_END) {}
@@ -189,17 +181,6 @@ Job *create_command(Argv argv)
     return (Job *)node;
 }
 
-void free_string_array(char **s)
-{
-    char **curr = s;
-
-    while (*curr) {
-        free(*(curr++));
-    }
-
-    free(s);
-}
-
 Job *parse_simple_command()
 {
     Argv argv = {0};
@@ -230,11 +211,11 @@ Job *parse_pipeline()
     return job;
 }
 
-Job *parse_and_if()
+Job *parse_and()
 {
     Job *job = parse_pipeline();
 
-    while (check(TOKEN_AND_IF)) {
+    while (check(TOKEN_AND)) {
         Token and_if = advance();
         Job *right = parse_pipeline();
         job = create_binary(job, and_if, right);
@@ -243,9 +224,22 @@ Job *parse_and_if()
     return job;
 }
 
+Job *parse_or()
+{
+    Job *job = parse_and();
+
+    while (check(TOKEN_OR)) {
+        Token or = advance();
+        Job *right = parse_and();
+        job = create_binary(job, or, right);
+    }
+
+    return job;
+}
+
 Job *parse_background_job()
 {
-    Job *job = parse_and_if();
+    Job *job = parse_or();
 
     if (check(TOKEN_AMPERSAND)) {
         Token ampersand = advance();
@@ -267,29 +261,6 @@ Statement *parse_job_statement()
     return (Statement *)create_statement_job(job);
 }
 
-Statement_Vec parse_block()
-{
-    Statement_Vec statements = {0};
-    skip_empty_statements();
-
-    while (!is_at_end() && !check(TOKEN_END)) {
-
-        Statement *statement = parse_statement();
-
-        if (statement == NULL) {
-            syncronize();
-        } else {
-            z_da_append(&statements, statement);
-        }
-
-        skip_empty_statements();
-    }
-
-    consume(TOKEN_END, "Expected 'end' after if statement");
-
-    return statements;
-}
-
 Statement_Vec parse_if_block()
 {
     Statement_Vec statements = {0};
@@ -300,7 +271,7 @@ Statement_Vec parse_if_block()
         Statement *statement = parse_statement();
 
         if (statement == NULL) {
-            syncronize();
+            synchronize();
         } else {
             z_da_append(&statements, statement);
         }
@@ -320,7 +291,7 @@ Statement *parse_if_statement()
         return NULL;
     }
 
-    consume(TOKEN_STATEMENT_END, "expected new line or ';' after condition");
+    skip_empty_statements();
     Statement_Vec ifBranch = parse_if_block();
     Statement_Vec elseBranch = {0};
 
@@ -360,7 +331,7 @@ Statement_Vec parse(const Token_Vec *t, Z_String_View s)
         Statement *statement = parse_statement();
 
         if (statement == NULL) {
-            syncronize();
+            synchronize();
         } else {
             z_da_append(&statements, statement);
         }

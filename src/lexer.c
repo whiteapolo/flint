@@ -198,10 +198,10 @@ Token lexer_next()
 
     switch (c) {
         case '|':
-            return create_token(TOKEN_PIPE);
+            return create_token(match('|') ? TOKEN_OR : TOKEN_AND);
 
         case '&':
-            return create_token(match('&') ? TOKEN_AND_IF : TOKEN_AMPERSAND);
+            return create_token(match('&') ? TOKEN_AND : TOKEN_AMPERSAND);
 
         case '\'':
             return single_quoted_string();

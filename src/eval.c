@@ -116,15 +116,16 @@ int evaluate_pipe(Job_Binary *job)
     return status2;
 }
 
-int evaluate_and_if(Job_Binary *job)
+int evaluate_and(Job_Binary *job)
 {
     int status = evaluate_job(job->left);
+    return status ? status : evaluate_job(job->right);
+}
 
-    if (status == 0) {
-        return evaluate_job(job->right);
-    }
-
-    return status;
+int evaluate_or(Job_Binary *job)
+{
+    int status = evaluate_job(job->left);
+    return status ? evaluate_job(job->right) : status;
 }
 
 int evaluate_ampersand(Job_Unary *job)
@@ -158,8 +159,10 @@ int evaluate_unary(Job_Unary *job)
 int evaluate_binary(Job_Binary *job)
 {
     switch (job->operator.type) {
-        case TOKEN_AND_IF:
-            return evaluate_and_if(job);
+        case TOKEN_AND:
+            return evaluate_and(job);
+        case TOKEN_OR:
+            return evaluate_or(job);
         case TOKEN_PIPE:
             return evaluate_pipe(job);
         default:

@@ -6,7 +6,8 @@ const char *token_type_to_string(Token_Type type)
 {
     switch (type) {
         case TOKEN_PIPE:            return "PIPE";
-        case TOKEN_AND_IF:          return "AND_IF";
+        case TOKEN_AND:             return "AND";
+        case TOKEN_OR:              return "OR";
         case TOKEN_AMPERSAND:       return "AMPERSAND";
         case TOKEN_ERROR:           return "ERROR";
         case TOKEN_EOD:             return "EOD";

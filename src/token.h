@@ -5,7 +5,8 @@
 
 typedef enum {
     TOKEN_PIPE,
-    TOKEN_AND_IF,
+    TOKEN_AND,
+    TOKEN_OR,
     TOKEN_AMPERSAND,
     TOKEN_ERROR,
     TOKEN_STATEMENT_END,
