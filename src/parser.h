@@ -40,9 +40,10 @@ typedef struct {
 } Job_Binary;
 
 typedef enum {
-    // STATEMENT_FOR,
-    STATEMENT_IF,
     STATEMENT_JOB,
+    STATEMENT_IF,
+    STATEMENT_WHILE,
+    // STATEMENT_FOR,
 } Statement_Type;
 
 typedef struct {
@@ -71,6 +72,12 @@ typedef struct {
     Statement_Vec ifBranch;
     Statement_Vec elseBranch;
 } Statement_If;
+
+typedef struct {
+    Statement_Type type;
+    Job *condition;
+    Statement_Vec body;
+} Statement_While;
 
 Statement_Vec parse(const Token_Vec *t, Z_String_View s);
 void parser_free(Statement_Vec *node);

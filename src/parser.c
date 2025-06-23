@@ -19,6 +19,7 @@ Statement *parse_statement();
 static const Token_Vec *tokens;
 static int curr;
 static bool had_error;
+static bool panic_mode;
 static Z_String_View source;
 
 static Token advance()
@@ -40,28 +41,41 @@ static bool is_at_end()
 
 static bool check(Token_Type type)
 {
-    if (had_error) {
+    if (panic_mode) {
         return false;
     }
 
     return peek().type == type;
 }
 
+static bool check_array(Token_Type types[], int len)
+{
+    for (int i = 0; i < len; i++) {
+        if (check(types[i])) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
 static bool check_keyword()
 {
-    return check(TOKEN_IF)
-            || check(TOKEN_FOR)
-            || check(TOKEN_IN)
-            || check(TOKEN_FUN)
-            || check(TOKEN_END)
-            || check(TOKEN_ELSE);
+    Token_Type keywords[] = {
+        TOKEN_FOR, TOKEN_IN, TOKEN_FUN,
+        TOKEN_END, TOKEN_ELSE, TOKEN_WHILE,
+    };
+
+    return check_array(keywords, Z_ARRAY_LEN(keywords));
 }
 
 static bool check_string()
 {
-    return check(TOKEN_WORD)
-            || check(TOKEN_DQUOTED_STRING)
-            || check(TOKEN_SQUOTED_STRING);
+    Token_Type string_types[] = {
+        TOKEN_WORD, TOKEN_DQUOTED_STRING, TOKEN_SQUOTED_STRING,
+    };
+
+    return check_array(string_types, Z_ARRAY_LEN(string_types));
 }
 
 static bool check_argument()
@@ -92,6 +106,7 @@ static void error(Token token, const char *fmt, ...)
     va_start(ap, fmt);
     syntax_error_at_token_va(source, token, fmt, ap);
     had_error = true;
+    panic_mode = true;
     va_end(ap);
 }
 
@@ -110,6 +125,7 @@ void synchronize()
 {
     match(TOKEN_STATEMENT_END);
     while (!is_at_end() && advance().type != TOKEN_STATEMENT_END) {}
+    panic_mode = false;
 }
 
 void skip_empty_statements()
@@ -124,6 +140,16 @@ Statement *create_statement_if(Job *condition, Statement_Vec ifBranch, Statement
     node->condition = condition;
     node->ifBranch = ifBranch;
     node->elseBranch = elseBranch;
+
+    return (Statement *)node;
+}
+
+Statement *create_statement_while(Job *condition, Statement_Vec body)
+{
+    Statement_While *node = malloc(sizeof(Statement_While));
+    node->type = STATEMENT_WHILE;
+    node->condition = condition;
+    node->body = body;
 
     return (Statement *)node;
 }
@@ -246,12 +272,12 @@ Statement *parse_job_statement()
     return job ? create_statement_job(job) : NULL;
 }
 
-Statement_Vec parse_if_block()
+Statement_Vec parse_block_utill(Token_Type types[], int len)
 {
     Statement_Vec statements = {0};
     skip_empty_statements();
 
-    while (!is_at_end() && !check(TOKEN_END) && !check(TOKEN_ELSE)) {
+    while (!is_at_end() && !check_array(types, len)) {
 
         Statement *statement = parse_statement();
 
@@ -267,9 +293,11 @@ Statement_Vec parse_if_block()
     return statements;
 }
 
-
 Statement *parse_if_statement()
 {
+    Token_Type if_body_end[] = { TOKEN_ELSE, TOKEN_END };
+    Token_Type else_body_end[] = { TOKEN_END };
+
     Job *condition = parse_job();
 
     if (condition == NULL) {
@@ -277,13 +305,14 @@ Statement *parse_if_statement()
     }
 
     skip_empty_statements();
-    Statement_Vec ifBranch = parse_if_block();
+
+    Statement_Vec ifBranch = parse_block_utill(if_body_end, Z_ARRAY_LEN(if_body_end));
     Statement_Vec elseBranch = {0};
 
     skip_empty_statements();
 
     if (match(TOKEN_ELSE)) {
-        elseBranch = parse_if_block();
+        elseBranch = parse_block_utill(else_body_end, Z_ARRAY_LEN(else_body_end));
     }
 
     skip_empty_statements();
@@ -307,6 +336,7 @@ Statement_Vec parse(const Token_Vec *t, Z_String_View s)
     tokens = t;
     curr = 0;
     had_error = false;
+    panic_mode = false;
     source = s;
 
     Statement_Vec statements = {0};
@@ -359,7 +389,15 @@ void free_job(Job *job)
 
 void free_if_statement(Statement_If *statement)
 {
+    free_job(statement->condition);
     free_statements(&statement->ifBranch);
+    free(statement);
+}
+
+void free_while_statement(Statement_While *statement)
+{
+    free_job(statement->condition);
+    free_statements(&statement->body);
     free(statement);
 }
 
@@ -379,6 +417,10 @@ void free_statement(Statement *statement)
 
         case STATEMENT_IF:
             free_if_statement((Statement_If *)statement);
+            break;
+
+        case STATEMENT_WHILE:
+            free_while_statement((Statement_While *)statement);
             break;
     }
 }

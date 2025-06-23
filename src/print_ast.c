@@ -79,6 +79,14 @@ void print_statement_if(Statement_If *statement)
     print_statements(statement->ifBranch);
 }
 
+void print_statement_while(Statement_While *statement)
+{
+    printf("while (");
+    print_job(statement->condition);
+    printf(")");
+    print_statements(statement->body);
+}
+
 void print_statement(Statement *statement)
 {
     switch (statement->type) {
@@ -88,6 +96,10 @@ void print_statement(Statement *statement)
 
         case STATEMENT_IF:
             print_statement_if((Statement_If *)statement);
+            break;
+
+        case STATEMENT_WHILE:
+            print_statement_while((Statement_While *)statement);
             break;
     }
 

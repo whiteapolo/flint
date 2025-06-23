@@ -28,6 +28,7 @@ static Keyword keywords[] = {
     { .type = TOKEN_IN, .lexeme = "in" },
     { .type = TOKEN_FUN, .lexeme = "fun" },
     { .type = TOKEN_ELSE, .lexeme = "else" },
+    { .type = TOKEN_WHILE, .lexeme = "while" },
 };
 
 static void error(const char *fmt, ...)

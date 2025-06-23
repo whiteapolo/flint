@@ -61,6 +61,8 @@ int z_print_warning(const char *fmt, ...);
 
 void z_die_format(const char *fmt, ...);
 
+#define Z_ARRAY_LEN(arr) (sizeof(arr) / sizeof(arr[0]))
+
 #define z_da_ensure_capacity(da, cap)                                                  \
     do {                                                                               \
         if ((da)->capacity < (cap)) {                                                  \
