@@ -47,11 +47,29 @@ static bool check(Token_Type type)
     return peek().type == type;
 }
 
+static bool check_keyword()
+{
+    return check(TOKEN_IF)
+            || check(TOKEN_FOR)
+            || check(TOKEN_IN)
+            || check(TOKEN_FUN)
+            || check(TOKEN_END)
+            || check(TOKEN_ELSE);
+}
+
 static bool check_string()
 {
     return check(TOKEN_WORD)
             || check(TOKEN_DQUOTED_STRING)
             || check(TOKEN_SQUOTED_STRING);
+}
+
+static bool check_argument()
+{
+    // argument override keywords
+    // for example:
+    // echo if
+    return check_string() || check_keyword();
 }
 
 static bool match(Token_Type type)
@@ -153,7 +171,7 @@ Job *parse_simple_command()
 {
     Argv argv = {0};
 
-    while (check_string()) {
+    while (check_argument()) {
         Token token = advance();
         z_da_append(&argv, token);
     }

@@ -41,7 +41,8 @@ int safe_fork()
 void safe_execvp(const char *file, char *const argv[])
 {
     execvp(file, argv);
-    fprintf(stderr, "'%s': %s\n", file, strerror(errno));
+    fprintf(stderr, "Exec failed: '%s': %s\n", file, strerror(errno));
+    fprintf(stderr, "Exit...\n");
     exit(1);
 }
 
@@ -161,7 +162,7 @@ int evaluate_unary(Job_Unary *job)
         case TOKEN_AMPERSAND:
             return evaluate_ampersand(job);
         default:
-            fprintf(stderr, "Unknown operator\n");
+            assert(0 && "Unknown operator\n");
             return 0; // unreachable
     }
 }
@@ -176,7 +177,7 @@ int evaluate_binary(Job_Binary *job)
         case TOKEN_PIPE:
             return evaluate_pipe(job);
         default:
-            fprintf(stderr, "Unknown operator\n");
+            assert(0 && "Unknown operator\n");
             return 0; // unreachable
     }
 }
