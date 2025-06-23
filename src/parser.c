@@ -117,6 +117,7 @@ Token consume(Token_Type type, const char *msg)
     }
 
     error(peek(), msg);
+
     return peek();
 }
 

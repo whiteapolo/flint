@@ -90,6 +90,31 @@ static bool match(char expected)
     return false;
 }
 
+static bool check_string(const char *s, int len)
+{
+    if (curr + len > end) {
+        return false;
+    }
+
+    for (int i = 0; i < len; i++) {
+        if (curr[i] != s[i]) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+static bool match_string(const char *s, int len)
+{
+    if (check_string(s, len)) {
+        curr += len;
+        return true;
+    }
+
+    return false;
+}
+
 static bool is_argument(char c)
 {
     return !strchr(" &|;()\n\"'", c);
@@ -105,6 +130,31 @@ void advance_utill(char c)
 
         advance();
     }
+}
+
+Token multi_double_quoted_string()
+{
+    match('\n');
+    start = curr;
+
+    while (!is_at_end() && !check_string("\"\"\"", 3)) {
+        advance();
+    }
+
+    if (is_at_end()) {
+        return create_error_token("unexpected EOF while looking for matching '\"\"\"'");
+    }
+
+    bool is_line_end = (previous() == '\n');
+
+    if (is_line_end) {
+        curr--;
+    }
+
+    Token token = create_token(TOKEN_DQUOTED_STRING);
+    curr += 3 + is_line_end;
+
+    return token;
 }
 
 Token double_quoted_string()
@@ -183,7 +233,9 @@ void skip_spaces()
 
 void skip_comment()
 {
-    while (!is_at_end() && advance() != '\n') { }
+    while (!is_at_end() && peek() != '\n') {
+        advance();
+    }
 }
 
 Token lexer_next()
@@ -207,7 +259,7 @@ Token lexer_next()
             return single_quoted_string();
 
         case '"':
-            return double_quoted_string();
+            return match_string("\"\"", 2) ? multi_double_quoted_string() : double_quoted_string();
 
         case '#':
             skip_comment();
@@ -280,6 +332,12 @@ Token_Vec lexer_get_tokens(Z_String_View source)
 
     z_da_append(&tokens, token);
     z_da_append(&tokens, lexer_next());
+
+    if (had_error) {
+        tokens.len = 0;
+        z_da_append(&tokens, create_token(TOKEN_EOD));
+        return tokens;
+    }
 
     return tokens;
 }
