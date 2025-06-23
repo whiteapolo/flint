@@ -16,6 +16,8 @@ typedef enum {
     TOKEN_DQUOTED_STRING,
     TOKEN_SQUOTED_STRING,
 
+    TOKEN_UNKOWN,
+
     // keywords
     TOKEN_IF,
     TOKEN_FOR,

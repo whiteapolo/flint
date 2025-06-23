@@ -13,6 +13,7 @@ int main(int argc, char **argv)
     z_cmd_append(&cmd, "src/builtins/cd.c", "src/builtins/builtin.c", "src/builtins/exit.c");
     z_cmd_append(&cmd, "src/builtins/alias.c", "src/builtins/mut.c", "src/builtins/export.c");
     z_cmd_append(&cmd, "src/builtins/let.c");
+    z_cmd_append(&cmd, "src/error.c");
     z_cmd_append(&cmd, "-Wextra", "-Wall");
     z_cmd_append(&cmd, "-lreadline");
     z_cmd_append(&cmd, "-g");

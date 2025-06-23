@@ -1,4 +1,5 @@
 #include "parser.h"
+#include "error.h"
 #include "lexer.h"
 #include "libzatar.h"
 #include "token.h"
@@ -67,47 +68,13 @@ static bool match(Token_Type type)
     return false;
 }
 
-Z_String_View get_token_line(Token token)
+static void error(Token token, const char *fmt, ...)
 {
-    const char *start = token.lexeme.ptr - 1;
-    const char *end = token.lexeme.ptr;
-
-    while (*start != '\n' && start > source.ptr) {
-        start--;
-    }
-
-    if (*start == '\n') {
-        start++;
-    }
-
-    while (end < source.ptr + source.len && *end != '\n') {
-        end++;
-    }
-
-    return Z_SV(start, end - start);
-}
-
-void print_str_without_tabs(Z_String_View s)
-{
-    for (int i = 0; i < s.len; i++) {
-        fprintf(stderr, "%c", s.ptr[i] == '\t' ? ' ' : s.ptr[i]);
-    }
-}
-
-static void error(Token token, const char *msg)
-{
-    if (token.type == TOKEN_EOD || token.type == TOKEN_STATEMENT_END) {
-        fprintf(stderr, "Error at end: %s\n", msg);
-    } else {
-        fprintf(stderr, "Error at '%.*s': %s\n", token.lexeme.len, token.lexeme.ptr, msg);
-    }
-
-    Z_String_View line = get_token_line(token);
-
-    fprintf(stderr, "%5d | ", token.line);
-    print_str_without_tabs(line);
-    fprintf(stderr, "\n      | %*s^\n", (int)(token.lexeme.ptr - line.ptr), "");
+    va_list ap;
+    va_start(ap, fmt);
+    syntax_error_at_token_va(source, token, fmt, ap);
     had_error = true;
+    va_end(ap);
 }
 
 Token consume(Token_Type type, const char *msg)

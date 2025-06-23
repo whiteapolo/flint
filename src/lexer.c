@@ -1,7 +1,9 @@
 #include "lexer.h"
+#include "error.h"
 #include "token.h"
 #include "builtins/alias.h"
 #include <ctype.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -28,17 +30,13 @@ static Keyword keywords[] = {
     { .type = TOKEN_ELSE, .lexeme = "else" },
 };
 
-static Token create_error_token(const char *msg)
+static void error(const char *fmt, ...)
 {
-    fprintf(stderr, "%s\n", msg);
+    va_list ap;
+    va_start(ap, fmt);
+    syntax_error_va(fmt, ap);
     had_error = true;
-
-    Token token = {
-        .lexeme = Z_CSTR_TO_SV(msg),
-        .type = TOKEN_ERROR,
-    };
-
-    return token;
+    va_end(ap);
 }
 
 static Token create_token(Token_Type type)
@@ -62,9 +60,14 @@ static char peek()
     return *curr;
 }
 
+static bool check(char c)
+{
+    return peek() == c;
+}
+
 static char advance()
 {
-    if (peek() == '\n') {
+    if (check('\n')) {
         line++;
     }
 
@@ -82,7 +85,7 @@ static bool match(char expected)
         return false;
     }
 
-    if (peek() == expected) {
+    if (check(expected)) {
         advance();
         return true;
     }
@@ -90,8 +93,10 @@ static bool match(char expected)
     return false;
 }
 
-static bool check_string(const char *s, int len)
+static bool check_string(const char *s)
 {
+    int len = strlen(s);
+
     if (curr + len > end) {
         return false;
     }
@@ -105,10 +110,10 @@ static bool check_string(const char *s, int len)
     return true;
 }
 
-static bool match_string(const char *s, int len)
+static bool match_string(const char *s)
 {
-    if (check_string(s, len)) {
-        curr += len;
+    if (check_string(s)) {
+        curr += strlen(s);
         return true;
     }
 
@@ -122,12 +127,14 @@ static bool is_argument(char c)
 
 void advance_utill(char c)
 {
-    while (!is_at_end() && peek() != c) {
+    while (!is_at_end() && !check(c)) {
+        advance();
+    }
+}
 
-        if (peek() == '\n') {
-            line++;
-        }
-
+void advance_utill_string(const char *s)
+{
+    while (!is_at_end() && !check_string(s)) {
         advance();
     }
 }
@@ -137,12 +144,11 @@ Token multi_double_quoted_string()
     match('\n');
     start = curr;
 
-    while (!is_at_end() && !check_string("\"\"\"", 3)) {
-        advance();
-    }
+    advance_utill_string("\"\"\"");
 
     if (is_at_end()) {
-        return create_error_token("unexpected EOF while looking for matching '\"\"\"'");
+        error("Unexpected end of file while looking for matching '\"\"\"'");
+        return create_token(TOKEN_UNKOWN);
     }
 
     bool is_line_end = (previous() == '\n');
@@ -164,7 +170,8 @@ Token double_quoted_string()
     advance_utill('"');
 
     if (is_at_end()) {
-        return create_error_token("unexpected EOF while looking for matching '\"'");
+        error("Unexpected end of file while looking for matching \"");
+        return create_token(TOKEN_UNKOWN);
     }
 
     Token token = create_token(TOKEN_DQUOTED_STRING);
@@ -180,7 +187,8 @@ Token single_quoted_string()
     advance_utill('\'');
 
     if (is_at_end()) {
-        return create_error_token("unexpected EOF while looking for matching '''");
+        error("Unexpected end of file while looking for matching '");
+        return create_token(TOKEN_UNKOWN);
     }
 
     Token token = create_token(TOKEN_SQUOTED_STRING);
@@ -259,7 +267,7 @@ Token lexer_next()
             return single_quoted_string();
 
         case '"':
-            return match_string("\"\"", 2) ? multi_double_quoted_string() : double_quoted_string();
+            return match_string("\"\"") ? multi_double_quoted_string() : double_quoted_string();
 
         case '#':
             skip_comment();
