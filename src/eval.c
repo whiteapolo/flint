@@ -41,8 +41,7 @@ int safe_fork()
 void safe_execvp(const char *file, char *const argv[])
 {
     execvp(file, argv);
-    fprintf(stderr, "Exec failed: '%s': %s\n", file, strerror(errno));
-    fprintf(stderr, "Exit...\n");
+    fprintf(stderr, "'%s': %s\n", file, strerror(errno));
     exit(1);
 }
 

@@ -333,13 +333,12 @@ Token_Vec lexer_get_tokens(Z_String_View source)
     Token_Vec tokens = {0};
     Token token = lexer_next();
 
-    while (!is_at_end()) {
+    while (token.type != TOKEN_EOD) {
         z_da_append(&tokens, token);
         token = lexer_next();
     }
 
     z_da_append(&tokens, token);
-    z_da_append(&tokens, lexer_next());
 
     if (had_error) {
         tokens.len = 0;

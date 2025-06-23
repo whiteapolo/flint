@@ -43,7 +43,7 @@ void interpret_to(Z_String_View source, Z_String *output)
         z_str_append_format(output, "%s", buf);
     }
 
-    if (z_str_top_char(Z_STR_TO_SV(*output)) == '\n') {
+    if (output->len > 0 && z_str_top_char(Z_STR_TO_SV(*output)) == '\n') {
         z_str_pop_char(output);
     }
 

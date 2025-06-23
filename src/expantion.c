@@ -150,7 +150,7 @@ void expand_word(Token token, String_Vec *output)
     String_Vec tmp = {0};
     expand_dqouted_string(token, &tmp);
 
-    Z_String_View delim = Z_CSTR_TO_SV(" ");
+    Z_String_View delim = Z_CSTR_TO_SV(" \n");
     Z_String_View word = z_str_tok_start(Z_CSTR_TO_SV(tmp.ptr[0]), delim);
 
     while (word.len > 0) {
