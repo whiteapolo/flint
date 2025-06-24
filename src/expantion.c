@@ -35,6 +35,11 @@ static char peek(Scanner *scanner)
     return *scanner->curr;
 }
 
+static bool check(Scanner *scanner, char c)
+{
+    return peek(scanner) == c;
+}
+
 static bool match(Scanner *scanner, char expected)
 {
     if (is_at_end(scanner)) {
@@ -43,6 +48,40 @@ static bool match(Scanner *scanner, char expected)
 
     if (peek(scanner) == expected) {
         advance(scanner);
+        return true;
+    }
+
+    return false;
+}
+
+static bool check_string(Scanner *scanner, const char *s)
+{
+    int len = strlen(s);
+
+    if (scanner->curr + len > scanner->end) {
+        return false;
+    }
+
+    for (int i = 0; i < len; i++) {
+        if (scanner->curr[i] != s[i]) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+static void advance_untill(Scanner *scanner, char c)
+{
+    while (!is_at_end(scanner) && !check(scanner, c)) {
+        advance(scanner);
+    }
+}
+
+static bool match_string(Scanner *scanner, const char *s)
+{
+    if (check_string(scanner, s)) {
+        scanner->curr += strlen(s);
         return true;
     }
 
@@ -74,16 +113,60 @@ void resolve_var(Z_String_View var, Z_String *output)
     z_str_append_str(output, environment_get(&environment, var));
 }
 
-void command_substitution(Scanner *scanner, Z_String *output)
+static void command_substitution(Scanner *scanner, Z_String *output);
+static void advance_single_quoted_string(Scanner *scanner);
+static void advance_double_quoted_string(Scanner *scanner);
+static void advance_command_substitution(Scanner *scanner);
+
+static void advance_command_substitution(Scanner *scanner)
+{
+    while (!is_at_end(scanner)) {
+        switch (advance(scanner)) {
+            case '(':
+                advance_command_substitution(scanner);
+                break;
+
+            case ')':
+                return;
+
+            case '\'':
+                advance_single_quoted_string(scanner);
+                if (is_at_end(scanner)) return;
+                advance(scanner);
+                break;
+
+            case '"': {
+                advance_double_quoted_string(scanner);
+                if (is_at_end(scanner)) return;
+                advance(scanner);
+                break;
+            }
+        }
+    }
+}
+
+static void advance_double_quoted_string(Scanner *scanner)
+{
+    while (!is_at_end(scanner) && peek(scanner) != '"') {
+        if (match_string(scanner, "$(")) {
+            advance_command_substitution(scanner);
+        } else {
+            advance(scanner);
+        }
+    }
+}
+
+static void advance_single_quoted_string(Scanner *scanner)
+{
+    advance_untill(scanner, '\'');
+}
+
+static void command_substitution(Scanner *scanner, Z_String *output)
 {
     const char *start = scanner->curr;
-    int len = 0;
+    advance_command_substitution(scanner);
 
-    while (!is_at_end(scanner) && advance(scanner) != ')') {
-        len++;
-    }
-
-    interpret_to(Z_SV(start, len), output);
+    interpret_to(Z_SV(start, scanner->curr - start - 1), output);
 }
 
 void braced_variable(Scanner *scanner, Z_String *output)

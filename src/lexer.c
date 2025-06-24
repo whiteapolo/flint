@@ -126,47 +126,65 @@ static bool is_argument(char c)
     return !strchr(" &|;()\n\"'", c);
 }
 
-void advance_utill(char c)
+void advance_untill(char c)
 {
     while (!is_at_end() && !check(c)) {
         advance();
     }
 }
 
-void advance_utill_string(const char *s)
+void advance_untill_string(const char *s)
 {
     while (!is_at_end() && !check_string(s)) {
         advance();
     }
 }
 
-void advance_command_substitution()
+static void advance_command_substitution();
+static void advance_double_quoted_string();
+static void advance_single_quoted_string();
+
+static void advance_command_substitution()
 {
-    int nesting = 1;
-
-    while (!is_at_end() && nesting) {
-        char c = advance();
-
-        switch (c) {
+    while (!is_at_end()) {
+        switch (advance()) {
             case '(':
-                nesting++;
+                advance_command_substitution();
                 break;
 
             case ')':
-                nesting--;
-                break;
+                return;
 
             case '\'':
-                if (!is_at_end()) advance();
-                advance_utill('\'');
+                advance_single_quoted_string();
+                if (is_at_end()) return;
+                advance();
                 break;
 
-            case '"':
-                advance_utill('"');
-                if (!is_at_end()) advance();
+            case '"': {
+                advance_double_quoted_string();
+                if (is_at_end()) return;
+                advance();
                 break;
+            }
         }
     }
+}
+
+static void advance_double_quoted_string()
+{
+    while (!is_at_end() && !check('"')) {
+        if (match_string("$(")) {
+            advance_command_substitution();
+        } else {
+            advance();
+        }
+    }
+}
+
+static void advance_single_quoted_string()
+{
+    advance_untill('\'');
 }
 
 Token multi_double_quoted_string()
@@ -174,7 +192,7 @@ Token multi_double_quoted_string()
     match('\n');
     start = curr;
 
-    advance_utill_string("\"\"\"");
+    advance_untill_string("\"\"\"");
 
     if (is_at_end()) {
         error("Unexpected end of file while looking for matching '\"\"\"'");
@@ -197,13 +215,7 @@ Token double_quoted_string()
 {
     start = curr;
 
-    while (!is_at_end() && !check('"')) {
-        if (match_string("$(")) {
-            advance_command_substitution();
-        } else {
-            advance();
-        }
-    }
+    advance_double_quoted_string();
 
     if (is_at_end()) {
         error("Unexpected end of file while looking for matching \"");
@@ -220,7 +232,7 @@ Token single_quoted_string()
 {
     start = curr;
 
-    advance_utill('\'');
+    advance_single_quoted_string();
 
     if (is_at_end()) {
         error("Unexpected end of file while looking for matching '");
