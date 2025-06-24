@@ -1,9 +1,27 @@
-#include "cd.h"
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+
+#ifndef PATH_MAX
+#  define PATH_MAX 4096
+#endif
+
+static int change_directory(const char *path)
+{
+    int status = chdir(path);
+
+    char pwd[PATH_MAX];
+
+    if (getcwd(pwd, PATH_MAX) == NULL) {
+        return 1;
+    }
+
+    setenv("PWD", pwd, 1);
+
+    return status;
+}
 
 static const char *get_home()
 {
@@ -18,7 +36,7 @@ static const char *get_home()
 
 int builtin_cd_home()
 {
-    int status = chdir(get_home());
+    int status = change_directory(get_home());
 
     if (status != 0) {
         fprintf(stderr, "builtin_cd: %s\n", strerror(errno));
@@ -30,7 +48,7 @@ int builtin_cd_home()
 
 int builtin_cd_path(const char *pathname)
 {
-    int status = chdir(pathname);
+    int status = change_directory(pathname);
 
     if (status != 0) {
         fprintf(stderr, "builtin_cd: %s\n", strerror(errno));

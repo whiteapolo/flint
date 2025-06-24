@@ -1,7 +1,7 @@
 #include "lexer.h"
 #include "error.h"
 #include "token.h"
-#include "builtins/alias.h"
+#include "builtins/builtin.h"
 #include <ctype.h>
 #include <stdarg.h>
 #include <stdio.h>

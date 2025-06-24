@@ -2,8 +2,20 @@
 #define BUILTIN_H
 
 #include <stdbool.h>
+#include "../libzatar.h"
 
-int execute_builtin(char **argv);
-bool is_builtin(const char *name);
+typedef int (*BuiltinFn)(int argc, char **argv);
+
+BuiltinFn get_builtin(const char *name);
+
+int builtin_cd(int argc, char **argv);
+int builtin_exit(int argc, char **argv);
+int builtin_export(int argc, char **argv);
+int builtin_let(int argc, char **argv);
+int builtin_mut(int argc, char **argv);
+
+const char *get_alias(Z_String_View key);
+void add_alias(Z_String_View key, Z_String_View value);
+int builtin_alias(int argc, char **argv);
 
 #endif

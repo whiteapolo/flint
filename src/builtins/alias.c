@@ -1,4 +1,3 @@
-#include "alias.h"
 #include "../libzatar.h"
 #include <stdio.h>
 #include <stdlib.h>

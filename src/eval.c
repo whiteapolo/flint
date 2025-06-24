@@ -16,6 +16,17 @@
 
 int evaluate_job(Job *job);
 
+int count_argc(char **argv)
+{
+    int i = 0;
+
+    while (argv[i] != NULL) {
+        i++;
+    }
+
+    return i;
+}
+
 void free_string_array(char **s)
 {
     for (char **curr = s; *curr; curr++) {
@@ -58,8 +69,10 @@ int exec_command(char **argv)
         return 0;
     }
 
-    if (is_builtin(argv[0])) {
-        return execute_builtin(argv);
+    BuiltinFn fun = get_builtin(argv[0]);
+
+    if (fun) {
+        return fun(count_argc(argv), argv);
     }
 
     int status = 0;
