@@ -3,6 +3,8 @@
 #include "environment.h"
 #include "interpreter.h"
 #include "libzatar.h"
+#include "scanner.h"
+#include <ctype.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -14,99 +16,6 @@ typedef struct {
     int capacity;
 } String_Vec;
 
-typedef struct {
-    const char *end;
-    const char *start;
-    const char *curr;
-} Scanner;
-
-static bool is_at_end(Scanner *scanner)
-{
-    return scanner->curr >= scanner->end;
-}
-
-static char advance(Scanner *scanner)
-{
-    return *(scanner->curr++);
-}
-
-static char peek(Scanner *scanner)
-{
-    return *scanner->curr;
-}
-
-static bool check(Scanner *scanner, char c)
-{
-    return peek(scanner) == c;
-}
-
-static bool match(Scanner *scanner, char expected)
-{
-    if (is_at_end(scanner)) {
-        return false;
-    }
-
-    if (peek(scanner) == expected) {
-        advance(scanner);
-        return true;
-    }
-
-    return false;
-}
-
-static bool check_string(Scanner *scanner, const char *s)
-{
-    int len = strlen(s);
-
-    if (scanner->curr + len > scanner->end) {
-        return false;
-    }
-
-    for (int i = 0; i < len; i++) {
-        if (scanner->curr[i] != s[i]) {
-            return false;
-        }
-    }
-
-    return true;
-}
-
-static void advance_untill(Scanner *scanner, char c)
-{
-    while (!is_at_end(scanner) && !check(scanner, c)) {
-        advance(scanner);
-    }
-}
-
-static bool match_string(Scanner *scanner, const char *s)
-{
-    if (check_string(scanner, s)) {
-        scanner->curr += strlen(s);
-        return true;
-    }
-
-    return false;
-}
-
-static Scanner scanner_new(Z_String_View s)
-{
-    Scanner scanner = {
-        .curr = s.ptr,
-        .start = s.ptr,
-        .end = s.ptr + s.len,
-    };
-
-    return scanner;
-}
-
-bool is_alpha(char c)
-{
-    return ('0' <= c && c <= '9')      ||
-                ('a' <= c && c <= 'z') ||
-                ('A' <= c && c <= 'Z') ||
-                (c == '_');
-}
-
 void resolve_var(Z_String_View var, Z_String *output)
 {
     extern Environment environment;
@@ -114,91 +23,96 @@ void resolve_var(Z_String_View var, Z_String *output)
 }
 
 static void command_substitution(Scanner *scanner, Z_String *output);
-static void advance_single_quoted_string(Scanner *scanner);
-static void advance_double_quoted_string(Scanner *scanner);
-static void advance_command_substitution(Scanner *scanner);
+static void scanner_advance_single_quoted_string(Scanner *scanner);
+static void scanner_advance_double_quoted_string(Scanner *scanner);
+static void scanner_advance_command_substitution(Scanner *scanner);
 
-static void advance_command_substitution(Scanner *scanner)
+static void scanner_advance_command_substitution(Scanner *scanner)
 {
-    while (!is_at_end(scanner)) {
-        switch (advance(scanner)) {
+    while (!scanner_is_at_end(scanner)) {
+        switch (scanner_advance(scanner)) {
             case '(':
-                advance_command_substitution(scanner);
+                scanner_advance_command_substitution(scanner);
                 break;
 
             case ')':
                 return;
 
             case '\'':
-                advance_single_quoted_string(scanner);
-                if (is_at_end(scanner)) return;
-                advance(scanner);
+                scanner_advance_single_quoted_string(scanner);
+                if (scanner_is_at_end(scanner)) return;
+                scanner_advance(scanner);
                 break;
 
             case '"': {
-                advance_double_quoted_string(scanner);
-                if (is_at_end(scanner)) return;
-                advance(scanner);
+                scanner_advance_double_quoted_string(scanner);
+                if (scanner_is_at_end(scanner)) return;
+                scanner_advance(scanner);
                 break;
             }
         }
     }
 }
 
-static void advance_double_quoted_string(Scanner *scanner)
+static void scanner_advance_double_quoted_string(Scanner *scanner)
 {
-    while (!is_at_end(scanner) && peek(scanner) != '"') {
-        if (match_string(scanner, "$(")) {
-            advance_command_substitution(scanner);
+    while (!scanner_is_at_end(scanner) && !scanner_check(scanner, '"')) {
+        if (scanner_match_string(scanner, "$(")) {
+            scanner_advance_command_substitution(scanner);
         } else {
-            advance(scanner);
+            scanner_advance(scanner);
         }
     }
 }
 
-static void advance_single_quoted_string(Scanner *scanner)
+static void scanner_advance_single_quoted_string(Scanner *scanner)
 {
-    advance_untill(scanner, '\'');
+    scanner_advance_untill(scanner, '\'');
 }
 
 static void command_substitution(Scanner *scanner, Z_String *output)
 {
     const char *start = scanner->curr;
-    advance_command_substitution(scanner);
+    scanner_advance_command_substitution(scanner);
 
     interpret_to(Z_SV(start, scanner->curr - start - 1), output);
 }
 
 void braced_variable(Scanner *scanner, Z_String *output)
 {
-    const char *start = scanner->curr;
-    int len = 0;
+    scanner->start = scanner->curr;
 
-    while (!is_at_end(scanner) && advance(scanner) != '}') {
-        len++;
+    while (!scanner_is_at_end(scanner) && scanner_peek(scanner) != '}') {
+        scanner_advance(scanner);
     }
 
+    if (scanner_is_at_end(scanner)) {
+        z_str_append_str(output, Z_SV(scanner->start, scanner->curr - scanner->start));
+        return;
+    }
+
+    Z_String_View variable_name = Z_SV(scanner->start, scanner->curr - scanner->start);
+
     extern Environment environment;
-    z_str_append_str(output, environment_get(&environment, Z_SV(start, len)));
+    z_str_append_str(output, environment_get(&environment, variable_name));
+    scanner_advance(scanner); // eat the '}'
 }
 
 bool is_variable_char(char c)
 {
-    return is_alpha(c) || c == '?';
+    return isdigit(c) || isalpha(c) || strchr("_?", c);
 }
 
 void variable(Scanner *scanner, Z_String *output)
 {
-    const char *start = scanner->curr;
-    int len = 0;
+    scanner->start = scanner->curr;
 
-    while (!is_at_end(scanner) && is_variable_char(peek(scanner))) {
-        advance(scanner);
-        len++;
+    while (!scanner_is_at_end(scanner) && is_variable_char(scanner_peek(scanner))) {
+        scanner_advance(scanner);
     }
 
     extern Environment environment;
-    z_str_append_str(output, environment_get(&environment, Z_SV(start, len)));
+    z_str_append_str(output, environment_get(&environment, Z_SV(scanner->start, scanner->curr - scanner->start)));
 }
 
 void expand_dqouted_string(Token token, String_Vec *output)
@@ -207,21 +121,21 @@ void expand_dqouted_string(Token token, String_Vec *output)
 
     Z_String exapnded = {0};
 
-    if (match(&scanner, '~')) {
+    if (scanner_match(&scanner, '~')) {
         z_str_append_str(&exapnded, z_get_home_path());
     }
 
-    while (!is_at_end(&scanner)) {
-        if (match(&scanner, '$')) {
-            if (match(&scanner, '(')) {
+    while (!scanner_is_at_end(&scanner)) {
+        if (scanner_match(&scanner, '$')) {
+            if (scanner_match(&scanner, '(')) {
                 command_substitution(&scanner, &exapnded);
-            } else if (match(&scanner, '{')) {
+            } else if (scanner_match(&scanner, '{')) {
                 braced_variable(&scanner, &exapnded);
             } else {
                 variable(&scanner, &exapnded);
             }
         } else {
-            z_str_append_char(&exapnded, advance(&scanner));
+            z_str_append_char(&exapnded, scanner_advance(&scanner));
         }
     }
 

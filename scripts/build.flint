@@ -2,7 +2,7 @@
 
 let EXECUTABLE_NAME "exe"
 let CFLAGS "-Wextra -Wall -lreadline -g -O0"
-let SRC "$(find src -type f -name '*.c' | tr '\n' ' ')" # get all .c files
+let SRC "$(find ./src -type f -name '*.c' | tr '\n' ' ')" # get all .c files
 
 let GREEN '\033[32m'
 let RED '\033[31m'

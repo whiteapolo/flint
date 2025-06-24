@@ -22,7 +22,6 @@ void interpret(Z_String_View source)
 
 void interpret_to(Z_String_View source, Z_String *output)
 {
-    z_str_println(source);
     int fd[2];
     pipe(fd);
 

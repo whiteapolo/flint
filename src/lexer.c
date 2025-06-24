@@ -1,5 +1,6 @@
 #include "lexer.h"
 #include "error.h"
+#include "scanner.h"
 #include "token.h"
 #include "builtins/builtin.h"
 #include <ctype.h>
@@ -10,11 +11,8 @@
 #include <stdbool.h>
 #include "libzatar.h"
 
-static const char *end;
-static const char *start;
-static const char *curr;
 static bool had_error;
-static int line;
+static Scanner scanner;
 
 typedef struct {
     Token_Type type;
@@ -40,104 +38,34 @@ static void error(const char *fmt, ...)
     va_end(ap);
 }
 
+bool is_space(char c)
+{
+    return strchr(" \t\r", c);
+}
+
+void skip_spaces()
+{
+    while (!scanner_is_at_end(&scanner) && is_space(scanner_peek(&scanner))) {
+        scanner_advance(&scanner);
+    }
+
+    scanner.start = scanner.curr;
+}
+
 static Token create_token(Token_Type type)
 {
     Token token = {
-        .lexeme = Z_SV(start, curr - start),
+        .lexeme = Z_SV(scanner.start, scanner.curr - scanner.start),
         .type = type,
-        .line = line,
+        .line = scanner.line,
     };
 
     return token;
 }
 
-static bool is_at_end()
-{
-    return curr >= end;
-}
-
-static char peek()
-{
-    return *curr;
-}
-
-static bool check(char c)
-{
-    return peek() == c;
-}
-
-static char advance()
-{
-    if (check('\n')) {
-        line++;
-    }
-
-    return *(curr++);
-}
-
-static char previous()
-{
-    return curr[-1];
-}
-
-static bool match(char expected)
-{
-    if (is_at_end()) {
-        return false;
-    }
-
-    if (check(expected)) {
-        advance();
-        return true;
-    }
-
-    return false;
-}
-
-static bool check_string(const char *s)
-{
-    int len = strlen(s);
-
-    if (curr + len > end) {
-        return false;
-    }
-
-    for (int i = 0; i < len; i++) {
-        if (curr[i] != s[i]) {
-            return false;
-        }
-    }
-
-    return true;
-}
-
-static bool match_string(const char *s)
-{
-    if (check_string(s)) {
-        curr += strlen(s);
-        return true;
-    }
-
-    return false;
-}
-
 static bool is_argument(char c)
 {
     return !strchr(" &|;()\n\"'", c);
-}
-
-void advance_untill(char c)
-{
-    while (!is_at_end() && !check(c)) {
-        advance();
-    }
-}
-
-void advance_untill_string(const char *s)
-{
-    while (!is_at_end() && !check_string(s)) {
-        advance();
-    }
 }
 
 static void advance_command_substitution();
@@ -146,8 +74,8 @@ static void advance_single_quoted_string();
 
 static void advance_command_substitution()
 {
-    while (!is_at_end()) {
-        switch (advance()) {
+    while (!scanner_is_at_end(&scanner)) {
+        switch (scanner_advance(&scanner)) {
             case '(':
                 advance_command_substitution();
                 break;
@@ -157,14 +85,14 @@ static void advance_command_substitution()
 
             case '\'':
                 advance_single_quoted_string();
-                if (is_at_end()) return;
-                advance();
+                if (scanner_is_at_end(&scanner)) return;
+                scanner_advance(&scanner);
                 break;
 
             case '"': {
-                advance_double_quoted_string();
-                if (is_at_end()) return;
-                advance();
+                advance_double_quoted_string(&scanner);
+                if (scanner_is_at_end(&scanner)) return;
+                scanner_advance(&scanner);
                 break;
             }
         }
@@ -173,91 +101,91 @@ static void advance_command_substitution()
 
 static void advance_double_quoted_string()
 {
-    while (!is_at_end() && !check('"')) {
-        if (match_string("$(")) {
+    while (!scanner_is_at_end(&scanner) && !scanner_check(&scanner, '"')) {
+        if (scanner_match_string(&scanner, "$(")) {
             advance_command_substitution();
         } else {
-            advance();
+            scanner_advance(&scanner);
         }
     }
 }
 
 static void advance_single_quoted_string()
 {
-    advance_untill('\'');
+    scanner_advance_untill(&scanner, '\'');
 }
 
 Token multi_double_quoted_string()
 {
-    match('\n');
-    start = curr;
+    scanner_match(&scanner, '\n');
+    scanner.start = scanner.curr;
 
-    advance_untill_string("\"\"\"");
+    scanner_advance_untill_string(&scanner, "\"\"\"");
 
-    if (is_at_end()) {
+    if (scanner_is_at_end(&scanner)) {
         error("Unexpected end of file while looking for matching '\"\"\"'");
         return create_token(TOKEN_UNKOWN);
     }
 
-    bool is_line_end = (previous() == '\n');
+    bool is_line_end = (scanner_previous(&scanner) == '\n');
 
     if (is_line_end) {
-        curr--;
+        scanner.curr--;
     }
 
     Token token = create_token(TOKEN_DQUOTED_STRING);
-    curr += 3 + is_line_end;
+    scanner.curr += 3 + is_line_end;
 
     return token;
 }
 
 Token double_quoted_string()
 {
-    start = curr;
+    scanner.start = scanner.curr;
 
     advance_double_quoted_string();
 
-    if (is_at_end()) {
+    if (scanner_is_at_end(&scanner)) {
         error("Unexpected end of file while looking for matching \"");
         return create_token(TOKEN_UNKOWN);
     }
 
     Token token = create_token(TOKEN_DQUOTED_STRING);
-    advance();
+    scanner_advance(&scanner);
 
     return token;
 }
 
 Token single_quoted_string()
 {
-    start = curr;
+    scanner.start = scanner.curr;
 
-    advance_single_quoted_string();
+    advance_single_quoted_string(&scanner);
 
-    if (is_at_end()) {
+    if (scanner_is_at_end(&scanner)) {
         error("Unexpected end of file while looking for matching '");
         return create_token(TOKEN_UNKOWN);
     }
 
     Token token = create_token(TOKEN_SQUOTED_STRING);
-    advance();
+    scanner_advance(&scanner);
 
     return token;
 }
 
 Token argument()
 {
-    while (!is_at_end()) {
-        if (previous() == '$' && match('(')) {
+    while (!scanner_is_at_end(&scanner)) {
+        if (scanner_previous(&scanner) == '$' && scanner_match(&scanner, '(')) {
             advance_command_substitution();
-        } else if (is_argument(peek())) {
-            advance();
+        } else if (is_argument(scanner_peek(&scanner))) {
+            scanner_advance(&scanner);
         } else {
             break;
         }
     }
 
-    Z_String_View arg = Z_SV(start, curr - start);
+    Z_String_View arg = Z_SV(scanner.start, scanner.curr - scanner.start);
 
     for (int i = 0; i < (int)(sizeof(keywords) / sizeof(keywords[0])); i++) {
         if (!z_str_compare(arg, Z_CSTR_TO_SV(keywords[i].lexeme))) {
@@ -268,49 +196,35 @@ Token argument()
     return create_token(TOKEN_WORD);
 }
 
-bool is_space(char c)
-{
-    return strchr(" \t\r", c);
-}
-
-void skip_spaces()
-{
-    while (!is_at_end() && is_space(peek())) {
-        advance();
-    }
-
-    start = curr;
-}
-
 void skip_comment()
 {
-    while (!is_at_end() && peek() != '\n') {
-        advance();
+    while (!scanner_is_at_end(&scanner) && !scanner_check(&scanner, '\n')) {
+        scanner_advance(&scanner);
     }
 }
 
 Token lexer_next()
 {
-    skip_spaces();
+    skip_spaces(&scanner);
 
-    if (is_at_end()) {
+    if (scanner_is_at_end(&scanner)) {
         return create_token(TOKEN_EOD);
     }
 
-    char c = advance();
+    char c = scanner_advance(&scanner);
 
     switch (c) {
         case '|':
-            return create_token(match('|') ? TOKEN_OR : TOKEN_PIPE);
+            return create_token(scanner_match(&scanner, '|') ? TOKEN_OR : TOKEN_PIPE);
 
         case '&':
-            return create_token(match('&') ? TOKEN_AND : TOKEN_AMPERSAND);
+            return create_token(scanner_match(&scanner, '&') ? TOKEN_AND : TOKEN_AMPERSAND);
 
         case '\'':
-            return single_quoted_string();
+            return single_quoted_string(&scanner);
 
         case '"':
-            return match_string("\"\"") ? multi_double_quoted_string() : double_quoted_string();
+            return scanner_match_string(&scanner, "\"\"") ? multi_double_quoted_string() : double_quoted_string();
 
         case '#':
             skip_comment();
@@ -367,18 +281,15 @@ void alias_expension(Token_Vec *tokens)
 
 Token_Vec lexer_get_tokens(Z_String_View source)
 {
-    end = source.ptr + source.len;
-    start = source.ptr;
-    curr = source.ptr;
+    scanner = scanner_new(source);
     had_error = false;
-    line = 0;
 
     Token_Vec tokens = {0};
-    Token token = lexer_next();
+    Token token = lexer_next(&scanner);
 
     while (token.type != TOKEN_EOD) {
         z_da_append(&tokens, token);
-        token = lexer_next();
+        token = lexer_next(&scanner);
     }
 
     z_da_append(&tokens, token);
