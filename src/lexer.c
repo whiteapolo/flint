@@ -140,6 +140,35 @@ void advance_utill_string(const char *s)
     }
 }
 
+void advance_command_substitution()
+{
+    int nesting = 1;
+
+    while (!is_at_end() && nesting) {
+        char c = advance();
+
+        switch (c) {
+            case '(':
+                nesting++;
+                break;
+
+            case ')':
+                nesting--;
+                break;
+
+            case '\'':
+                if (!is_at_end()) advance();
+                advance_utill('\'');
+                break;
+
+            case '"':
+                advance_utill('"');
+                if (!is_at_end()) advance();
+                break;
+        }
+    }
+}
+
 Token multi_double_quoted_string()
 {
     match('\n');
@@ -168,7 +197,13 @@ Token double_quoted_string()
 {
     start = curr;
 
-    advance_utill('"');
+    while (!is_at_end() && !check('"')) {
+        if (match_string("$(")) {
+            advance_command_substitution();
+        } else {
+            advance();
+        }
+    }
 
     if (is_at_end()) {
         error("Unexpected end of file while looking for matching \"");
@@ -196,11 +231,6 @@ Token single_quoted_string()
     advance();
 
     return token;
-}
-
-void advance_command_substitution()
-{
-    while (!is_at_end() && advance() != ')') { }
 }
 
 Token argument()

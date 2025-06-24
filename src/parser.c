@@ -9,6 +9,24 @@
 #include <stdbool.h>
 #include <string.h>
 
+/*
+ * GRAMMER
+ * -----------------------------------------------
+ * program: statement*
+ *
+ * statement: for_statement | if_statement | job
+ *
+ * for_statement: "for" WORD "in" WORD*; statement*; end
+ * if_statement: "if" job; statement*; end
+ *
+ * job: background_job
+ * background_job: and_if "&"
+ * and: pipeline { "&&" pipeline }*
+ * or: and { "||" and }*
+ * pipeline: simple_command { "|" simple_command }*
+ * simple_command: WORD+
+ */
+
 void free_job(Job *job);
 void free_if_statement(Statement_If *statement);
 void free_job_statement(Statement_Job *statement);
