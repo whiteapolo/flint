@@ -14,7 +14,7 @@ void syntax_error(const char *fmt, ...)
 
 void syntax_error_va(const char *fmt, va_list ap)
 {
-    fprintf(stderr, "Syntax error: ");
+    fprintf(stderr, ""Z_COLOR_RED"Syntax error"Z_COLOR_RESET": ");
     vfprintf(stderr, fmt, ap);
     fprintf(stderr, "\n");
 }
@@ -56,19 +56,20 @@ void print_str_without_tabs(Z_String_View s)
 
 void syntax_error_at_token_va(Z_String_View source, Token token, const char *fmt, va_list ap)
 {
+    fprintf(stderr, "%d:%d: "Z_COLOR_RED"Syntax error"Z_COLOR_RESET": ", token.line, token.column);
+
     if (token.type == TOKEN_EOD || token.type == TOKEN_STATEMENT_END) {
-        fprintf(stderr, "Syntax error: at end: ");
-        vfprintf(stderr, fmt, ap);
-        fprintf(stderr, "\n");
+        fprintf(stderr, "at end: ");
     } else {
-        fprintf(stderr, "Syntax error: at '%.*s': ", token.lexeme.len, token.lexeme.ptr);
-        vfprintf(stderr, fmt, ap);
-        fprintf(stderr, "\n");
+        fprintf(stderr, "at '%.*s': ", token.lexeme.len, token.lexeme.ptr);
     }
+
+    vfprintf(stderr, fmt, ap);
+    fprintf(stderr, "\n");
 
     Z_String_View line = get_token_line(source, token);
 
     fprintf(stderr, "%5d | ", token.line);
     print_str_without_tabs(line);
-    fprintf(stderr, "\n      | %*s^\n", (int)(token.lexeme.ptr - line.ptr), "");
+    fprintf(stderr, "\n      | %*s"Z_COLOR_RED"^"Z_COLOR_RESET"\n", (int)(token.lexeme.ptr - line.ptr), "");
 }

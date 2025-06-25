@@ -10,6 +10,7 @@ typedef struct {
     const char *curr;
     const char *end;
     int line;
+    int column;
 } Scanner;
 
 bool scanner_is_at_end(const Scanner *scanner);

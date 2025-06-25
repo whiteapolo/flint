@@ -11,6 +11,7 @@ Scanner scanner_new(Z_String_View s)
         .start = s.ptr,
         .end = s.ptr + s.len,
         .line = 0,
+        .column = 0,
     };
 
     return scanner;
@@ -23,8 +24,11 @@ bool scanner_is_at_end(const Scanner *scanner)
 
 char scanner_advance(Scanner *scanner)
 {
+    scanner->column++;
+
     if (scanner_check(scanner, '\n')) {
         scanner->line++;
+        scanner->column = 0;
     }
 
     return *(scanner->curr++);

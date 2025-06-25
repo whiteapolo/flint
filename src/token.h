@@ -32,6 +32,7 @@ typedef struct {
     Token_Type type;
     Z_String_View lexeme;
     int line;
+    int column;
 } Token;
 
 typedef struct {

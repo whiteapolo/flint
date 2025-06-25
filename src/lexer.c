@@ -58,6 +58,7 @@ static Token create_token(Token_Type type)
         .lexeme = Z_SV(scanner.start, scanner.curr - scanner.start),
         .type = type,
         .line = scanner.line,
+        .column = scanner.column,
     };
 
     return token;
