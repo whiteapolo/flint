@@ -39,7 +39,7 @@ void update_prompt()
     z_str_append_format(&prompt, Z_COLOR_MAGENTA);
     z_str_append_str(&prompt, Z_STR_TO_SV(compressed_pwd));
     z_str_append_format(&prompt, Z_COLOR_GREEN);
-    z_str_append_format(&prompt, " # ");
+    z_str_append_format(&prompt, "::dev:: ");
     z_str_append_format(&prompt, Z_COLOR_RESET);
     z_str_free(&compressed_pwd);
 }

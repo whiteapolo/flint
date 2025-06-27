@@ -188,7 +188,7 @@ Token argument()
 
     Z_String_View arg = Z_SV(scanner.start, scanner.curr - scanner.start);
 
-    for (int i = 0; i < (int)(sizeof(keywords) / sizeof(keywords[0])); i++) {
+    for (int i = 0; i < (int)Z_ARRAY_LEN(keywords); i++) {
         if (!z_str_compare(arg, Z_CSTR_TO_SV(keywords[i].lexeme))) {
             return create_token(keywords[i].type);
         }

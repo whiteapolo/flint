@@ -340,10 +340,32 @@ Statement *parse_if_statement()
     return create_statement_if(condition, ifBranch, elseBranch);
 }
 
+Statement *parse_while_statement()
+{
+    Job *condition = parse_job();
+
+    if (condition == NULL) {
+        return NULL;
+    }
+
+    skip_empty_statements();
+
+    Token_Type end[] = { TOKEN_END };
+    Statement_Vec body = parse_block_utill(end, Z_ARRAY_LEN(end));
+
+    consume(TOKEN_END, "Expected 'end' after if statement");
+
+    return create_statement_while(condition, body);
+}
+
 Statement *parse_statement()
 {
     if (match(TOKEN_IF)) {
         return parse_if_statement();
+    }
+
+    if (match(TOKEN_WHILE)) {
+        return parse_while_statement();
     }
 
     return parse_job_statement();

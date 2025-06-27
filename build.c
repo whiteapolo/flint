@@ -18,7 +18,7 @@ int main(int argc, char **argv)
     z_cmd_append(&cmd, "-Wextra", "-Wall");
     z_cmd_append(&cmd, "-lreadline");
     z_cmd_append(&cmd, "-g");
-    z_cmd_append(&cmd, "-O0");
+    z_cmd_append(&cmd, "-O3");
 
     return z_cmd_run_async(&cmd);
 }

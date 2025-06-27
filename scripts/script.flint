@@ -1,11 +1,25 @@
 #find . -type f -name '*.c' -exec cat {} + | wc -l
 
-if true
-    let i "no scoping"
-end
+# if true
+#     let i "no scoping"
+# end
 
-if test -n "$i"
-    echo "$i"
-else
-    echo 'scoping works!'
+# if test -n "$i"
+#     echo "$i"
+# else
+#     echo 'scoping works!'
+# end
+
+
+# let i ""
+
+# while test $(printf "%s" "$i" | wc -c) -lt 1000
+#     # echo $i
+#     mut i "${i}1"
+# end
+
+let i "1"
+while test $i -lt 1000
+    # echo $i
+    mut i "$(expr $i + 1)"
 end

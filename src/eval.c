@@ -230,6 +230,20 @@ void evaluate_if(Statement_If *statement)
     environment = previous_envirnoment;
 }
 
+void evaluate_while(Statement_While *statement)
+{
+    while (!evaluate_job(statement->condition)) {
+        extern Environment environment;
+        Environment previous_envirnoment = environment;
+        environment = environment_new(&previous_envirnoment);
+
+        evaluate_statements(&statement->body);
+
+        environment_free(&environment);
+        environment = previous_envirnoment;
+    }
+}
+
 int evaluate_statement(Statement *statement)
 {
     switch (statement->type) {
@@ -238,6 +252,10 @@ int evaluate_statement(Statement *statement)
 
         case STATEMENT_IF:
             evaluate_if(((Statement_If *)statement));
+            return 0;
+
+        case STATEMENT_WHILE:
+            evaluate_while((Statement_While *)statement);
             return 0;
 
         default:
