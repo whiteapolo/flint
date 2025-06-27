@@ -66,3 +66,8 @@ Z_String_View environment_get(const Environment *environment, Z_String_View name
 
     return Z_CSTR_TO_SV(value);
 }
+
+void environment_free(Environment *environment)
+{
+    var_map_free(&environment->values, free_string, free_string);
+}

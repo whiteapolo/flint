@@ -1,1 +1,11 @@
-find . -type f -name '*.c' -exec cat {} + | wc -l
+#find . -type f -name '*.c' -exec cat {} + | wc -l
+
+if true
+    let i "no scoping"
+end
+
+if test -n "$i"
+    echo "$i"
+else
+    echo 'scoping works!'
+end

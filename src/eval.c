@@ -216,11 +216,18 @@ int evaluate_job(Job *job)
 
 void evaluate_if(Statement_If *statement)
 {
+    extern Environment environment;
+    Environment previous_envirnoment = environment;
+    environment = environment_new(&previous_envirnoment);
+
     if (!evaluate_job(statement->condition)) {
         evaluate_statements(&statement->ifBranch);
     } else {
         evaluate_statements(&statement->elseBranch);
     }
+
+    environment_free(&environment);
+    environment = previous_envirnoment;
 }
 
 int evaluate_statement(Statement *statement)
