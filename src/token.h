@@ -26,6 +26,7 @@ typedef enum {
     TOKEN_END,
     TOKEN_ELSE,
     TOKEN_WHILE,
+    TOKEN_BY,
 } Token_Type;
 
 typedef struct {

@@ -3,6 +3,6 @@
 
 #include "parser.h"
 
-void evaluate_statements(const Statement_Vec *statements);
+void evaluate_statements(Statement_Vec statements);
 
 #endif

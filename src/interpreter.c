@@ -15,7 +15,7 @@ void interpret(Z_String_View source)
     // lexer_print_tokens(&tokens);
     Statement_Vec statements = parse(&tokens, source);
     // print_statements(statements);
-    evaluate_statements(&statements);
+    evaluate_statements(statements);
     parser_free(&statements);
     free(tokens.ptr);
 }

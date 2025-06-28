@@ -122,7 +122,11 @@ static void error(Token token, const char *fmt, ...)
 {
     va_list ap;
     va_start(ap, fmt);
-    syntax_error_at_token_va(source, token, fmt, ap);
+
+    if (!panic_mode) {
+        syntax_error_at_token_va(source, token, fmt, ap);
+    }
+
     had_error = true;
     panic_mode = true;
     va_end(ap);
@@ -167,6 +171,18 @@ Statement *create_statement_while(Job *condition, Statement_Vec body)
     Statement_While *node = malloc(sizeof(Statement_While));
     node->type = STATEMENT_WHILE;
     node->condition = condition;
+    node->body = body;
+
+    return (Statement *)node;
+}
+
+Statement *create_statement_for(Token var_name, Token string, Token delim, Statement_Vec body)
+{
+    Statement_For *node = malloc(sizeof(Statement_For));
+    node->type = STATEMENT_FOR;
+    node->var_name = var_name;
+    node->string = string;
+    node->delim = delim;
     node->body = body;
 
     return (Statement *)node;
@@ -358,15 +374,46 @@ Statement *parse_while_statement()
     return create_statement_while(condition, body);
 }
 
-Statement *parse_statement()
+Statement *parse_for_statement()
 {
-    if (match(TOKEN_IF)) {
-        return parse_if_statement();
+    if (!check_string()) {
+        error(peek(), "Expected idenifier after for.");
+        return NULL;
     }
 
-    if (match(TOKEN_WHILE)) {
-        return parse_while_statement();
+    Token var_name = advance();
+    consume(TOKEN_IN, "Expected 'in' after idenifier.");
+
+    if (!check_string()) {
+        error(peek(), "Expected string after in.");
+        return NULL;
     }
+
+    Token string = advance();
+
+    consume(TOKEN_BY, "Expected 'by' after idenifier.");
+
+    if (!check_string()) {
+        error(peek(), "Expected delimeter string after by.");
+        return NULL;
+    }
+
+    Token delim = advance();
+
+    skip_empty_statements();
+    Token_Type end[] = { TOKEN_END };
+
+    Statement_Vec body = parse_block_utill(end, Z_ARRAY_LEN(end));
+    consume(TOKEN_END, "Expected 'end' after if statement");
+
+    return create_statement_for(var_name, string, delim, body);
+}
+
+Statement *parse_statement()
+{
+    if (match(TOKEN_IF))    return parse_if_statement();
+    if (match(TOKEN_WHILE)) return parse_while_statement();
+    if (match(TOKEN_FOR))   return parse_for_statement();
 
     return parse_job_statement();
 }
@@ -441,6 +488,12 @@ void free_while_statement(Statement_While *statement)
     free(statement);
 }
 
+void free_for_statement(Statement_For *statement)
+{
+    free_statements(&statement->body);
+    free(statement);
+}
+
 void free_job_statement(Statement_Job *statement)
 {
     Job *job = statement->job;
@@ -461,6 +514,10 @@ void free_statement(Statement *statement)
 
         case STATEMENT_WHILE:
             free_while_statement((Statement_While *)statement);
+            break;
+
+        case STATEMENT_FOR:
+            free_for_statement((Statement_For *)statement);
             break;
     }
 }

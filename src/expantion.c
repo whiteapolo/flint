@@ -10,12 +10,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-typedef struct {
-    char **ptr;
-    int len;
-    int capacity;
-} String_Vec;
-
 void resolve_var(Z_String_View var, Z_String *output)
 {
     extern Environment environment;
@@ -115,6 +109,16 @@ void variable(Scanner *scanner, Z_String *output)
     z_str_append_str(output, environment_get(&environment, Z_SV(scanner->start, scanner->curr - scanner->start)));
 }
 
+char escaped_char(char c)
+{
+    switch (c) {
+        case 'n': return '\n';
+        case 't': return '\t';
+        case 'r': return '\r';
+        default: return c;
+    }
+}
+
 void expand_dqouted_string(Token token, String_Vec *output)
 {
     Scanner scanner = scanner_new(token.lexeme);
@@ -135,7 +139,13 @@ void expand_dqouted_string(Token token, String_Vec *output)
                 variable(&scanner, &exapnded);
             }
         } else {
-            z_str_append_char(&exapnded, scanner_advance(&scanner));
+            char c = scanner_advance(&scanner);
+
+            if (c == '\\' && !scanner_is_at_end(&scanner)) {
+                z_str_append_char(&exapnded, escaped_char(scanner_advance(&scanner)));
+            } else {
+                z_str_append_char(&exapnded, c);
+            }
         }
     }
 
@@ -159,27 +169,31 @@ void expand_word(Token token, String_Vec *output)
     free(tmp.ptr);
 }
 
+void expand_token(Token token, String_Vec *out)
+{
+    switch (token.type) {
+        case TOKEN_WORD:
+            expand_word(token, out);
+            break;
+
+        case TOKEN_DQUOTED_STRING:
+            expand_dqouted_string(token, out);
+            break;
+
+        case TOKEN_SQUOTED_STRING:
+        default:
+            z_da_append(out, strndup(token.lexeme.ptr, token.lexeme.len));
+            break;
+    }
+}
+
 char **expand_argv(Argv argv)
 {
     String_Vec expanded = {0};
 
     for (int i = 0; i < argv.len; i++) {
         Token arg = argv.ptr[i];
-
-        switch (arg.type) {
-            case TOKEN_WORD:
-                expand_word(arg, &expanded);
-                break;
-
-            case TOKEN_DQUOTED_STRING:
-                expand_dqouted_string(arg, &expanded);
-                break;
-
-            case TOKEN_SQUOTED_STRING:
-            default:
-                z_da_append(&expanded, strndup(arg.lexeme.ptr, arg.lexeme.len));
-                break;
-        }
+        expand_token(arg, &expanded);
     }
 
     z_da_null_terminate(&expanded);

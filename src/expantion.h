@@ -3,6 +3,13 @@
 
 #include "eval.h"
 
+typedef struct {
+    char **ptr;
+    int len;
+    int capacity;
+} String_Vec;
+
+void expand_token(Token token, String_Vec *out);
 char **expand_argv(Argv argv);
 
 #endif

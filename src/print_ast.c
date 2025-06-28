@@ -83,7 +83,17 @@ void print_statement_while(Statement_While *statement)
 {
     printf("while (");
     print_job(statement->condition);
-    printf(")");
+    printf(")\n");
+    print_statements(statement->body);
+}
+
+void print_statement_for(Statement_For *statement)
+{
+    printf("for (\"");
+    z_str_print(statement->string.lexeme);
+    printf("\" \"");
+    z_str_print(statement->delim.lexeme);
+    printf("\")\n");
     print_statements(statement->body);
 }
 
@@ -100,6 +110,10 @@ void print_statement(Statement *statement)
 
         case STATEMENT_WHILE:
             print_statement_while((Statement_While *)statement);
+            break;
+
+        case STATEMENT_FOR:
+            print_statement_for((Statement_For *)statement);
             break;
     }
 

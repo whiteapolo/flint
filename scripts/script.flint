@@ -18,8 +18,12 @@
 #     mut i "${i}1"
 # end
 
-let i "1"
-while test $i -lt 1000
+# let i "1"
+# while test $i -lt 1000
     # echo $i
-    mut i "$(expr $i + 1)"
+    # mut i "$(expr $i + 1)"
+# end
+
+for i in "$(cat build.c)" by "\n"
+    echo $i
 end

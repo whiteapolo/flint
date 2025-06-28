@@ -715,6 +715,7 @@ typedef struct {
 
 const char *z_str_to_cstr(Z_String *s);
 Z_String z_str_new_format(const char *fmt, ...);
+Z_String z_str_new_from(Z_String_View s);
 Z_String z_str_new_format_va(const char *fmt, va_list ap);
 void z_str_append_format(Z_String *s, const char *fmt, ...);
 void z_str_append_format_va(Z_String *s, const char *fmt, va_list ap);
@@ -1443,6 +1444,11 @@ Z_String z_str_new_format(const char *fmt, ...)
     va_end(ap);
 
     return s;
+}
+
+Z_String z_str_new_from(Z_String_View s)
+{
+    return z_str_new_format("%.*s", s.len, s.ptr);
 }
 
 Z_String z_str_new_format_va(const char *fmt, va_list ap)

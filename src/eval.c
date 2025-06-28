@@ -214,34 +214,69 @@ int evaluate_job(Job *job)
     return 0;
 }
 
-void evaluate_if(Statement_If *statement)
+void evaluate_block(Statement_Vec statements)
 {
     extern Environment environment;
     Environment previous_envirnoment = environment;
     environment = environment_new(&previous_envirnoment);
 
-    if (!evaluate_job(statement->condition)) {
-        evaluate_statements(&statement->ifBranch);
-    } else {
-        evaluate_statements(&statement->elseBranch);
-    }
+    evaluate_statements(statements);
 
     environment_free(&environment);
     environment = previous_envirnoment;
 }
 
+void evaluate_if(Statement_If *statement)
+{
+    if (!evaluate_job(statement->condition)) {
+        evaluate_block(statement->ifBranch);
+    } else {
+        evaluate_block(statement->elseBranch);
+    }
+}
+
 void evaluate_while(Statement_While *statement)
 {
     while (!evaluate_job(statement->condition)) {
-        extern Environment environment;
-        Environment previous_envirnoment = environment;
-        environment = environment_new(&previous_envirnoment);
-
-        evaluate_statements(&statement->body);
-
-        environment_free(&environment);
-        environment = previous_envirnoment;
+        evaluate_block(statement->body);
     }
+}
+
+void evaluate_for(Statement_For *statement)
+{
+    extern Environment environment;
+    Environment previous_envirnoment = environment;
+    environment = environment_new(&previous_envirnoment);
+
+
+    String_Vec delim = {0};
+    String_Vec string = {0};
+    expand_token(statement->delim, &delim);
+    expand_token(statement->string, &string);
+
+    Z_String name = z_str_new_from(statement->var_name.lexeme);
+    Z_String value = {0};
+    Z_String_View tok = z_str_tok_start(Z_CSTR_TO_SV(string.ptr[0]), Z_CSTR_TO_SV(delim.ptr[0]));
+
+    environment_create_variable(&environment, z_str_to_cstr(&name), "");
+
+    while (tok.len > 0) {
+        value.len = 0;
+        z_str_append_str(&value, tok);
+        environment_mut_variable(&environment, z_str_to_cstr(&name), z_str_to_cstr(&value));
+        evaluate_block(statement->body);
+        tok = z_str_tok_next(Z_CSTR_TO_SV(string.ptr[0]), tok, Z_CSTR_TO_SV(delim.ptr[0]));
+    }
+
+    z_str_free(&value);
+    z_str_free(&name);
+    z_da_append(&delim, NULL);
+    z_da_append(&string, NULL);
+    free_string_array(delim.ptr);
+    free_string_array(string.ptr);
+
+    environment_free(&environment);
+    environment = previous_envirnoment;
 }
 
 int evaluate_statement(Statement *statement)
@@ -258,14 +293,18 @@ int evaluate_statement(Statement *statement)
             evaluate_while((Statement_While *)statement);
             return 0;
 
+        case STATEMENT_FOR:
+            evaluate_for((Statement_For *)statement);
+            return 0;
+
         default:
             return 0;
     }
 }
 
-void evaluate_statements(const Statement_Vec *statements)
+void evaluate_statements(Statement_Vec statements)
 {
-    for (int i = 0; i < statements->len; i++) {
-        evaluate_statement(statements->ptr[i]);
+    for (int i = 0; i < statements.len; i++) {
+        evaluate_statement(statements.ptr[i]);
     }
 }
