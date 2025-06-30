@@ -713,6 +713,9 @@ typedef struct {
 #define Z_CSTR_TO_SV(s)     ((Z_String_View){ .ptr = (s), .len = strlen(s)      })
 #define Z_EMPTY_SV()        ((Z_String_View){ .ptr = "", .len = 0               })
 
+#define Z_CSTR(s)           Z_CSTR_TO_SV(s)
+#define Z_STR(s)            Z_STR_TO_SV(s)
+
 const char *z_str_to_cstr(Z_String *s);
 Z_String z_str_new_format(const char *fmt, ...);
 Z_String z_str_new_from(Z_String_View s);
@@ -730,6 +733,9 @@ char *z_sv_to_cstr(Z_String_View s);
 
 bool z_str_contains(Z_String_View s, char c);
 int z_str_chr(Z_String_View s, char c);
+
+#define Z_STR_FOREACH_TOK(s, delim, tok) \
+    for (Z_String_View tok = z_str_tok_start(s, delim); tok.len > 0; tok = z_str_tok_next(s, tok, delim))
 
 Z_String_View z_str_tok_start(Z_String_View s, Z_String_View delim);
 Z_String_View z_str_tok_next(Z_String_View s, Z_String_View previous_token, Z_String_View delim);

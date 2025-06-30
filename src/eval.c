@@ -256,16 +256,14 @@ void evaluate_for(Statement_For *statement)
 
     Z_String name = z_str_new_from(statement->var_name.lexeme);
     Z_String value = {0};
-    Z_String_View tok = z_str_tok_start(Z_CSTR_TO_SV(string.ptr[0]), Z_CSTR_TO_SV(delim.ptr[0]));
 
     environment_create_variable(&environment, z_str_to_cstr(&name), "");
 
-    while (tok.len > 0) {
+    Z_STR_FOREACH_TOK(Z_CSTR(string.ptr[0]), Z_CSTR(delim.ptr[0]), tok) {
         value.len = 0;
         z_str_append_str(&value, tok);
         environment_mut_variable(&environment, z_str_to_cstr(&name), z_str_to_cstr(&value));
         evaluate_block(statement->body);
-        tok = z_str_tok_next(Z_CSTR_TO_SV(string.ptr[0]), tok, Z_CSTR_TO_SV(delim.ptr[0]));
     }
 
     z_str_free(&value);

@@ -4,6 +4,7 @@
 #include "interpreter.h"
 #include "libzatar.h"
 #include "scanner.h"
+#include "token.h"
 #include <ctype.h>
 #include <stdbool.h>
 #include <stdio.h>
@@ -115,7 +116,18 @@ char escaped_char(char c)
         case 'n': return '\n';
         case 't': return '\t';
         case 'r': return '\r';
-        default: return c;
+        default:  return c;
+    }
+}
+
+void escape_sequence(Scanner *scanner, Z_String *output)
+{
+    char c = scanner_advance(scanner);
+
+    if (c == '\\' && !scanner_is_at_end(scanner)) {
+        z_str_append_char(output, escaped_char(scanner_advance(scanner)));
+    } else {
+        z_str_append_char(output, c);
     }
 }
 
@@ -139,13 +151,7 @@ void expand_dqouted_string(Token token, String_Vec *output)
                 variable(&scanner, &exapnded);
             }
         } else {
-            char c = scanner_advance(&scanner);
-
-            if (c == '\\' && !scanner_is_at_end(&scanner)) {
-                z_str_append_char(&exapnded, escaped_char(scanner_advance(&scanner)));
-            } else {
-                z_str_append_char(&exapnded, c);
-            }
+            escape_sequence(&scanner, &exapnded);
         }
     }
 
@@ -157,16 +163,24 @@ void expand_word(Token token, String_Vec *output)
     String_Vec tmp = {0};
     expand_dqouted_string(token, &tmp);
 
-    Z_String_View delim = Z_CSTR_TO_SV(" \n");
-    Z_String_View word = z_str_tok_start(Z_CSTR_TO_SV(tmp.ptr[0]), delim);
-
-    while (word.len > 0) {
+    Z_STR_FOREACH_TOK(Z_CSTR(tmp.ptr[0]), Z_CSTR(" \n"), word) {
         z_da_append(output, strndup(word.ptr, word.len));
-        word = z_str_tok_next(Z_CSTR_TO_SV(tmp.ptr[0]), word, delim);
     }
 
     free(tmp.ptr[0]);
     free(tmp.ptr);
+}
+
+void expand_sqouted_string(Token token, String_Vec *output)
+{
+    Scanner scanner = scanner_new(token.lexeme);
+    Z_String expanded = {0};
+
+    while (!scanner_is_at_end(&scanner)) {
+        escape_sequence(&scanner, &expanded);
+    }
+
+    z_da_append(output, (char *)z_str_to_cstr(&expanded));
 }
 
 void expand_token(Token token, String_Vec *out)
@@ -182,7 +196,7 @@ void expand_token(Token token, String_Vec *out)
 
         case TOKEN_SQUOTED_STRING:
         default:
-            z_da_append(out, strndup(token.lexeme.ptr, token.lexeme.len));
+            expand_sqouted_string(token, out);
             break;
     }
 }
