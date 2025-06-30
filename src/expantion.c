@@ -163,7 +163,7 @@ void expand_word(Token token, String_Vec *output)
     String_Vec tmp = {0};
     expand_dqouted_string(token, &tmp);
 
-    Z_STR_FOREACH_TOK(Z_CSTR(tmp.ptr[0]), Z_CSTR(" \n"), word) {
+    Z_STR_TOK_FOREACH(Z_CSTR_TO_SV(tmp.ptr[0]), Z_CSTR_TO_SV(" \n"), word) {
         z_da_append(output, strndup(word.ptr, word.len));
     }
 

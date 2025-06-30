@@ -259,7 +259,7 @@ void evaluate_for(Statement_For *statement)
 
     environment_create_variable(&environment, z_str_to_cstr(&name), "");
 
-    Z_STR_FOREACH_TOK(Z_CSTR(string.ptr[0]), Z_CSTR(delim.ptr[0]), tok) {
+    Z_STR_TOK_FOREACH(Z_CSTR_TO_SV(string.ptr[0]), Z_CSTR_TO_SV(delim.ptr[0]), tok) {
         value.len = 0;
         z_str_append_str(&value, tok);
         environment_mut_variable(&environment, z_str_to_cstr(&name), z_str_to_cstr(&value));
