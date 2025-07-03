@@ -15,6 +15,8 @@ int builtin_let(int argc, char **argv);
 int builtin_mut(int argc, char **argv);
 int builtin_test(int argc, char **argv);
 int builtin_len(int argc, char **argv);
+int builtin_print(int argc, char **argv);
+int builtin_println(int argc, char **argv);
 
 const char *get_alias(Z_String_View key);
 void add_alias(Z_String_View key, Z_String_View value);

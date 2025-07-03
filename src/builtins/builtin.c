@@ -21,6 +21,8 @@ static Builtin builtins[] = {
     { .name = "let", .function = builtin_let },
     { .name = "test", .function = builtin_test },
     { .name = "len", .function = builtin_len },
+    { .name = "print", .function = builtin_print },
+    { .name = "println", .function = builtin_println },
 };
 
 BuiltinFn get_builtin(const char *name)

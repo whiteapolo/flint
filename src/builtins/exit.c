@@ -3,7 +3,7 @@
 #include <stdbool.h>
 #include <ctype.h>
 
-bool is_number(const char *s)
+static bool is_number(const char *s)
 {
     const char *curr = s;
 
