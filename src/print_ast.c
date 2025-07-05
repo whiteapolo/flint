@@ -97,6 +97,14 @@ void print_statement_for(Statement_For *statement)
     print_statements(statement->body);
 }
 
+void print_statement_function(Statement_Function *statement)
+{
+    z_str_print(statement->name.lexeme);
+    printf("() {\n");
+    print_statements(statement->body);
+    printf("}\n");
+}
+
 void print_statement(Statement *statement)
 {
     switch (statement->type) {
@@ -115,8 +123,11 @@ void print_statement(Statement *statement)
         case STATEMENT_FOR:
             print_statement_for((Statement_For *)statement);
             break;
-    }
 
+        case STATEMENT_FUNCTION:
+            print_statement_function((Statement_Function *)statement);
+            break;
+    }
 }
 
 void print_statements(Statement_Vec statements)

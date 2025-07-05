@@ -13,7 +13,8 @@ int main(int argc, char **argv)
     z_cmd_append(&cmd, "src/builtins/cd.c", "src/builtins/builtin.c", "src/builtins/exit.c");
     z_cmd_append(&cmd, "src/builtins/alias.c", "src/builtins/mut.c", "src/builtins/export.c");
     z_cmd_append(&cmd, "src/builtins/let.c", "src/builtins/test.c", "src/builtins/len.c");
-    z_cmd_append(&cmd, "src/builtins/print.c", "src/builtins/println.c");
+    z_cmd_append(&cmd, "src/builtins/print.c", "src/builtins/println.c",  "src/builtins/time.c");
+    z_cmd_append(&cmd, "src/builtins/command.c");
     z_cmd_append(&cmd, "src/error.c");
     z_cmd_append(&cmd, "src/scanner.c");
     z_cmd_append(&cmd, "-Wextra", "-Wall", "-Wno-unused-result");

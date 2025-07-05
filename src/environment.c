@@ -1,10 +1,12 @@
 #include "environment.h"
 #include "libzatar.h"
+#include "parser.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 Z_MAP_IMPLEMENT(Var_Map, char *, char *, var_map)
+Z_MAP_IMPLEMENT(Function_Map, Z_String_View, Statement_Function*, function_map)
 
 static void free_string(char *s)
 {
@@ -16,6 +18,7 @@ Environment environment_new(Environment *parent)
     Environment environment = {
         .parent = parent,
         .values = { .root = NULL, .cmp_keys = strcmp },
+        .functions = { .root = NULL, .cmp_keys = z_str_compare },
     };
 
     return environment;
@@ -40,6 +43,11 @@ int environment_mut_variable(Environment *environment, const char *name, const c
 void environment_create_variable(Environment *environment, const char *name, const char *value)
 {
     var_map_put(&environment->values, strdup(name), strdup(value), free_string, free_string);
+}
+
+void environment_create_function(Environment *environment, Z_String_View name, Statement_Function *fuction)
+{
+    function_map_put(&environment->functions, name, fuction, NULL, free_function_statement);
 }
 
 const char *environment_get_cstr(const Environment *environment, const char *name)
@@ -67,7 +75,22 @@ Z_String_View environment_get(const Environment *environment, Z_String_View name
     return Z_CSTR_TO_SV(value);
 }
 
+Statement_Function *environment_get_function(const Environment *environment, Z_String_View name)
+{
+    if (!environment) {
+        return NULL;
+    }
+
+    Statement_Function *ret;
+    if (function_map_find(&environment->functions, name, &ret)) {
+        return ret;
+    }
+
+    return environment_get_function(environment->parent, name);
+}
+
 void environment_free(Environment *environment)
 {
     var_map_free(&environment->values, free_string, free_string);
+    function_map_free(&environment->functions, NULL, free_function_statement);
 }

@@ -1,4 +1,5 @@
 #include "interpreter.h"
+#include "expantion.h"
 #include "libzatar.h"
 #include "token.h"
 #include "parser.h"
@@ -11,7 +12,7 @@
 void interpret(Z_String_View source)
 {
     Token_Vec tokens = lexer_get_tokens(source);
-    alias_expension(&tokens);
+    expand_aliases(&tokens);
     // lexer_print_tokens(&tokens);
     Statement_Vec statements = parse(&tokens, source);
     // print_statements(statements);

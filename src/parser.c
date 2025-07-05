@@ -8,6 +8,7 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <string.h>
+#include <setjmp.h>
 
 /*
  * GRAMMER
@@ -143,6 +144,28 @@ Token consume(Token_Type type, const char *msg)
     return peek();
 }
 
+Token consume_string(const char *msg)
+{
+    if (check_string()) {
+        return advance();
+    }
+
+    error(peek(), msg);
+
+    return peek();
+}
+
+Token consume_argument(const char *msg)
+{
+    if (check_argument()) {
+        return advance();
+    }
+
+    error(peek(), msg);
+
+    return peek();
+}
+
 void synchronize()
 {
     match(TOKEN_STATEMENT_END);
@@ -175,6 +198,17 @@ Statement *create_statement_while(Job *condition, Statement_Vec body)
 
     return (Statement *)node;
 }
+
+Statement *create_statement_function(Token name, Statement_Vec body)
+{
+    Statement_Function *node = malloc(sizeof(Statement_Function));
+    node->type = STATEMENT_FUNCTION;
+    node->name = name;
+    node->body = body;
+
+    return (Statement *)node;
+}
+
 
 Statement *create_statement_for(Token var_name, Token string, Token delim, Statement_Vec body)
 {
@@ -327,10 +361,15 @@ Statement_Vec parse_block_utill(Token_Type types[], int len)
     return statements;
 }
 
+Statement_Vec parse_block_utill_end()
+{
+    Token_Type end[] = { TOKEN_END };
+    return parse_block_utill(end, Z_ARRAY_LEN(end));
+}
+
 Statement *parse_if_statement()
 {
     Token_Type if_body_end[] = { TOKEN_ELSE, TOKEN_END };
-    Token_Type else_body_end[] = { TOKEN_END };
 
     Job *condition = parse_job();
 
@@ -346,7 +385,7 @@ Statement *parse_if_statement()
     skip_empty_statements();
 
     if (match(TOKEN_ELSE)) {
-        elseBranch = parse_block_utill(else_body_end, Z_ARRAY_LEN(else_body_end));
+        elseBranch = parse_block_utill_end();
     }
 
     skip_empty_statements();
@@ -366,8 +405,7 @@ Statement *parse_while_statement()
 
     skip_empty_statements();
 
-    Token_Type end[] = { TOKEN_END };
-    Statement_Vec body = parse_block_utill(end, Z_ARRAY_LEN(end));
+    Statement_Vec body = parse_block_utill_end();
 
     consume(TOKEN_END, "Expected 'end' after if statement");
 
@@ -401,12 +439,24 @@ Statement *parse_for_statement()
     Token delim = advance();
 
     skip_empty_statements();
-    Token_Type end[] = { TOKEN_END };
 
-    Statement_Vec body = parse_block_utill(end, Z_ARRAY_LEN(end));
+    Statement_Vec body = parse_block_utill_end();
     consume(TOKEN_END, "Expected 'end' after if statement");
 
     return create_statement_for(var_name, string, delim, body);
+}
+
+Statement *parse_function_statement()
+{
+    Token name = consume(TOKEN_WORD, "Expected function name after 'fn'");
+
+    skip_empty_statements();
+
+    Statement_Vec body = parse_block_utill_end();
+
+    consume(TOKEN_END, "Expected 'end' after function body.");
+
+    return create_statement_function(name, body);
 }
 
 Statement *parse_statement()
@@ -414,6 +464,7 @@ Statement *parse_statement()
     if (match(TOKEN_IF))    return parse_if_statement();
     if (match(TOKEN_WHILE)) return parse_while_statement();
     if (match(TOKEN_FOR))   return parse_for_statement();
+    if (match(TOKEN_FUN))   return parse_function_statement();
 
     return parse_job_statement();
 }
@@ -494,6 +545,12 @@ void free_for_statement(Statement_For *statement)
     free(statement);
 }
 
+void free_function_statement(Statement_Function *statement)
+{
+    free_statements(&statement->body);
+    free(statement);
+}
+
 void free_job_statement(Statement_Job *statement)
 {
     Job *job = statement->job;
@@ -518,6 +575,10 @@ void free_statement(Statement *statement)
 
         case STATEMENT_FOR:
             free_for_statement((Statement_For *)statement);
+            break;
+
+        case STATEMENT_FUNCTION:
+            free_function_statement((Statement_Function *)statement);
             break;
     }
 }

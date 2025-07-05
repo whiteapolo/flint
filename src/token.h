@@ -31,6 +31,11 @@ typedef enum {
 
 typedef struct {
     Token_Type type;
+    const char *lexeme;
+} Keyword;
+
+typedef struct {
+    Token_Type type;
     Z_String_View lexeme;
     int line;
     int column;
@@ -44,5 +49,6 @@ typedef struct {
 
 void print_token(Token token);
 const char *token_type_to_string(Token_Type type);
+const Keyword *get_keyword(Z_String_View lexeme);
 
 #endif

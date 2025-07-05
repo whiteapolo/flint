@@ -44,6 +44,7 @@ typedef enum {
     STATEMENT_IF,
     STATEMENT_WHILE,
     STATEMENT_FOR,
+    STATEMENT_FUNCTION,
 } Statement_Type;
 
 typedef struct {
@@ -60,11 +61,6 @@ typedef struct {
     Statement_Type type;
     Job *job;
 } Statement_Job;
-
-// typedef struct {
-//     Token token;
-//     Statement **statements;
-// } Statement_For;
 
 typedef struct {
     Statement_Type type;
@@ -87,7 +83,14 @@ typedef struct {
     Statement_Vec body;
 } Statement_For;
 
+typedef struct {
+    Statement_Type type;
+    Token name;
+    Statement_Vec body;
+} Statement_Function;
+
 Statement_Vec parse(const Token_Vec *t, Z_String_View s);
 void parser_free(Statement_Vec *node);
+void free_function_statement(Statement_Function *statement);
 
 #endif

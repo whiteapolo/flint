@@ -14,7 +14,10 @@
 #include "parser.h"
 #include "expantion.h"
 
+extern Environment environment;
+
 int evaluate_job(Job *job);
+void evaluate_block(Statement_Vec statements);
 
 int count_argc(char **argv)
 {
@@ -63,9 +66,46 @@ void set_last_status_code(int status)
     setenv("?", buf, 1);
 }
 
+void initialize_function_arguments(char **argv)
+{
+    Z_String name = {0};
+    Z_String all = {0};
+
+    for (int i = 1; argv[i]; i++) {
+        name.len = 0;
+        z_str_append_format(&name, "%d", i);
+        z_str_append_format(&all, "%s:", argv[i]);
+        environment_create_variable(&environment, z_str_to_cstr(&name), argv[i]);
+    }
+
+    environment_create_variable(&environment, "@", z_str_to_cstr(&all));
+
+    z_str_free(&all);
+    z_str_free(&name);
+}
+
+void call_function(Statement_Function *f, char **argv)
+{
+    Environment previous_envirnoment = environment;
+    environment = environment_new(&previous_envirnoment);
+
+    initialize_function_arguments(argv);
+    evaluate_statements(f->body);
+
+    environment_free(&environment);
+    environment = previous_envirnoment;
+}
+
 int exec_command(char **argv)
 {
     if (argv[0] == NULL) {
+        return 0;
+    }
+
+    Statement_Function *f = environment_get_function(&environment, Z_CSTR_TO_SV(argv[0]));
+
+    if (f) {
+        call_function(f, argv);
         return 0;
     }
 
@@ -216,7 +256,6 @@ int evaluate_job(Job *job)
 
 void evaluate_block(Statement_Vec statements)
 {
-    extern Environment environment;
     Environment previous_envirnoment = environment;
     environment = environment_new(&previous_envirnoment);
 
@@ -244,7 +283,6 @@ void evaluate_while(Statement_While *statement)
 
 void evaluate_for(Statement_For *statement)
 {
-    extern Environment environment;
     Environment previous_envirnoment = environment;
     environment = environment_new(&previous_envirnoment);
 
@@ -277,6 +315,11 @@ void evaluate_for(Statement_For *statement)
     environment = previous_envirnoment;
 }
 
+void evaluate_function(Statement_Function *function)
+{
+    environment_create_function(&environment, function->name.lexeme, function);
+}
+
 int evaluate_statement(Statement *statement)
 {
     switch (statement->type) {
@@ -293,6 +336,10 @@ int evaluate_statement(Statement *statement)
 
         case STATEMENT_FOR:
             evaluate_for((Statement_For *)statement);
+            return 0;
+
+        case STATEMENT_FUNCTION:
+            evaluate_function((Statement_Function *)statement);
             return 0;
 
         default:

@@ -11,5 +11,6 @@ typedef struct {
 
 void expand_token(Token token, String_Vec *out);
 char **expand_argv(Argv argv);
+void expand_aliases(Token_Vec *tokens);
 
 #endif

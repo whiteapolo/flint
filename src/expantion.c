@@ -10,6 +10,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "builtins/builtin.h"
 
 void resolve_var(Z_String_View var, Z_String *output)
 {
@@ -213,4 +214,42 @@ char **expand_argv(Argv argv)
     z_da_null_terminate(&expanded);
 
     return expanded.ptr;
+}
+
+void expand_alias(Token key, Token_Vec *output)
+{
+    const char *value = get_alias(key.lexeme);
+
+    if (!value) {
+        z_da_append(output, key);
+    } else {
+        Token_Vec tmp = lexer_get_tokens(Z_CSTR_TO_SV(value));
+        z_da_append_da(output, &tmp);
+        output->len--; // remove EOF token
+        free(tmp.ptr);
+    }
+}
+
+void expand_aliases(Token_Vec *tokens)
+{
+    Token_Vec tmp = {0};
+    bool is_command_start = true;
+
+    for (int i = 0; i < tokens->len; i++) {
+        Token token = tokens->ptr[i];
+
+        if (token.type != TOKEN_WORD) {
+            is_command_start = true;
+            z_da_append(&tmp, token);
+        } else if (!is_command_start) {
+            z_da_append(&tmp, token);
+        } else {
+            expand_alias(token, &tmp);
+            is_command_start = false;
+        }
+    }
+
+    tokens->len = 0;
+    z_da_append_da(tokens, &tmp);
+    free(tmp.ptr);
 }

@@ -14,7 +14,7 @@ void syntax_error(const char *fmt, ...)
 
 void syntax_error_va(const char *fmt, va_list ap)
 {
-    fprintf(stderr, ""Z_COLOR_RED"Syntax error"Z_COLOR_RESET": ");
+    fprintf(stderr, ""Z_COLOR_RED"YOU SUCK. here is why"Z_COLOR_RESET": ");
     vfprintf(stderr, fmt, ap);
     fprintf(stderr, "\n");
 }
@@ -56,7 +56,7 @@ void print_str_without_tabs(Z_String_View s)
 
 void syntax_error_at_token_va(Z_String_View source, Token token, const char *fmt, va_list ap)
 {
-    fprintf(stderr, "%d:%d: "Z_COLOR_RED"Syntax error"Z_COLOR_RESET": ", token.line, token.column);
+    fprintf(stderr, "%d:%d: "Z_COLOR_RED"YOU SUCK. here is why"Z_COLOR_RESET": ", token.line, token.column);
 
     if (token.type == TOKEN_EOD || token.type == TOKEN_STATEMENT_END) {
         fprintf(stderr, "at end: ");

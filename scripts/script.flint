@@ -1,5 +1,7 @@
 #find . -type f -name '*.c' -exec cat {} + | wc -l
 
-for p in "$(ls -a)" by "\n"
-    echo $p
+fn ls
+    ls --color=always --group-directories-first -v
 end
+
+ls
