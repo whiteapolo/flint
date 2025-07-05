@@ -1,7 +1,5 @@
-#find . -type f -name '*.c' -exec cat {} + | wc -l
-
-fn ls
-    ls --color=always --group-directories-first -v
+fn ech
+    println "$@"
 end
 
-ls
+ech bye dihdi

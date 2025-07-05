@@ -74,7 +74,7 @@ void initialize_function_arguments(char **argv)
     for (int i = 1; argv[i]; i++) {
         name.len = 0;
         z_str_append_format(&name, "%d", i);
-        z_str_append_format(&all, "%s:", argv[i]);
+        z_str_append_format(&all, "%s ", argv[i]);
         environment_create_variable(&environment, z_str_to_cstr(&name), argv[i]);
     }
 

@@ -12,6 +12,8 @@
 #include <string.h>
 #include "builtins/builtin.h"
 
+extern Environment environment;
+
 void resolve_var(Z_String_View var, Z_String *output)
 {
     extern Environment environment;
@@ -89,14 +91,13 @@ void braced_variable(Scanner *scanner, Z_String *output)
 
     Z_String_View variable_name = Z_SV(scanner->start, scanner->curr - scanner->start);
 
-    extern Environment environment;
     z_str_append_str(output, environment_get(&environment, variable_name));
     scanner_advance(scanner); // eat the '}'
 }
 
 bool is_variable_char(char c)
 {
-    return isdigit(c) || isalpha(c) || strchr("_?", c);
+    return isdigit(c) || isalpha(c) || strchr("_?@", c);
 }
 
 void variable(Scanner *scanner, Z_String *output)
@@ -107,7 +108,6 @@ void variable(Scanner *scanner, Z_String *output)
         scanner_advance(scanner);
     }
 
-    extern Environment environment;
     z_str_append_str(output, environment_get(&environment, Z_SV(scanner->start, scanner->curr - scanner->start)));
 }
 
@@ -230,6 +230,13 @@ void expand_alias(Token key, Token_Vec *output)
     }
 }
 
+static bool is_string(Token_Type type)
+{
+    return type == TOKEN_WORD ||
+        type == TOKEN_DQUOTED_STRING ||
+        type == TOKEN_SQUOTED_STRING;
+}
+
 void expand_aliases(Token_Vec *tokens)
 {
     Token_Vec tmp = {0};
@@ -238,7 +245,7 @@ void expand_aliases(Token_Vec *tokens)
     for (int i = 0; i < tokens->len; i++) {
         Token token = tokens->ptr[i];
 
-        if (token.type != TOKEN_WORD) {
+        if (!is_string(token.type) && token.type != TOKEN_FUN) {
             is_command_start = true;
             z_da_append(&tmp, token);
         } else if (!is_command_start) {

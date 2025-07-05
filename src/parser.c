@@ -166,16 +166,16 @@ Token consume_argument(const char *msg)
     return peek();
 }
 
-void synchronize()
-{
-    match(TOKEN_STATEMENT_END);
-    while (!is_at_end() && advance().type != TOKEN_STATEMENT_END) {}
-    panic_mode = false;
-}
-
 void skip_empty_statements()
 {
     while (!is_at_end() && match(TOKEN_STATEMENT_END)) { }
+}
+
+void synchronize()
+{
+    skip_empty_statements();
+    while (!is_at_end() && advance().type != TOKEN_STATEMENT_END) {}
+    panic_mode = false;
 }
 
 Statement *create_statement_if(Job *condition, Statement_Vec ifBranch, Statement_Vec elseBranch)
@@ -272,7 +272,6 @@ Job *parse_simple_command()
 
     if (argv.len == 0) {
         error(peek(), "Expected command.");
-        return NULL;
     }
 
     return create_command(argv);
@@ -347,12 +346,10 @@ Statement_Vec parse_block_utill(Token_Type types[], int len)
 
     while (!is_at_end() && !check_array(types, len)) {
 
-        Statement *statement = parse_statement();
+        z_da_append(&statements, parse_statement());
 
-        if (statement == NULL) {
+        if (panic_mode) {
             synchronize();
-        } else {
-            z_da_append(&statements, statement);
         }
 
         skip_empty_statements();
@@ -372,10 +369,6 @@ Statement *parse_if_statement()
     Token_Type if_body_end[] = { TOKEN_ELSE, TOKEN_END };
 
     Job *condition = parse_job();
-
-    if (condition == NULL) {
-        return NULL;
-    }
 
     skip_empty_statements();
 
@@ -399,44 +392,24 @@ Statement *parse_while_statement()
 {
     Job *condition = parse_job();
 
-    if (condition == NULL) {
-        return NULL;
-    }
-
     skip_empty_statements();
 
     Statement_Vec body = parse_block_utill_end();
 
-    consume(TOKEN_END, "Expected 'end' after if statement");
+    consume(TOKEN_END, "Expected 'end' after while statement");
 
     return create_statement_while(condition, body);
 }
 
 Statement *parse_for_statement()
 {
-    if (!check_string()) {
-        error(peek(), "Expected idenifier after for.");
-        return NULL;
-    }
-
-    Token var_name = advance();
+    Token var_name = consume_string( "Expected idenifier after for.");
     consume(TOKEN_IN, "Expected 'in' after idenifier.");
 
-    if (!check_string()) {
-        error(peek(), "Expected string after in.");
-        return NULL;
-    }
-
-    Token string = advance();
-
+    Token string  = consume_string( "Expected string after in.");
     consume(TOKEN_BY, "Expected 'by' after idenifier.");
 
-    if (!check_string()) {
-        error(peek(), "Expected delimeter string after by.");
-        return NULL;
-    }
-
-    Token delim = advance();
+    Token delim = consume_string("Expected delimeter string after by.");
 
     skip_empty_statements();
 
@@ -477,20 +450,7 @@ Statement_Vec parse(const Token_Vec *t, Z_String_View s)
     panic_mode = false;
     source = s;
 
-    Statement_Vec statements = {0};
-    skip_empty_statements();
-
-    while (!is_at_end()) {
-        Statement *statement = parse_statement();
-
-        if (statement == NULL) {
-            synchronize();
-        } else {
-            z_da_append(&statements, statement);
-        }
-
-        skip_empty_statements();
-    }
+    Statement_Vec statements = parse_block_utill(NULL, 0);
 
     if (had_error) {
         parser_free(&statements);
