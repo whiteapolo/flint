@@ -1,22 +1,36 @@
+#include <dirent.h>
 #define LIBZATAR_IMPLEMENTATION
 #include "src/libzatar.h"
+
+void append_folder(Z_Cmd *cmd, const char *dirname)
+{
+    DIR *dir = opendir(dirname);
+    if (!dir) return;
+
+    struct dirent *de;
+
+    Z_String path = {0};
+
+    while ((de = readdir(dir))) {
+        if (z_sv_ends_with(Z_CSTR_TO_SV(de->d_name), Z_CSTR_TO_SV(".c"))) {
+            path.len = 0;
+            z_str_append_format(&path, "%s/%s", dirname, de->d_name);
+            z_cmd_append(cmd, z_str_to_cstr(&path));
+        }
+    }
+
+    z_str_free(&path);
+    closedir(dir);
+}
 
 int main(int argc, char **argv)
 {
     z_rebuild_yourself(__FILE__, argv);
 
     Z_Cmd cmd = {0};
-    z_cmd_append(&cmd, "cc", "src/main.c", "-o", "exe");
-    z_cmd_append(&cmd, "src/lexer.c", "src/token.c", "src/parser.c");
-    z_cmd_append(&cmd, "src/eval.c", "src/print_ast.c", "src/environment.c");
-    z_cmd_append(&cmd, "src/expantion.c", "src/interpreter.c");
-    z_cmd_append(&cmd, "src/builtins/cd.c", "src/builtins/builtin.c", "src/builtins/exit.c");
-    z_cmd_append(&cmd, "src/builtins/alias.c", "src/builtins/mut.c", "src/builtins/export.c");
-    z_cmd_append(&cmd, "src/builtins/let.c", "src/builtins/test.c", "src/builtins/len.c");
-    z_cmd_append(&cmd, "src/builtins/print.c", "src/builtins/println.c",  "src/builtins/time.c");
-    z_cmd_append(&cmd, "src/builtins/command.c");
-    z_cmd_append(&cmd, "src/error.c");
-    z_cmd_append(&cmd, "src/scanner.c");
+    z_cmd_append(&cmd, "cc", "-o", "exe");
+    append_folder(&cmd, "src/builtins");
+    append_folder(&cmd, "src");
     z_cmd_append(&cmd, "-Wextra", "-Wall", "-Wno-unused-result");
     z_cmd_append(&cmd, "-lreadline");
     z_cmd_append(&cmd, "-g");

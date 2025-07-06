@@ -78,6 +78,7 @@ void initialize_function_arguments(char **argv)
         environment_create_variable(&environment, z_str_to_cstr(&name), argv[i]);
     }
 
+    z_str_trim(&all);
     environment_create_variable(&environment, "@", z_str_to_cstr(&all));
 
     z_str_free(&all);
@@ -297,7 +298,7 @@ void evaluate_for(Statement_For *statement)
 
     environment_create_variable(&environment, z_str_to_cstr(&name), "");
 
-    Z_STR_TOK_FOREACH(Z_CSTR_TO_SV(string.ptr[0]), Z_CSTR_TO_SV(delim.ptr[0]), tok) {
+    z_str_tok_foreach(Z_CSTR_TO_SV(string.ptr[0]), Z_CSTR_TO_SV(delim.ptr[0]), tok) {
         value.len = 0;
         z_str_append_str(&value, tok);
         environment_mut_variable(&environment, z_str_to_cstr(&name), z_str_to_cstr(&value));

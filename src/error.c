@@ -3,6 +3,8 @@
 #include "token.h"
 #include <stdarg.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
 
 void syntax_error(const char *fmt, ...)
 {
@@ -73,3 +75,15 @@ void syntax_error_at_token_va(Z_String_View source, Token token, const char *fmt
     print_str_without_tabs(line);
     fprintf(stderr, "\n      | %*s"Z_COLOR_RED"^"Z_COLOR_RESET"\n", (int)(token.lexeme.ptr - line.ptr), "");
 }
+
+// const char *get_random_assult()
+// {
+//     srand(time(NULL));
+//     const char *assults[] = {
+//         "You suck",
+//         "Stupid",
+//         "Dumb you",
+//         "You're like a cloud... when you disappear, it's a beutiful day."
+//     }
+
+// }

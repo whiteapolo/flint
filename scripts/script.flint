@@ -1,5 +1,13 @@
-fn ech
-    println "$@"
+# fn append
+#     mut "$1" "$1$2"
+# end
+
+
+fn lior
+    println "Hello world"
 end
 
-ech bye dihdi
+let i "$(lior $(lior))"
+
+println "$i"
+

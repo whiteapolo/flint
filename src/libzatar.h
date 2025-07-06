@@ -672,11 +672,12 @@ int z_str_compare(Z_String_View s1, Z_String_View s2);
 int z_str_compare_n(Z_String_View s1, Z_String_View s2, int n);
 void z_str_replace(Z_String *s, Z_String_View target, Z_String_View replacement);
 char *z_sv_to_cstr(Z_String_View s);
+bool z_sv_ends_with(Z_String_View s, Z_String_View end);
 
 bool z_str_contains(Z_String_View s, char c);
 int z_str_chr(Z_String_View s, char c);
 
-#define Z_STR_TOK_FOREACH(s, delim, tok) \
+#define z_str_tok_foreach(s, delim, tok) \
     for (Z_String_View tok = z_str_tok_start(s, delim); tok.len > 0; tok = z_str_tok_next(s, tok, delim))
 
 Z_String_View z_str_tok_start(Z_String_View s, Z_String_View delim);
@@ -730,7 +731,6 @@ bool z_redirect_fd(int src_fd, const char *dst_pathname);
 bool z_popen2(char *path, char *argv[], FILE *ppipe[2]);
 
 bool z_mkdir(const char *pathname);
-
 
 // ----------------------------------------------------------------------
 //
@@ -1378,6 +1378,20 @@ void z_str_replace(Z_String *s, Z_String_View target, Z_String_View replacement)
 char *z_sv_to_cstr(Z_String_View s)
 {
     return strndup(s.ptr, s.len);
+}
+
+bool z_sv_ends_with(Z_String_View s, Z_String_View end)
+{
+    if (s.len < end.len) {
+        return false;
+    }
+
+    Z_String_View endings = {
+        .ptr = s.ptr + s.len - end.len,
+        .len = end.len,
+    };
+
+    return !z_str_compare(endings, end);
 }
 
 bool z_str_contains(Z_String_View s, char c)
