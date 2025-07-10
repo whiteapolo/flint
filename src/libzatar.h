@@ -89,6 +89,9 @@ int z_print_warning(const char *fmt, ...);
         memset(&(da)->ptr[(da)->len], 0, sizeof(*(da)->ptr));  \
     } while (0)
 
+#define z_da_foreach(it, da) \
+    for (typeof((da)->ptr) it = da->ptr; it < da->ptr + da->len; it++)
+
 // ----------------------------------------------------------------------
 //
 //   cursor header
