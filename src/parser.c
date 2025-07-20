@@ -203,8 +203,9 @@ Statement *create_statement_function(Token name, Statement_Vec body)
 {
     Statement_Function *node = malloc(sizeof(Statement_Function));
     node->type = STATEMENT_FUNCTION;
-    node->name = name;
     node->body = body;
+
+    node->name = strndup(name.lexeme.ptr, name.lexeme.len);
 
     return (Statement *)node;
 }
@@ -214,10 +215,11 @@ Statement *create_statement_for(Token var_name, Token string, Token delim, State
 {
     Statement_For *node = malloc(sizeof(Statement_For));
     node->type = STATEMENT_FOR;
-    node->var_name = var_name;
-    node->string = string;
-    node->delim = delim;
     node->body = body;
+
+    node->var_name = strndup(var_name.lexeme.ptr, var_name.lexeme.len);
+    node->string = strndup(string.lexeme.ptr, string.lexeme.len);
+    node->delim = strndup(delim.lexeme.ptr, delim.lexeme.len);
 
     return (Statement *)node;
 }
@@ -236,7 +238,7 @@ Job *create_binary(Job *left, Token operator, Job *right)
     Job_Binary *node = malloc(sizeof(Job_Binary));
     node->type = JOB_BINARY;
     node->left = left;
-    node->operator = operator;
+    node->operator = strndup(operator.lexeme.ptr, operator.lexeme.len);
     node->right = right;
 
     return (Job *)node;
@@ -246,7 +248,7 @@ Job *create_unary(Token operator, Job *child)
 {
     Job_Unary *node = malloc(sizeof(Job_Unary));
     node->type = JOB_UNARY;
-    node->operator = operator;
+    node->operator = strndup(operator.lexeme.ptr, operator.lexeme.len);
     node->child = child;
 
     return (Job *)node;
@@ -507,8 +509,8 @@ void free_for_statement(Statement_For *statement)
 
 void free_function_statement(Statement_Function *statement)
 {
-    free_statements(&statement->body);
-    free(statement);
+    // free_statements(&statement->body);
+    // free(statement);
 }
 
 void free_job_statement(Statement_Job *statement)

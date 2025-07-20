@@ -2,6 +2,7 @@
 #define PARSER_H
 
 #include "lexer.h"
+#include "libzatar.h"
 #include "token.h"
 #include <stdbool.h>
 
@@ -28,13 +29,13 @@ typedef struct {
 
 typedef struct {
     Job_Type type;
-    Token operator;
+    char *operator;
     Job *child;
 } Job_Unary;
 
 typedef struct {
     Job_Type type;
-    Token operator;
+    char *operator;
     Job *left;
     Job *right;
 } Job_Binary;
@@ -77,15 +78,15 @@ typedef struct {
 
 typedef struct {
     Statement_Type type;
-    Token var_name;
-    Token string;
-    Token delim;
+    char *var_name;
+    char *string;
+    char *delim;
     Statement_Vec body;
 } Statement_For;
 
 typedef struct {
     Statement_Type type;
-    Token name;
+    char *name;
     Statement_Vec body;
 } Statement_Function;
 

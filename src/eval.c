@@ -8,13 +8,12 @@
 
 #include "environment.h"
 #include "libzatar.h"
+#include "state.h"
 #include "token.h"
 #include "eval.h"
 #include "builtins/builtin.h"
 #include "parser.h"
 #include "expantion.h"
-
-extern Environment environment;
 
 int evaluate_job(Job *job);
 void evaluate_block(Statement_Vec statements);
@@ -75,11 +74,12 @@ void initialize_function_arguments(char **argv)
         name.len = 0;
         z_str_append_format(&name, "%d", i);
         z_str_append_format(&all, "%s ", argv[i]);
-        environment_create_variable(&environment, z_str_to_cstr(&name), argv[i]);
+        action_create_variable(Z_STR_TO_SV(name), Z_CSTR_TO_SV(argv[i]));
     }
 
     z_str_trim(&all);
-    environment_create_variable(&environment, "@", z_str_to_cstr(&all));
+
+    action_create_variable(Z_CSTR_TO_SV("@"), Z_STR_TO_SV(all));
 
     z_str_free(&all);
     z_str_free(&name);
@@ -87,14 +87,12 @@ void initialize_function_arguments(char **argv)
 
 void call_function(Statement_Function *f, char **argv)
 {
-    Environment previous_envirnoment = environment;
-    environment = environment_new(&previous_envirnoment);
+    action_push_environment();
 
     initialize_function_arguments(argv);
     evaluate_statements(f->body);
 
-    environment_free(&environment);
-    environment = previous_envirnoment;
+    action_pop_environment();
 }
 
 int exec_command(char **argv)
@@ -103,7 +101,7 @@ int exec_command(char **argv)
         return 0;
     }
 
-    Statement_Function *f = environment_get_function(&environment, Z_CSTR_TO_SV(argv[0]));
+    Statement_Function *f = select_function(Z_CSTR_TO_SV(argv[0]));
 
     if (f) {
         call_function(f, argv);
@@ -257,13 +255,11 @@ int evaluate_job(Job *job)
 
 void evaluate_block(Statement_Vec statements)
 {
-    Environment previous_envirnoment = environment;
-    environment = environment_new(&previous_envirnoment);
+    action_push_environment();
 
     evaluate_statements(statements);
 
-    environment_free(&environment);
-    environment = previous_envirnoment;
+    action_pop_environment();
 }
 
 void evaluate_if(Statement_If *statement)
@@ -284,8 +280,7 @@ void evaluate_while(Statement_While *statement)
 
 void evaluate_for(Statement_For *statement)
 {
-    Environment previous_envirnoment = environment;
-    environment = environment_new(&previous_envirnoment);
+    action_push_environment();
 
 
     String_Vec delim = {0};
@@ -296,12 +291,12 @@ void evaluate_for(Statement_For *statement)
     Z_String name = z_str_new_from(statement->var_name.lexeme);
     Z_String value = {0};
 
-    environment_create_variable(&environment, z_str_to_cstr(&name), "");
+    action_create_variable(Z_STR_TO_SV(name), Z_CSTR_TO_SV(""));
 
     z_str_tok_foreach(Z_CSTR_TO_SV(string.ptr[0]), Z_CSTR_TO_SV(delim.ptr[0]), tok) {
         value.len = 0;
         z_str_append_str(&value, tok);
-        environment_mut_variable(&environment, z_str_to_cstr(&name), z_str_to_cstr(&value));
+        action_mutate_variable(z_str_to_cstr(&name), z_str_to_cstr(&value));
         evaluate_block(statement->body);
     }
 
@@ -312,13 +307,12 @@ void evaluate_for(Statement_For *statement)
     free_string_array(delim.ptr);
     free_string_array(string.ptr);
 
-    environment_free(&environment);
-    environment = previous_envirnoment;
+    action_pop_environment();
 }
 
 void evaluate_function(Statement_Function *function)
 {
-    environment_create_function(&environment, function->name.lexeme, function);
+    action_create_fuction(function->name.lexeme, function);
 }
 
 int evaluate_statement(Statement *statement)

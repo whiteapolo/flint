@@ -660,6 +660,7 @@ typedef struct {
 #define Z_STR_TO_SV(s)      ((Z_String_View){ .ptr = (s).ptr, .len = (s).len    })
 #define Z_CSTR_TO_SV(s)     ((Z_String_View){ .ptr = (s), .len = strlen(s)      })
 #define Z_EMPTY_SV()        ((Z_String_View){ .ptr = "", .len = 0               })
+#define Z_EMPTY_STR()       ((Z_String){0})
 
 const char *z_str_to_cstr(Z_String *s);
 Z_String z_str_new_format(const char *fmt, ...);

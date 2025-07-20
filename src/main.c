@@ -14,6 +14,7 @@
 
 #include "environment.h"
 #include "interpreter.h"
+#include "state.h"
 
 #define INIT_FILE_PATH "~/.config/flint/init.flint"
 
@@ -22,8 +23,6 @@
 #endif
 
 static Z_String prompt = {0};
-
-Environment environment;
 
 void update_prompt()
 {
@@ -86,7 +85,7 @@ void execute_init_file()
 
 int main(int argc, char **argv)
 {
-    environment = environment_new(NULL);
+    initialize_state();
     execute_init_file();
 
     if (argc == 1) {

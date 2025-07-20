@@ -4,6 +4,7 @@
 #include "interpreter.h"
 #include "libzatar.h"
 #include "scanner.h"
+#include "state.h"
 #include "token.h"
 #include <ctype.h>
 #include <stdbool.h>
@@ -12,12 +13,10 @@
 #include <string.h>
 #include "builtins/builtin.h"
 
-extern Environment environment;
-
 void resolve_var(Z_String_View var, Z_String *output)
 {
-    extern Environment environment;
-    z_str_append_str(output, environment_get(&environment, var));
+    // z_str_append_str(output, select_variable(var));
+    z_str_append_format(output, "%s", select_variable(var));
 }
 
 static void command_substitution(Scanner *scanner, Z_String *output);
@@ -91,7 +90,7 @@ void braced_variable(Scanner *scanner, Z_String *output)
 
     Z_String_View variable_name = Z_SV(scanner->start, scanner->curr - scanner->start);
 
-    z_str_append_str(output, environment_get(&environment, variable_name));
+    z_str_append_format(output, "%s", select_variable(variable_name));
     scanner_advance(scanner); // eat the '}'
 }
 
@@ -108,7 +107,7 @@ void variable(Scanner *scanner, Z_String *output)
         scanner_advance(scanner);
     }
 
-    z_str_append_str(output, environment_get(&environment, Z_SV(scanner->start, scanner->curr - scanner->start)));
+    z_str_append_format(output, "%s", select_variable(Z_SV(scanner->start, scanner->curr - scanner->start)));
 }
 
 char escaped_char(char c)
@@ -218,7 +217,7 @@ char **expand_argv(Argv argv)
 
 void expand_alias(Token key, Token_Vec *output)
 {
-    const char *value = get_alias(key.lexeme);
+    const char *value = select_alias(key.lexeme);
 
     if (!value) {
         z_da_append(output, key);
