@@ -4,9 +4,9 @@
 #include "eval.h"
 
 typedef struct {
-    char **ptr;
-    int len;
-    int capacity;
+  char **ptr;
+  int len;
+  int cap;
 } String_Vec;
 
 void expand_token(Token token, String_Vec *out);

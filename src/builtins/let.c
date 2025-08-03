@@ -13,7 +13,7 @@ int builtin_let(int argc, char **argv)
     const char *name = argv[1];
     const char *value = argv[2];
 
-    action_create_variable(Z_CSTR_TO_SV(name), Z_CSTR_TO_SV(value));
+    action_create_variable(Z_CSTR(name), Z_CSTR(value));
 
     return 0;
 }

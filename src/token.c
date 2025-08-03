@@ -18,7 +18,7 @@ Token dup_token(Token token) {
       .column = token.column,
       .line = token.line,
       .type = token.type,
-      .lexeme = z_str_new_from(Z_STR_TO_SV(token.lexeme)),
+      .lexeme = z_str_new_from(Z_STR(token.lexeme)),
   };
 
   return new_token;
@@ -28,7 +28,7 @@ const int keywords_len = Z_ARRAY_LEN(keywords);
 
 const Keyword *get_keyword(Z_String_View lexeme) {
   for (int i = 0; i < keywords_len; i++) {
-    if (!z_str_compare(lexeme, Z_CSTR_TO_SV(keywords[i].lexeme))) {
+    if (!z_str_compare(lexeme, Z_CSTR(keywords[i].lexeme))) {
       return &keywords[i];
     }
   }

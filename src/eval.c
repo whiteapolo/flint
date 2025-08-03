@@ -68,12 +68,12 @@ void initialize_function_arguments(char **argv) {
     name.len = 0;
     z_str_append_format(&name, "%d", i);
     z_str_append_format(&all, "%s ", argv[i]);
-    action_create_variable(Z_STR_TO_SV(name), Z_CSTR_TO_SV(argv[i]));
+    action_create_variable(Z_STR(name), Z_CSTR(argv[i]));
   }
 
   z_str_trim(&all);
 
-  action_create_variable(Z_CSTR_TO_SV("@"), Z_STR_TO_SV(all));
+  action_create_variable(Z_CSTR("@"), Z_STR(all));
 
   z_str_free(&all);
   z_str_free(&name);
@@ -93,7 +93,7 @@ int exec_command(char **argv) {
     return 0;
   }
 
-  Statement_Function *f = select_function(Z_CSTR_TO_SV(argv[0]));
+  Statement_Function *f = select_function(Z_CSTR(argv[0]));
 
   if (f) {
     call_function(f, argv);
@@ -266,13 +266,12 @@ void evaluate_for(Statement_For *statement) {
   expand_token(statement->delim, &delim);
   expand_token(statement->string, &string);
 
-  Z_String name = z_str_new_from(Z_STR_TO_SV(statement->var_name.lexeme));
+  Z_String name = z_str_new_from(Z_STR(statement->var_name.lexeme));
   Z_String value = {0};
 
-  action_create_variable(Z_STR_TO_SV(name), Z_CSTR_TO_SV(""));
+  action_create_variable(Z_STR(name), Z_CSTR(""));
 
-  z_str_tok_foreach(Z_CSTR_TO_SV(string.ptr[0]), Z_CSTR_TO_SV(delim.ptr[0]),
-                    tok) {
+  z_str_split_cset_foreach(Z_CSTR(string.ptr[0]), Z_CSTR(delim.ptr[0]), tok) {
     value.len = 0;
     z_str_append_str(&value, tok);
     action_mutate_variable(z_str_to_cstr(&name), z_str_to_cstr(&value));
@@ -290,7 +289,7 @@ void evaluate_for(Statement_For *statement) {
 }
 
 void evaluate_function(Statement_Function *function) {
-  action_create_fuction(Z_STR_TO_SV(function->name.lexeme), function);
+  action_create_fuction(Z_STR(function->name.lexeme), function);
 }
 
 int evaluate_statement(Statement *statement) {

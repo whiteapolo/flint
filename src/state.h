@@ -12,7 +12,7 @@ typedef struct {
 typedef struct {
   Environment *ptr;
   int len;
-  int capacity;
+  int cap;
 } Environment_Vec;
 
 typedef struct {

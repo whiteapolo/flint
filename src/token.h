@@ -44,7 +44,7 @@ typedef struct {
 typedef struct {
   Token *ptr;
   int len;
-  int capacity;
+  int cap;
 } Token_Vec;
 
 Token dup_token(Token token);

@@ -72,7 +72,7 @@
 //     const char *value = environment_get_cstr(environment, _name);
 //     free(_name);
 
-//     return Z_CSTR_TO_SV(value);
+//     return Z_CSTR(value);
 // }
 
 // Statement_Function *environment_get_function(const Environment *environment, Z_String_View name)

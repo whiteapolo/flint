@@ -33,9 +33,9 @@ void update_prompt() {
     return;
   }
 
-  Z_String compressed_pwd = z_compress_path(Z_CSTR_TO_SV(pwd));
+  Z_String compressed_pwd = z_compress_path(Z_CSTR(pwd));
   z_str_append_format(&prompt, Z_COLOR_MAGENTA);
-  z_str_append_str(&prompt, Z_STR_TO_SV(compressed_pwd));
+  z_str_append_str(&prompt, Z_STR(compressed_pwd));
   z_str_append_format(&prompt, Z_COLOR_GREEN);
   z_str_append_format(&prompt, "::dev:: ");
   z_str_append_format(&prompt, Z_COLOR_RESET);
@@ -48,7 +48,7 @@ void repl() {
 
   while ((line = readline(z_str_to_cstr(&prompt)))) {
     add_history(line);
-    interpret(Z_CSTR_TO_SV(line));
+    interpret(Z_CSTR(line));
     update_prompt();
     free(line);
   }
@@ -62,7 +62,7 @@ void execute_file_from_raw_path(const char *pathname) {
     return;
   }
 
-  interpret(Z_STR_TO_SV(file_content));
+  interpret(Z_STR(file_content));
   z_str_free(&file_content);
 }
 
@@ -74,7 +74,7 @@ void execute_file(Z_String_View pathname) {
 }
 
 void execute_init_file() {
-  Z_String_View init_file = Z_CSTR_TO_SV(INIT_FILE_PATH);
+  Z_String_View init_file = Z_CSTR(INIT_FILE_PATH);
   execute_file(init_file);
 }
 
@@ -85,7 +85,7 @@ int main(int argc, char **argv) {
   if (argc == 1) {
     repl();
   } else if (argc == 2) {
-    execute_file(Z_CSTR_TO_SV(argv[1]));
+    execute_file(Z_CSTR(argv[1]));
   } else {
     z_die_format("Flint: Usage: Flint <path>\n");
   }

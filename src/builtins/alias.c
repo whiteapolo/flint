@@ -12,8 +12,8 @@ int builtin_alias(int argc, char **argv)
         return 1;
     }
 
-    Z_String_View key = Z_CSTR_TO_SV(argv[1]);
-    Z_String_View value = Z_CSTR_TO_SV(argv[2]);
+    Z_String_View key = Z_CSTR(argv[1]);
+    Z_String_View value = Z_CSTR(argv[2]);
 
     action_put_alias(key, value);
 

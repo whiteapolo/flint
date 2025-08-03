@@ -9,7 +9,7 @@
 typedef struct {
   Token *ptr;
   int len;
-  int capacity;
+  int cap;
 } Argv;
 
 typedef enum {
@@ -55,7 +55,7 @@ typedef struct {
 typedef struct {
   Statement **ptr;
   int len;
-  int capacity;
+  int cap;
 } Statement_Vec;
 
 typedef struct {

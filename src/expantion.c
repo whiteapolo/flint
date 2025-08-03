@@ -133,7 +133,7 @@ void escape_sequence(Scanner *scanner, Z_String *output) {
 }
 
 void expand_dqouted_string(Token token, String_Vec *output) {
-  Scanner scanner = scanner_new(Z_STR_TO_SV(token.lexeme));
+  Scanner scanner = scanner_new(Z_STR(token.lexeme));
 
   Z_String exapnded = {0};
 
@@ -162,7 +162,7 @@ void expand_word(Token token, String_Vec *output) {
   String_Vec tmp = {0};
   expand_dqouted_string(token, &tmp);
 
-  z_str_tok_foreach(Z_CSTR_TO_SV(tmp.ptr[0]), Z_CSTR_TO_SV(" \n"), word) {
+  z_str_split_cset_foreach(Z_CSTR(tmp.ptr[0]), Z_CSTR(" \n"), word) {
     z_da_append(output, strndup(word.ptr, word.len));
   }
 
@@ -171,7 +171,7 @@ void expand_word(Token token, String_Vec *output) {
 }
 
 void expand_sqouted_string(Token token, String_Vec *output) {
-  Scanner scanner = scanner_new(Z_STR_TO_SV(token.lexeme));
+  Scanner scanner = scanner_new(Z_STR(token.lexeme));
   Z_String expanded = {0};
 
   while (!scanner_is_at_end(&scanner)) {
@@ -212,12 +212,12 @@ char **expand_argv(Argv argv) {
 }
 
 void expand_alias(Token key, Token_Vec *output) {
-  const char *value = select_alias(Z_STR_TO_SV(key.lexeme));
+  const char *value = select_alias(Z_STR(key.lexeme));
 
   if (!value) {
     z_da_append(output, key);
   } else {
-    Token_Vec tmp = lexer_get_tokens(Z_CSTR_TO_SV(value));
+    Token_Vec tmp = lexer_get_tokens(Z_CSTR(value));
     z_da_append_da(output, &tmp);
     output->len--; // remove EOF token
     free(tmp.ptr);
