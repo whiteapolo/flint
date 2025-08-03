@@ -1,4 +1,5 @@
 #include <dirent.h>
+#include <unistd.h>
 #define LIBZATAR_IMPLEMENTATION
 #include "src/libzatar.h"
 
@@ -12,7 +13,7 @@ void append_folder(Z_Cmd *cmd, const char *dirname) {
   Z_String path = {0};
 
   while ((de = readdir(dir))) {
-    if (z_sv_ends_with(Z_CSTR_TO_SV(de->d_name), Z_CSTR_TO_SV(".c"))) {
+    if (z_sv_ends_with(Z_CSTR(de->d_name), Z_CSTR(".c"))) {
       path.len = 0;
       z_str_append_format(&path, "%s/%s", dirname, de->d_name);
       z_cmd_append(cmd, z_str_to_cstr(&path));
@@ -24,6 +25,7 @@ void append_folder(Z_Cmd *cmd, const char *dirname) {
 }
 
 int main(int argc, char **argv) {
+  sleep(1);
   z_rebuild_yourself(__FILE__, argv);
 
   Z_Cmd cmd = {0};
@@ -35,5 +37,5 @@ int main(int argc, char **argv) {
   z_cmd_append(&cmd, "-g");
   z_cmd_append(&cmd, "-O0");
 
-  return z_cmd_run_async(&cmd);
+  return z_cmd_run_sync(&cmd);
 }

@@ -4,23 +4,21 @@
 #include "libzatar.h"
 #include "parser.h"
 
-Z_MAP_DECLARE(Map, void *, void *, map)
-
 typedef struct {
-    Map variables;
-    Map functions;
+  Z_Map variables;
+  Z_Map functions;
 } Environment;
 
 typedef struct {
-    Environment *ptr;
-    int len;
-    int capacity;
+  Environment *ptr;
+  int len;
+  int capacity;
 } Environment_Vec;
 
 typedef struct {
-    Environment_Vec env;
-    Z_String buf;
-    Map alias;
+  Environment_Vec env;
+  Z_String buf;
+  Z_Map alias;
 } State;
 
 void initialize_state();

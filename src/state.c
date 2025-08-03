@@ -4,8 +4,6 @@
 #include <stdio.h>
 #include <string.h>
 
-Z_MAP_IMPLEMENT(Map, void *, void *, map)
-
 typedef int (*CompareFn)(const void *, const void *);
 typedef void (*FreeFn)(void *);
 
