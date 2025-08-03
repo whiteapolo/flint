@@ -1,6 +1,7 @@
 #include "token.h"
 #include "libzatar.h"
 #include <stdio.h>
+#include <stdlib.h>
 
 const Keyword keywords[] = {
     {.type = TOKEN_FOR, .lexeme = "for"},
@@ -22,6 +23,11 @@ Token dup_token(Token token) {
   };
 
   return new_token;
+}
+
+void free_tokens(Token_Vec *tokens) {
+  z_da_foreach(token, tokens) { z_str_free(&token->lexeme); }
+  z_da_free(tokens);
 }
 
 const int keywords_len = Z_ARRAY_LEN(keywords);

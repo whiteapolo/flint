@@ -47,6 +47,7 @@ typedef struct {
   int cap;
 } Token_Vec;
 
+void free_tokens(Token_Vec *tokens);
 Token dup_token(Token token);
 void print_token(Token token);
 const char *token_type_to_string(Token_Type type);

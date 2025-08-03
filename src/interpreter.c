@@ -17,7 +17,7 @@ void interpret(Z_String_View source) {
   // print_statements(statements);
   evaluate_statements(statements);
   parser_free(&statements);
-  free(tokens.ptr);
+  free_tokens(&tokens);
 }
 
 void interpret_to(Z_String_View source, Z_String *output) {
