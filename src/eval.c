@@ -7,7 +7,6 @@
 #include <unistd.h>
 
 #include "builtins/builtin.h"
-#include "environment.h"
 #include "eval.h"
 #include "expantion.h"
 #include "libzatar.h"

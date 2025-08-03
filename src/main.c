@@ -12,7 +12,6 @@
 #include <sys/ucontext.h>
 #include <unistd.h>
 
-#include "environment.h"
 #include "interpreter.h"
 #include "state.h"
 

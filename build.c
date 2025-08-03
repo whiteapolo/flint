@@ -25,7 +25,6 @@ void append_folder(Z_Cmd *cmd, const char *dirname) {
 }
 
 int main(int argc, char **argv) {
-  sleep(1);
   z_rebuild_yourself(__FILE__, argv);
 
   Z_Cmd cmd = {0};

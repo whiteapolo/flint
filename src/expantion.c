@@ -1,6 +1,5 @@
 #include "expantion.h"
 #include "builtins/builtin.h"
-#include "environment.h"
 #include "eval.h"
 #include "interpreter.h"
 #include "libzatar.h"
