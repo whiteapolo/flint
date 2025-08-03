@@ -5,12 +5,12 @@
 #include <stdbool.h>
 
 typedef struct {
-    const char *source;
-    const char *start;
-    const char *curr;
-    const char *end;
-    int line;
-    int column;
+  const char *source;
+  const char *start;
+  const char *curr;
+  const char *end;
+  int line;
+  int column;
 } Scanner;
 
 bool scanner_is_at_end(const Scanner *scanner);
