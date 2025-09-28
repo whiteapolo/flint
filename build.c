@@ -3,7 +3,8 @@
 #define LIBZATAR_IMPLEMENTATION
 #include "src/libzatar.h"
 
-void append_folder(Z_Cmd *cmd, const char *dirname) {
+void append_folder(Z_Cmd *cmd, const char *dirname)
+{
   DIR *dir = opendir(dirname);
   if (!dir)
     return;
@@ -24,7 +25,8 @@ void append_folder(Z_Cmd *cmd, const char *dirname) {
   closedir(dir);
 }
 
-int main(int argc, char **argv) {
+int main(int argc, char **argv)
+{
   z_rebuild_yourself(__FILE__, argv);
 
   Z_Cmd cmd = {0};
