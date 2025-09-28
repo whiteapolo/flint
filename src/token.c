@@ -25,8 +25,10 @@ Token dup_token(Token token) {
   return new_token;
 }
 
+void free_token(Token *token) { z_str_free(&token->lexeme); }
+
 void free_tokens(Token_Vec *tokens) {
-  z_da_foreach(token, tokens) { z_str_free(&token->lexeme); }
+  z_da_foreach(token, tokens) { free_token(token); }
   z_da_free(tokens);
 }
 

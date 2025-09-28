@@ -94,4 +94,19 @@ Statement_Vec parse(const Token_Vec *t, Z_String_View s);
 void parser_free(Statement_Vec *node);
 void free_function_statement(Statement_Function *statement);
 
+Statement_Vec dup_statements(Statement_Vec statements);
+Job *dup_job(const Job *job);
+Statement *dup_statement_function(const Statement_Function *fn);
+Statement *dup_statement_if(const Statement_If *statement);
+Statement *dup_statement_for(const Statement_For *statement);
+Statement *dup_statement_job(const Statement_Job *statement);
+Statement *dup_statement_while(const Statement_While *statement);
+
+
+Argv dup_argv(Argv argv);
+Job *dup_job(const Job *job);
+Job *dup_job_binary(const Job_Binary *job);
+Job *dup_job_unary(const Job_Unary *job);
+Job *dup_job_command(const Job_Command *job);
+
 #endif

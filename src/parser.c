@@ -470,8 +470,9 @@ void free_for_statement(Statement_For *statement) {
 }
 
 void free_function_statement(Statement_Function *statement) {
-  // free_statements(&statement->body);
-  // free(statement);
+  free_statements(&statement->body);
+  free_token(&statement->name);
+  free(statement);
 }
 
 void free_job_statement(Statement_Job *statement) {
@@ -499,7 +500,7 @@ void free_statement(Statement *statement) {
     break;
 
   case STATEMENT_FUNCTION:
-    free_function_statement((Statement_Function *)statement);
+    // free_function_statement((Statement_Function *)statement);
     break;
   }
 }
@@ -513,3 +514,80 @@ void free_statements(Statement_Vec *statements) {
 }
 
 void parser_free(Statement_Vec *statements) { free_statements(statements); }
+
+Statement *dup_statement(Statement *statement) {
+  switch (statement->type) {
+    case STATEMENT_FUNCTION: return dup_statement_function((const Statement_Function *)statement);
+    case STATEMENT_FOR: return dup_statement_for((const Statement_For *)statement);
+    case STATEMENT_IF: return dup_statement_if((const Statement_If *)statement);
+    case STATEMENT_WHILE: return dup_statement_while((const Statement_While *)statement);
+    case STATEMENT_JOB: return dup_statement_job((const Statement_Job *)statement);
+    default: return NULL;
+  }
+}
+
+Statement_Vec dup_statements(Statement_Vec statements) {
+  Statement_Vec new_statements = {0};
+
+  z_da_foreach(statement, &statements) {
+    z_da_append(&new_statements, dup_statement(*statement));
+  }
+
+  return new_statements;
+}
+
+Job *dup_job(const Job *job) {
+  switch (job->type) {
+    case JOB_BINARY: return dup_job_binary((const Job_Binary *)job);
+    case JOB_UNARY: return dup_job_unary((const Job_Unary *)job);
+    case JOB_COMMAND: return dup_job_command((const Job_Command *)job);
+    default: return NULL;
+  }
+}
+
+Job *dup_job_binary(const Job_Binary *job) {
+  return create_binary(dup_job(job->left), dup_token(job->operator), dup_job(job->right));
+}
+
+Job *dup_job_unary(const Job_Unary *job) {
+  return create_unary(dup_token(job->operator), dup_job(job->child));
+}
+
+Job *dup_job_command(const Job_Command *job) {
+  return create_command(dup_argv(job->argv));
+}
+
+Statement *dup_statement_function(const Statement_Function *fn) {
+  return create_statement_function(fn->name, dup_statements(fn->body));
+}
+
+Statement *dup_statement_if(const Statement_If *statement) {
+  return create_statement_if(
+      dup_job(statement->condition),
+      dup_statements(statement->ifBranch),
+      dup_statements(statement->elseBranch)
+  );
+}
+
+Statement *dup_statement_for(const Statement_For *statement) {
+  return create_statement_for(dup_token(statement->var_name), dup_token(statement->string), dup_token(statement->delim),
+                       dup_statements(statement->body));
+}
+
+Statement *dup_statement_job(const Statement_Job *statement) {
+  return create_statement_job(dup_job(statement->job));
+}
+
+Statement *dup_statement_while(const Statement_While *statement) {
+  return create_statement_while(dup_job(statement->condition), dup_statements(statement->body));
+}
+
+Argv dup_argv(Argv argv) {
+  Argv new_argv = {0};
+
+  z_da_foreach(arg, &argv) {
+    z_da_append(&new_argv, dup_token(*arg));
+  }
+
+  return new_argv;
+}

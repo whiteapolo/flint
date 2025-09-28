@@ -237,9 +237,7 @@ int evaluate_job(Job *job) {
 
 void evaluate_block(Statement_Vec statements) {
   action_push_environment();
-
   evaluate_statements(statements);
-
   action_pop_environment();
 }
 
@@ -288,7 +286,8 @@ void evaluate_for(Statement_For *statement) {
 }
 
 void evaluate_function(Statement_Function *function) {
-  action_create_fuction(Z_STR(function->name.lexeme), function);
+  action_create_fuction(Z_STR(function->name.lexeme), (Statement_Function *)dup_statement_function(function));
+  // action_create_fuction(Z_STR(function->name.lexeme), function);
 }
 
 int evaluate_statement(Statement *statement) {
