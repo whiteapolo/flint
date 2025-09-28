@@ -538,8 +538,7 @@ void free_statement(Statement *statement)
     break;
 
   case STATEMENT_FUNCTION:
-    // TODO
-    // free_function_statement((Statement_Function *)statement);
+    free_function_statement((Statement_Function *)statement);
     break;
   }
 }
