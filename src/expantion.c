@@ -12,8 +12,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-void resolve_var(Z_String_View var, Z_String *output) {
-  // z_str_append_str(output, select_variable(var));
+void resolve_var(Z_String_View var, Z_String *output)
+{
   z_str_append_format(output, "%s", select_variable(var));
 }
 
@@ -22,7 +22,8 @@ static void scanner_advance_single_quoted_string(Scanner *scanner);
 static void scanner_advance_double_quoted_string(Scanner *scanner);
 static void scanner_advance_command_substitution(Scanner *scanner);
 
-static void scanner_advance_command_substitution(Scanner *scanner) {
+static void scanner_advance_command_substitution(Scanner *scanner)
+{
   while (!scanner_is_at_end(scanner)) {
     switch (scanner_advance(scanner)) {
     case '(':
@@ -50,7 +51,8 @@ static void scanner_advance_command_substitution(Scanner *scanner) {
   }
 }
 
-static void scanner_advance_double_quoted_string(Scanner *scanner) {
+static void scanner_advance_double_quoted_string(Scanner *scanner)
+{
   while (!scanner_is_at_end(scanner) && !scanner_check(scanner, '"')) {
     if (scanner_match_string(scanner, "$(")) {
       scanner_advance_command_substitution(scanner);
@@ -60,18 +62,21 @@ static void scanner_advance_double_quoted_string(Scanner *scanner) {
   }
 }
 
-static void scanner_advance_single_quoted_string(Scanner *scanner) {
+static void scanner_advance_single_quoted_string(Scanner *scanner)
+{
   scanner_advance_untill(scanner, '\'');
 }
 
-static void command_substitution(Scanner *scanner, Z_String *output) {
+static void command_substitution(Scanner *scanner, Z_String *output)
+{
   const char *start = scanner->curr;
   scanner_advance_command_substitution(scanner);
 
   interpret_to(Z_SV(start, scanner->curr - start - 1), output);
 }
 
-void braced_variable(Scanner *scanner, Z_String *output) {
+void braced_variable(Scanner *scanner, Z_String *output)
+{
   scanner->start = scanner->curr;
 
   while (!scanner_is_at_end(scanner) && scanner_peek(scanner) != '}') {
@@ -79,8 +84,7 @@ void braced_variable(Scanner *scanner, Z_String *output) {
   }
 
   if (scanner_is_at_end(scanner)) {
-    z_str_append_str(output,
-                     Z_SV(scanner->start, scanner->curr - scanner->start));
+    z_str_append_str(output, Z_SV(scanner->start, scanner->curr - scanner->start));
     return;
   }
 
@@ -91,37 +95,37 @@ void braced_variable(Scanner *scanner, Z_String *output) {
   scanner_advance(scanner); // eat the '}'
 }
 
-bool is_variable_char(char c) {
+bool is_variable_char(char c)
+{
   return isdigit(c) || isalpha(c) || strchr("_?@", c);
 }
 
-void variable(Scanner *scanner, Z_String *output) {
+void variable(Scanner *scanner, Z_String *output)
+{
   scanner->start = scanner->curr;
 
-  while (!scanner_is_at_end(scanner) &&
-         is_variable_char(scanner_peek(scanner))) {
+  while (!scanner_is_at_end(scanner) && is_variable_char(scanner_peek(scanner))) {
     scanner_advance(scanner);
   }
 
   z_str_append_format(
       output, "%s",
-      select_variable(Z_SV(scanner->start, scanner->curr - scanner->start)));
+      select_variable(Z_SV(scanner->start, scanner->curr - scanner->start))
+  );
 }
 
-char escaped_char(char c) {
+char escaped_char(char c)
+{
   switch (c) {
-  case 'n':
-    return '\n';
-  case 't':
-    return '\t';
-  case 'r':
-    return '\r';
-  default:
-    return c;
+  case 'n': return '\n';
+  case 't': return '\t';
+  case 'r': return '\r';
+  default: return c;
   }
 }
 
-void escape_sequence(Scanner *scanner, Z_String *output) {
+void escape_sequence(Scanner *scanner, Z_String *output)
+{
   char c = scanner_advance(scanner);
 
   if (c == '\\' && !scanner_is_at_end(scanner)) {
@@ -131,7 +135,8 @@ void escape_sequence(Scanner *scanner, Z_String *output) {
   }
 }
 
-void expand_dqouted_string(Token token, String_Vec *output) {
+void expand_dqouted_string(Token token, String_Vec *output)
+{
   Scanner scanner = scanner_new(Z_STR(token.lexeme));
 
   Z_String exapnded = {0};
@@ -157,7 +162,8 @@ void expand_dqouted_string(Token token, String_Vec *output) {
   z_da_append(output, (char *)z_str_to_cstr(&exapnded));
 }
 
-void expand_word(Token token, String_Vec *output) {
+void expand_word(Token token, String_Vec *output)
+{
   String_Vec tmp = {0};
   expand_dqouted_string(token, &tmp);
 
@@ -169,7 +175,8 @@ void expand_word(Token token, String_Vec *output) {
   free(tmp.ptr);
 }
 
-void expand_sqouted_string(Token token, String_Vec *output) {
+void expand_sqouted_string(Token token, String_Vec *output)
+{
   Scanner scanner = scanner_new(Z_STR(token.lexeme));
   Z_String expanded = {0};
 
@@ -180,7 +187,8 @@ void expand_sqouted_string(Token token, String_Vec *output) {
   z_da_append(output, (char *)z_str_to_cstr(&expanded));
 }
 
-void expand_token(Token token, String_Vec *out) {
+void expand_token(Token token, String_Vec *out)
+{
   switch (token.type) {
   case TOKEN_WORD:
     expand_word(token, out);
@@ -197,7 +205,8 @@ void expand_token(Token token, String_Vec *out) {
   }
 }
 
-char **expand_argv(Argv argv) {
+char **expand_argv(Argv argv)
+{
   String_Vec expanded = {0};
 
   for (int i = 0; i < argv.len; i++) {
@@ -210,7 +219,8 @@ char **expand_argv(Argv argv) {
   return expanded.ptr;
 }
 
-void expand_alias(Token key, Token_Vec *output) {
+void expand_alias(Token key, Token_Vec *output)
+{
   const char *value = select_alias(Z_STR(key.lexeme));
 
   if (!value) {
@@ -223,12 +233,13 @@ void expand_alias(Token key, Token_Vec *output) {
   }
 }
 
-static bool is_string(Token_Type type) {
-  return type == TOKEN_WORD || type == TOKEN_DQUOTED_STRING ||
-         type == TOKEN_SQUOTED_STRING;
+static bool is_string(Token_Type type)
+{
+  return type == TOKEN_WORD || type == TOKEN_DQUOTED_STRING || type == TOKEN_SQUOTED_STRING;
 }
 
-void expand_aliases(Token_Vec *tokens) {
+void expand_aliases(Token_Vec *tokens)
+{
   Token_Vec tmp = {0};
   bool is_command_start = true;
 

@@ -23,7 +23,8 @@
 
 static Z_String prompt = {0};
 
-void update_prompt() {
+void update_prompt()
+{
   char pwd[PATH_MAX];
   z_str_clear(&prompt);
 
@@ -41,7 +42,8 @@ void update_prompt() {
   z_str_free(&compressed_pwd);
 }
 
-void repl() {
+void repl()
+{
   char *line;
   update_prompt();
 
@@ -53,7 +55,8 @@ void repl() {
   }
 }
 
-void execute_file_from_raw_path(const char *pathname) {
+void execute_file_from_raw_path(const char *pathname)
+{
   Z_String file_content = {0};
 
   if (!z_read_whole_file(pathname, &file_content)) {
@@ -65,19 +68,22 @@ void execute_file_from_raw_path(const char *pathname) {
   z_str_free(&file_content);
 }
 
-void execute_file(Z_String_View pathname) {
+void execute_file(Z_String_View pathname)
+{
   Z_String expanded_path = {0};
   z_expand_path(pathname, &expanded_path);
   execute_file_from_raw_path(z_str_to_cstr(&expanded_path));
   z_str_free(&expanded_path);
 }
 
-void execute_init_file() {
+void execute_init_file()
+{
   Z_String_View init_file = Z_CSTR(INIT_FILE_PATH);
   execute_file(init_file);
 }
 
-int main(int argc, char **argv) {
+int main(int argc, char **argv)
+{
   initialize_state();
   execute_init_file();
 

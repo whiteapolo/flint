@@ -41,19 +41,24 @@ static bool had_error;
 static bool panic_mode;
 static Z_String_View source;
 
-static Token advance() {
+static Token advance()
+{
   assert(curr < tokens->len);
   return tokens->ptr[curr++];
 }
 
-static Token peek() {
+static Token peek()
+{
   assert(curr < tokens->len);
   return tokens->ptr[curr];
 }
 
-static bool is_at_end() { return peek().type == TOKEN_EOD; }
+static bool is_at_end() {
+  return peek().type == TOKEN_EOD;
+}
 
-static bool check(Token_Type type) {
+static bool check(Token_Type type)
+{
   if (panic_mode) {
     return false;
   }
@@ -61,7 +66,8 @@ static bool check(Token_Type type) {
   return peek().type == type;
 }
 
-static bool check_array(Token_Type types[], int len) {
+static bool check_array(Token_Type types[], int len)
+{
   for (int i = 0; i < len; i++) {
     if (check(types[i])) {
       return true;
@@ -71,7 +77,8 @@ static bool check_array(Token_Type types[], int len) {
   return false;
 }
 
-static bool check_keyword() {
+static bool check_keyword()
+{
   Token_Type keywords[] = {
       TOKEN_FOR, TOKEN_IN, TOKEN_FUN, TOKEN_END, TOKEN_ELSE, TOKEN_WHILE,
   };
@@ -79,7 +86,8 @@ static bool check_keyword() {
   return check_array(keywords, Z_ARRAY_LEN(keywords));
 }
 
-static bool check_string() {
+static bool check_string()
+{
   Token_Type string_types[] = {
       TOKEN_WORD,
       TOKEN_DQUOTED_STRING,
@@ -96,7 +104,8 @@ static bool check_argument() {
   return check_string() || check_keyword();
 }
 
-static bool match(Token_Type type) {
+static bool match(Token_Type type)
+{
   if (had_error) {
     return false;
   }
@@ -109,7 +118,8 @@ static bool match(Token_Type type) {
   return false;
 }
 
-static void error(Token token, const char *fmt, ...) {
+static void error(Token token, const char *fmt, ...)
+{
   va_list ap;
   va_start(ap, fmt);
 
@@ -122,7 +132,8 @@ static void error(Token token, const char *fmt, ...) {
   va_end(ap);
 }
 
-Token consume(Token_Type type, const char *msg) {
+Token consume(Token_Type type, const char *msg)
+{
   if (check(type)) {
     return advance();
   }
@@ -132,7 +143,8 @@ Token consume(Token_Type type, const char *msg) {
   return peek();
 }
 
-Token consume_string(const char *msg) {
+Token consume_string(const char *msg)
+{
   if (check_string()) {
     return advance();
   }
@@ -142,7 +154,8 @@ Token consume_string(const char *msg) {
   return peek();
 }
 
-Token consume_argument(const char *msg) {
+Token consume_argument(const char *msg)
+{
   if (check_argument()) {
     return advance();
   }
@@ -152,20 +165,20 @@ Token consume_argument(const char *msg) {
   return peek();
 }
 
-void skip_empty_statements() {
-  while (!is_at_end() && match(TOKEN_STATEMENT_END)) {
-  }
+void skip_empty_statements()
+{
+  while (!is_at_end() && match(TOKEN_STATEMENT_END)) { }
 }
 
-void synchronize() {
+void synchronize()
+{
   skip_empty_statements();
-  while (!is_at_end() && advance().type != TOKEN_STATEMENT_END) {
-  }
+  while (!is_at_end() && advance().type != TOKEN_STATEMENT_END) { }
   panic_mode = false;
 }
 
-Statement *create_statement_if(Job *condition, Statement_Vec ifBranch,
-                               Statement_Vec elseBranch) {
+Statement *create_statement_if(Job *condition, Statement_Vec ifBranch, Statement_Vec elseBranch)
+{
   Statement_If *node = malloc(sizeof(Statement_If));
   node->type = STATEMENT_IF;
   node->condition = condition;
@@ -175,7 +188,8 @@ Statement *create_statement_if(Job *condition, Statement_Vec ifBranch,
   return (Statement *)node;
 }
 
-Statement *create_statement_while(Job *condition, Statement_Vec body) {
+Statement *create_statement_while(Job *condition, Statement_Vec body)
+{
   Statement_While *node = malloc(sizeof(Statement_While));
   node->type = STATEMENT_WHILE;
   node->condition = condition;
@@ -184,7 +198,8 @@ Statement *create_statement_while(Job *condition, Statement_Vec body) {
   return (Statement *)node;
 }
 
-Statement *create_statement_function(Token name, Statement_Vec body) {
+Statement *create_statement_function(Token name, Statement_Vec body)
+{
   Statement_Function *node = malloc(sizeof(Statement_Function));
   node->type = STATEMENT_FUNCTION;
   node->body = body;
@@ -194,8 +209,8 @@ Statement *create_statement_function(Token name, Statement_Vec body) {
   return (Statement *)node;
 }
 
-Statement *create_statement_for(Token var_name, Token string, Token delim,
-                                Statement_Vec body) {
+Statement *create_statement_for(Token var_name, Token string, Token delim, Statement_Vec body)
+{
   Statement_For *node = malloc(sizeof(Statement_For));
   node->type = STATEMENT_FOR;
   node->body = body;
@@ -207,7 +222,8 @@ Statement *create_statement_for(Token var_name, Token string, Token delim,
   return (Statement *)node;
 }
 
-Statement *create_statement_job(Job *job) {
+Statement *create_statement_job(Job *job)
+{
   Statement_Job *node = malloc(sizeof(Statement_Job));
   node->type = STATEMENT_JOB;
   node->job = job;
@@ -215,7 +231,8 @@ Statement *create_statement_job(Job *job) {
   return (Statement *)node;
 }
 
-Job *create_binary(Job *left, Token operator, Job * right) {
+Job *create_binary(Job *left, Token operator, Job * right)
+{
   Job_Binary *node = malloc(sizeof(Job_Binary));
   node->type = JOB_BINARY;
   node->left = left;
@@ -225,7 +242,8 @@ Job *create_binary(Job *left, Token operator, Job * right) {
   return (Job *)node;
 }
 
-Job *create_unary(Token operator, Job * child) {
+Job *create_unary(Token operator, Job * child)
+{
   Job_Unary *node = malloc(sizeof(Job_Unary));
   node->type = JOB_UNARY;
   node->operator= dup_token(operator);
@@ -234,7 +252,8 @@ Job *create_unary(Token operator, Job * child) {
   return (Job *)node;
 }
 
-Job *create_command(Argv argv) {
+Job *create_command(Argv argv)
+{
   Job_Command *node = malloc(sizeof(Job_Command));
   node->type = JOB_COMMAND;
   node->argv = argv;
@@ -242,7 +261,8 @@ Job *create_command(Argv argv) {
   return (Job *)node;
 }
 
-Job *parse_simple_command() {
+Job *parse_simple_command()
+{
   Argv argv = {0};
 
   while (check_argument()) {
@@ -257,7 +277,8 @@ Job *parse_simple_command() {
   return create_command(argv);
 }
 
-Job *parse_pipeline() {
+Job *parse_pipeline()
+{
   Job *job = parse_simple_command();
 
   while (check(TOKEN_PIPE)) {
@@ -269,7 +290,8 @@ Job *parse_pipeline() {
   return job;
 }
 
-Job *parse_and() {
+Job *parse_and()
+{
   Job *job = parse_pipeline();
 
   while (check(TOKEN_AND)) {
@@ -281,7 +303,8 @@ Job *parse_and() {
   return job;
 }
 
-Job *parse_or() {
+Job *parse_or()
+{
   Job *job = parse_and();
 
   while (check(TOKEN_OR)) {
@@ -293,7 +316,8 @@ Job *parse_or() {
   return job;
 }
 
-Job *parse_background_job() {
+Job *parse_background_job()
+{
   Job *job = parse_or();
 
   if (check(TOKEN_AMPERSAND)) {
@@ -304,14 +328,19 @@ Job *parse_background_job() {
   return job;
 }
 
-Job *parse_job() { return parse_background_job(); }
+Job *parse_job()
+{
+  return parse_background_job();
+}
 
-Statement *parse_job_statement() {
+Statement *parse_job_statement()
+{
   Job *job = parse_job();
   return job ? create_statement_job(job) : NULL;
 }
 
-Statement_Vec parse_block_utill(Token_Type types[], int len) {
+Statement_Vec parse_block_utill(Token_Type types[], int len)
+{
   Statement_Vec statements = {0};
   skip_empty_statements();
 
@@ -329,12 +358,14 @@ Statement_Vec parse_block_utill(Token_Type types[], int len) {
   return statements;
 }
 
-Statement_Vec parse_block_utill_end() {
+Statement_Vec parse_block_utill_end()
+{
   Token_Type end[] = {TOKEN_END};
   return parse_block_utill(end, Z_ARRAY_LEN(end));
 }
 
-Statement *parse_if_statement() {
+Statement *parse_if_statement()
+{
   Token_Type if_body_end[] = {TOKEN_ELSE, TOKEN_END};
 
   Job *condition = parse_job();
@@ -358,7 +389,8 @@ Statement *parse_if_statement() {
   return create_statement_if(condition, ifBranch, elseBranch);
 }
 
-Statement *parse_while_statement() {
+Statement *parse_while_statement()
+{
   Job *condition = parse_job();
 
   skip_empty_statements();
@@ -370,7 +402,8 @@ Statement *parse_while_statement() {
   return create_statement_while(condition, body);
 }
 
-Statement *parse_for_statement() {
+Statement *parse_for_statement()
+{
   Token var_name = consume_string("Expected idenifier after for.");
   consume(TOKEN_IN, "Expected 'in' after idenifier.");
 
@@ -387,7 +420,8 @@ Statement *parse_for_statement() {
   return create_statement_for(var_name, string, delim, body);
 }
 
-Statement *parse_function_statement() {
+Statement *parse_function_statement()
+{
   Token name = consume(TOKEN_WORD, "Expected function name after 'fn'");
 
   skip_empty_statements();
@@ -399,20 +433,17 @@ Statement *parse_function_statement() {
   return create_statement_function(name, body);
 }
 
-Statement *parse_statement() {
-  if (match(TOKEN_IF))
-    return parse_if_statement();
-  if (match(TOKEN_WHILE))
-    return parse_while_statement();
-  if (match(TOKEN_FOR))
-    return parse_for_statement();
-  if (match(TOKEN_FUN))
-    return parse_function_statement();
-
+Statement *parse_statement()
+{
+  if (match(TOKEN_IF)) return parse_if_statement();
+  if (match(TOKEN_WHILE)) return parse_while_statement();
+  if (match(TOKEN_FOR)) return parse_for_statement();
+  if (match(TOKEN_FUN)) return parse_function_statement();
   return parse_job_statement();
 }
 
-Statement_Vec parse(const Token_Vec *t, Z_String_View s) {
+Statement_Vec parse(const Token_Vec *t, Z_String_View s)
+{
   tokens = t;
   curr = 0;
   had_error = false;
@@ -429,7 +460,8 @@ Statement_Vec parse(const Token_Vec *t, Z_String_View s) {
   return statements;
 }
 
-void free_job(Job *job) {
+void free_job(Job *job)
+{
   if (job == NULL) {
     return;
   }
@@ -452,36 +484,42 @@ void free_job(Job *job) {
   free(job);
 }
 
-void free_if_statement(Statement_If *statement) {
+void free_if_statement(Statement_If *statement)
+{
   free_job(statement->condition);
   free_statements(&statement->ifBranch);
   free(statement);
 }
 
-void free_while_statement(Statement_While *statement) {
+void free_while_statement(Statement_While *statement)
+{
   free_job(statement->condition);
   free_statements(&statement->body);
   free(statement);
 }
 
-void free_for_statement(Statement_For *statement) {
+void free_for_statement(Statement_For *statement)
+{
   free_statements(&statement->body);
   free(statement);
 }
 
-void free_function_statement(Statement_Function *statement) {
+void free_function_statement(Statement_Function *statement)
+{
   free_statements(&statement->body);
   free_token(&statement->name);
   free(statement);
 }
 
-void free_job_statement(Statement_Job *statement) {
+void free_job_statement(Statement_Job *statement)
+{
   Job *job = statement->job;
   free_job(job);
   free(statement);
 }
 
-void free_statement(Statement *statement) {
+void free_statement(Statement *statement)
+{
   switch (statement->type) {
   case STATEMENT_JOB:
     free_job_statement((Statement_Job *)statement);
@@ -500,12 +538,14 @@ void free_statement(Statement *statement) {
     break;
 
   case STATEMENT_FUNCTION:
+    // TODO
     // free_function_statement((Statement_Function *)statement);
     break;
   }
 }
 
-void free_statements(Statement_Vec *statements) {
+void free_statements(Statement_Vec *statements)
+{
   for (int i = 0; i < statements->len; i++) {
     free_statement(statements->ptr[i]);
   }
@@ -513,9 +553,13 @@ void free_statements(Statement_Vec *statements) {
   free(statements->ptr);
 }
 
-void parser_free(Statement_Vec *statements) { free_statements(statements); }
+void parser_free(Statement_Vec *statements)
+{
+  free_statements(statements);
+}
 
-Statement *dup_statement(Statement *statement) {
+Statement *dup_statement(Statement *statement)
+{
   switch (statement->type) {
     case STATEMENT_FUNCTION: return dup_statement_function((const Statement_Function *)statement);
     case STATEMENT_FOR: return dup_statement_for((const Statement_For *)statement);
@@ -526,7 +570,8 @@ Statement *dup_statement(Statement *statement) {
   }
 }
 
-Statement_Vec dup_statements(Statement_Vec statements) {
+Statement_Vec dup_statements(Statement_Vec statements)
+{
   Statement_Vec new_statements = {0};
 
   z_da_foreach(statement, &statements) {
@@ -536,7 +581,8 @@ Statement_Vec dup_statements(Statement_Vec statements) {
   return new_statements;
 }
 
-Job *dup_job(const Job *job) {
+Job *dup_job(const Job *job)
+{
   switch (job->type) {
     case JOB_BINARY: return dup_job_binary((const Job_Binary *)job);
     case JOB_UNARY: return dup_job_unary((const Job_Unary *)job);
@@ -545,23 +591,28 @@ Job *dup_job(const Job *job) {
   }
 }
 
-Job *dup_job_binary(const Job_Binary *job) {
+Job *dup_job_binary(const Job_Binary *job)
+{
   return create_binary(dup_job(job->left), dup_token(job->operator), dup_job(job->right));
 }
 
-Job *dup_job_unary(const Job_Unary *job) {
+Job *dup_job_unary(const Job_Unary *job)
+{
   return create_unary(dup_token(job->operator), dup_job(job->child));
 }
 
-Job *dup_job_command(const Job_Command *job) {
+Job *dup_job_command(const Job_Command *job)
+{
   return create_command(dup_argv(job->argv));
 }
 
-Statement *dup_statement_function(const Statement_Function *fn) {
+Statement *dup_statement_function(const Statement_Function *fn)
+{
   return create_statement_function(fn->name, dup_statements(fn->body));
 }
 
-Statement *dup_statement_if(const Statement_If *statement) {
+Statement *dup_statement_if(const Statement_If *statement)
+{
   return create_statement_if(
       dup_job(statement->condition),
       dup_statements(statement->ifBranch),
@@ -569,20 +620,28 @@ Statement *dup_statement_if(const Statement_If *statement) {
   );
 }
 
-Statement *dup_statement_for(const Statement_For *statement) {
-  return create_statement_for(dup_token(statement->var_name), dup_token(statement->string), dup_token(statement->delim),
-                       dup_statements(statement->body));
+Statement *dup_statement_for(const Statement_For *statement)
+{
+  return create_statement_for(
+      dup_token(statement->var_name),
+      dup_token(statement->string),
+      dup_token(statement->delim),
+      dup_statements(statement->body)
+  );
 }
 
-Statement *dup_statement_job(const Statement_Job *statement) {
+Statement *dup_statement_job(const Statement_Job *statement)
+{
   return create_statement_job(dup_job(statement->job));
 }
 
-Statement *dup_statement_while(const Statement_While *statement) {
+Statement *dup_statement_while(const Statement_While *statement)
+{
   return create_statement_while(dup_job(statement->condition), dup_statements(statement->body));
 }
 
-Argv dup_argv(Argv argv) {
+Argv dup_argv(Argv argv)
+{
   Argv new_argv = {0};
 
   z_da_foreach(arg, &argv) {

@@ -9,7 +9,8 @@
 #include <stdio.h>
 #include <unistd.h>
 
-void interpret(Z_String_View source) {
+void interpret(Z_String_View source)
+{
   Token_Vec tokens = lexer_get_tokens(source);
   expand_aliases(&tokens);
   // lexer_print_tokens(&tokens);
@@ -20,7 +21,8 @@ void interpret(Z_String_View source) {
   free_tokens(&tokens);
 }
 
-void interpret_to(Z_String_View source, Z_String *output) {
+void interpret_to(Z_String_View source, Z_String *output)
+{
   int fd[2];
   pipe(fd);
 
