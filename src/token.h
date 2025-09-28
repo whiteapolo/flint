@@ -36,7 +36,7 @@ typedef struct {
 
 typedef struct {
   Token_Type type;
-  Z_String_View lexeme;
+  Z_String lexeme;
   int line;
   int column;
 } Token;
@@ -44,9 +44,12 @@ typedef struct {
 typedef struct {
   Token *ptr;
   int len;
-  int capacity;
+  int cap;
 } Token_Vec;
 
+void free_token(Token *token);
+void free_tokens(Token_Vec *tokens);
+Token dup_token(Token token);
 void print_token(Token token);
 const char *token_type_to_string(Token_Type type);
 const Keyword *get_keyword(Z_String_View lexeme);

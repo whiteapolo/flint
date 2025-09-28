@@ -9,7 +9,8 @@
 #include <stdio.h>
 #include <unistd.h>
 
-void interpret(Z_String_View source) {
+void interpret(Z_String_View source)
+{
   Token_Vec tokens = lexer_get_tokens(source);
   expand_aliases(&tokens);
   // lexer_print_tokens(&tokens);
@@ -17,10 +18,11 @@ void interpret(Z_String_View source) {
   // print_statements(statements);
   evaluate_statements(statements);
   parser_free(&statements);
-  free(tokens.ptr);
+  free_tokens(&tokens);
 }
 
-void interpret_to(Z_String_View source, Z_String *output) {
+void interpret_to(Z_String_View source, Z_String *output)
+{
   int fd[2];
   pipe(fd);
 
@@ -42,7 +44,7 @@ void interpret_to(Z_String_View source, Z_String *output) {
     z_str_append_format(output, "%s", buf);
   }
 
-  if (output->len > 0 && z_str_top_char(Z_STR_TO_SV(*output)) == '\n') {
+  if (output->len > 0 && z_str_top_char(Z_STR(*output)) == '\n') {
     z_str_pop_char(output);
   }
 

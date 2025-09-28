@@ -6,28 +6,31 @@
 #include <stdlib.h>
 #include <time.h>
 
-void syntax_error(const char *fmt, ...) {
+void syntax_error(const char *fmt, ...)
+{
   va_list ap;
   va_start(ap, fmt);
   syntax_error_va(fmt, ap);
   va_end(ap);
 }
 
-void syntax_error_va(const char *fmt, va_list ap) {
+void syntax_error_va(const char *fmt, va_list ap)
+{
   fprintf(stderr, "" Z_COLOR_RED "YOU SUCK. here is why" Z_COLOR_RESET ": ");
   vfprintf(stderr, fmt, ap);
   fprintf(stderr, "\n");
 }
 
-void syntax_error_at_token(Z_String_View source, Token token, const char *fmt,
-                           ...) {
+void syntax_error_at_token(Z_String_View source, Token token, const char *fmt, ...)
+{
   va_list ap;
   va_start(ap, fmt);
   syntax_error_at_token_va(source, token, fmt, ap);
   va_end(ap);
 }
 
-Z_String_View get_token_line(Z_String_View source, Token token) {
+Z_String_View get_token_line(Z_String_View source, Token token)
+{
   const char *start = token.lexeme.ptr - 1;
   const char *end = token.lexeme.ptr;
 
@@ -46,17 +49,20 @@ Z_String_View get_token_line(Z_String_View source, Token token) {
   return Z_SV(start, end - start);
 }
 
-void print_str_without_tabs(Z_String_View s) {
+void print_str_without_tabs(Z_String_View s)
+{
   for (int i = 0; i < s.len; i++) {
     fprintf(stderr, "%c", s.ptr[i] == '\t' ? ' ' : s.ptr[i]);
   }
 }
 
-void syntax_error_at_token_va(Z_String_View source, Token token,
-                              const char *fmt, va_list ap) {
-  fprintf(stderr,
-          "%d:%d: " Z_COLOR_RED "YOU SUCK. here is why" Z_COLOR_RESET ": ",
-          token.line, token.column);
+void syntax_error_at_token_va(Z_String_View source, Token token, const char *fmt, va_list ap)
+{
+  fprintf(
+      stderr,
+      "%d:%d: " Z_COLOR_RED "YOU SUCK. here is why" Z_COLOR_RESET ": ",
+      token.line, token.column
+  );
 
   if (token.type == TOKEN_EOD || token.type == TOKEN_STATEMENT_END) {
     fprintf(stderr, "at end: ");
@@ -71,8 +77,11 @@ void syntax_error_at_token_va(Z_String_View source, Token token,
 
   fprintf(stderr, "%5d | ", token.line);
   print_str_without_tabs(line);
-  fprintf(stderr, "\n      | %*s" Z_COLOR_RED "^" Z_COLOR_RESET "\n",
-          (int)(token.lexeme.ptr - line.ptr), "");
+  fprintf(
+      stderr,
+      "\n      | %*s" Z_COLOR_RED "^" Z_COLOR_RESET "\n",
+      (int)(token.lexeme.ptr - line.ptr), ""
+  );
 }
 
 // const char *get_random_assult()

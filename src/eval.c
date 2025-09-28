@@ -7,19 +7,18 @@
 #include <unistd.h>
 
 #include "builtins/builtin.h"
-#include "environment.h"
 #include "eval.h"
 #include "expantion.h"
 #include "libzatar.h"
 #include "parser.h"
+#include "state.h"
 #include "token.h"
-
-extern Environment environment;
 
 int evaluate_job(Job *job);
 void evaluate_block(Statement_Vec statements);
 
-int count_argc(char **argv) {
+int count_argc(char **argv)
+{
   int i = 0;
 
   while (argv[i] != NULL) {
@@ -29,7 +28,8 @@ int count_argc(char **argv) {
   return i;
 }
 
-void free_string_array(char **s) {
+void free_string_array(char **s)
+{
   for (char **curr = s; *curr; curr++) {
     free(*curr);
   }
@@ -37,7 +37,8 @@ void free_string_array(char **s) {
   free(s);
 }
 
-int safe_fork() {
+int safe_fork()
+{
   int pid = fork();
 
   if (pid < 0) {
@@ -49,19 +50,22 @@ int safe_fork() {
   return pid;
 }
 
-void safe_execvp(const char *file, char *const argv[]) {
+void safe_execvp(const char *file, char *const argv[])
+{
   execvp(file, argv);
   fprintf(stderr, "'%s': %s\n", file, strerror(errno));
   exit(1);
 }
 
-void set_last_status_code(int status) {
+void set_last_status_code(int status)
+{
   char buf[16];
   snprintf(buf, 16, "%d", status);
   setenv("?", buf, 1);
 }
 
-void initialize_function_arguments(char **argv) {
+void initialize_function_arguments(char **argv)
+{
   Z_String name = {0};
   Z_String all = {0};
 
@@ -69,34 +73,32 @@ void initialize_function_arguments(char **argv) {
     name.len = 0;
     z_str_append_format(&name, "%d", i);
     z_str_append_format(&all, "%s ", argv[i]);
-    environment_create_variable(&environment, z_str_to_cstr(&name), argv[i]);
+    action_create_variable(Z_STR(name), Z_CSTR(argv[i]));
   }
 
   z_str_trim(&all);
-  environment_create_variable(&environment, "@", z_str_to_cstr(&all));
+
+  action_create_variable(Z_CSTR("@"), Z_STR(all));
 
   z_str_free(&all);
   z_str_free(&name);
 }
 
-void call_function(Statement_Function *f, char **argv) {
-  Environment previous_envirnoment = environment;
-  environment = environment_new(&previous_envirnoment);
-
+void call_function(Statement_Function *f, char **argv)
+{
+  action_push_environment();
   initialize_function_arguments(argv);
   evaluate_statements(f->body);
-
-  environment_free(&environment);
-  environment = previous_envirnoment;
+  action_pop_environment();
 }
 
-int exec_command(char **argv) {
+int exec_command(char **argv)
+{
   if (argv[0] == NULL) {
     return 0;
   }
 
-  Statement_Function *f =
-      environment_get_function(&environment, Z_CSTR_TO_SV(argv[0]));
+  Statement_Function *f = select_function(Z_CSTR(argv[0]));
 
   if (f) {
     call_function(f, argv);
@@ -123,7 +125,8 @@ int exec_command(char **argv) {
   return status;
 }
 
-int evaluate_command(Job_Command *job) {
+int evaluate_command(Job_Command *job)
+{
   char **argv = expand_argv(job->argv);
   int status = exec_command(argv);
 
@@ -132,12 +135,14 @@ int evaluate_command(Job_Command *job) {
   return status;
 }
 
-void close_pipe(int fd[2]) {
+void close_pipe(int fd[2])
+{
   close(fd[0]);
   close(fd[1]);
 }
 
-int evaluate_pipe(Job_Binary *job) {
+int evaluate_pipe(Job_Binary *job)
+{
   Job_Command *command = (Job_Command *)job->left;
   Job *right = job->right;
 
@@ -170,17 +175,20 @@ int evaluate_pipe(Job_Binary *job) {
   return status2;
 }
 
-int evaluate_and(Job_Binary *job) {
+int evaluate_and(Job_Binary *job)
+{
   int status = evaluate_job(job->left);
   return status ? status : evaluate_job(job->right);
 }
 
-int evaluate_or(Job_Binary *job) {
+int evaluate_or(Job_Binary *job)
+{
   int status = evaluate_job(job->left);
   return status ? evaluate_job(job->right) : status;
 }
 
-int evaluate_ampersand(Job_Unary *job) {
+int evaluate_ampersand(Job_Unary *job)
+{
   if (safe_fork() == 0) {
     int status = evaluate_job(job->child);
 
@@ -196,31 +204,30 @@ int evaluate_ampersand(Job_Unary *job) {
   return 0;
 }
 
-int evaluate_unary(Job_Unary *job) {
+int evaluate_unary(Job_Unary *job)
+{
   switch (job->operator.type) {
-  case TOKEN_AMPERSAND:
-    return evaluate_ampersand(job);
+  case TOKEN_AMPERSAND: return evaluate_ampersand(job);
   default:
     assert(0 && "Unknown operator\n");
     return 0; // unreachable
   }
 }
 
-int evaluate_binary(Job_Binary *job) {
+int evaluate_binary(Job_Binary *job)
+{
   switch (job->operator.type) {
-  case TOKEN_AND:
-    return evaluate_and(job);
-  case TOKEN_OR:
-    return evaluate_or(job);
-  case TOKEN_PIPE:
-    return evaluate_pipe(job);
+  case TOKEN_AND: return evaluate_and(job);
+  case TOKEN_OR: return evaluate_or(job);
+  case TOKEN_PIPE: return evaluate_pipe(job);
   default:
     assert(0 && "Unknown operator\n");
     return 0; // unreachable
   }
 }
 
-int evaluate_job(Job *job) {
+int evaluate_job(Job *job)
+{
   if (job == NULL) {
     return 0;
   }
@@ -239,17 +246,15 @@ int evaluate_job(Job *job) {
   return 0;
 }
 
-void evaluate_block(Statement_Vec statements) {
-  Environment previous_envirnoment = environment;
-  environment = environment_new(&previous_envirnoment);
-
+void evaluate_block(Statement_Vec statements)
+{
+  action_push_environment();
   evaluate_statements(statements);
-
-  environment_free(&environment);
-  environment = previous_envirnoment;
+  action_pop_environment();
 }
 
-void evaluate_if(Statement_If *statement) {
+void evaluate_if(Statement_If *statement)
+{
   if (!evaluate_job(statement->condition)) {
     evaluate_block(statement->ifBranch);
   } else {
@@ -257,32 +262,31 @@ void evaluate_if(Statement_If *statement) {
   }
 }
 
-void evaluate_while(Statement_While *statement) {
+void evaluate_while(Statement_While *statement)
+{
   while (!evaluate_job(statement->condition)) {
     evaluate_block(statement->body);
   }
 }
 
-void evaluate_for(Statement_For *statement) {
-  Environment previous_envirnoment = environment;
-  environment = environment_new(&previous_envirnoment);
+void evaluate_for(Statement_For *statement)
+{
+  action_push_environment();
 
   String_Vec delim = {0};
   String_Vec string = {0};
   expand_token(statement->delim, &delim);
   expand_token(statement->string, &string);
 
-  Z_String name = z_str_new_from(statement->var_name.lexeme);
+  Z_String name = z_str_new_from(Z_STR(statement->var_name.lexeme));
   Z_String value = {0};
 
-  environment_create_variable(&environment, z_str_to_cstr(&name), "");
+  action_create_variable(Z_STR(name), Z_CSTR(""));
 
-  z_str_tok_foreach(Z_CSTR_TO_SV(string.ptr[0]), Z_CSTR_TO_SV(delim.ptr[0]),
-                    tok) {
+  z_str_split_cset_foreach(Z_CSTR(string.ptr[0]), Z_CSTR(delim.ptr[0]), tok) {
     value.len = 0;
     z_str_append_str(&value, tok);
-    environment_mut_variable(&environment, z_str_to_cstr(&name),
-                             z_str_to_cstr(&value));
+    action_mutate_variable(z_str_to_cstr(&name), z_str_to_cstr(&value));
     evaluate_block(statement->body);
   }
 
@@ -293,15 +297,16 @@ void evaluate_for(Statement_For *statement) {
   free_string_array(delim.ptr);
   free_string_array(string.ptr);
 
-  environment_free(&environment);
-  environment = previous_envirnoment;
+  action_pop_environment();
 }
 
-void evaluate_function(Statement_Function *function) {
-  environment_create_function(&environment, function->name.lexeme, function);
+void evaluate_function(Statement_Function *function)
+{
+  action_create_fuction(Z_STR(function->name.lexeme), (Statement_Function *)dup_statement_function(function));
 }
 
-int evaluate_statement(Statement *statement) {
+int evaluate_statement(Statement *statement)
+{
   switch (statement->type) {
   case STATEMENT_JOB:
     return evaluate_job(((Statement_Job *)statement)->job);
@@ -327,7 +332,8 @@ int evaluate_statement(Statement *statement) {
   }
 }
 
-void evaluate_statements(Statement_Vec statements) {
+void evaluate_statements(Statement_Vec statements)
+{
   for (int i = 0; i < statements.len; i++) {
     evaluate_statement(statements.ptr[i]);
   }

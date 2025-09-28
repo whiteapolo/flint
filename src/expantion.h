@@ -6,7 +6,7 @@
 typedef struct {
   char **ptr;
   int len;
-  int capacity;
+  int cap;
 } String_Vec;
 
 void expand_token(Token token, String_Vec *out);

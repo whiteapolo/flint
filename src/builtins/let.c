@@ -1,6 +1,7 @@
-#include "../environment.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include "../state.h"
+#include "../libzatar.h"
 
 int builtin_let(int argc, char **argv)
 {
@@ -9,12 +10,10 @@ int builtin_let(int argc, char **argv)
         return 1;
     }
 
-    extern Environment environment;
-
     const char *name = argv[1];
     const char *value = argv[2];
 
-    environment_create_variable(&environment, name, value);
+    action_create_variable(Z_CSTR(name), Z_CSTR(value));
 
     return 0;
 }

@@ -1,6 +1,7 @@
 #include "token.h"
 #include "libzatar.h"
 #include <stdio.h>
+#include <stdlib.h>
 
 const Keyword keywords[] = {
     {.type = TOKEN_FOR, .lexeme = "for"},
@@ -13,11 +14,37 @@ const Keyword keywords[] = {
     {.type = TOKEN_BY, .lexeme = "by"},
 };
 
+Token dup_token(Token token)
+{
+  Token new_token = {
+      .column = token.column,
+      .line = token.line,
+      .type = token.type,
+      .lexeme = z_str_new_from(Z_STR(token.lexeme)),
+  };
+
+  return new_token;
+}
+
+void free_token(Token *token)
+{
+  z_str_free(&token->lexeme);
+}
+
+void free_tokens(Token_Vec *tokens)
+{
+  z_da_foreach(token, tokens) {
+    free_token(token);
+  }
+  z_da_free(tokens);
+}
+
 const int keywords_len = Z_ARRAY_LEN(keywords);
 
-const Keyword *get_keyword(Z_String_View lexeme) {
+const Keyword *get_keyword(Z_String_View lexeme)
+{
   for (int i = 0; i < keywords_len; i++) {
-    if (!z_str_compare(lexeme, Z_CSTR_TO_SV(keywords[i].lexeme))) {
+    if (!z_str_compare(lexeme, Z_CSTR(keywords[i].lexeme))) {
       return &keywords[i];
     }
   }
@@ -25,7 +52,8 @@ const Keyword *get_keyword(Z_String_View lexeme) {
   return NULL;
 }
 
-const char *token_type_to_string(Token_Type type) {
+const char *token_type_to_string(Token_Type type)
+{
   for (int i = 0; i < keywords_len; i++) {
     if (type == keywords[i].type) {
       return keywords[i].lexeme;
@@ -74,8 +102,8 @@ const char *token_type_to_string(Token_Type type) {
   }
 }
 
-void print_token(Token token) {
+void print_token(Token token)
+{
   const char *type_str = token_type_to_string(token.type);
-
   printf("Token(%s, \"%.*s\")\n", type_str, token.lexeme.len, token.lexeme.ptr);
 }

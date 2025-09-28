@@ -1,6 +1,6 @@
-#include "../environment.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include "../state.h"
 
 int builtin_mut(int argc, char **argv)
 {
@@ -9,14 +9,10 @@ int builtin_mut(int argc, char **argv)
         return 1;
     }
 
-    extern Environment environment;
-
     const char *name = argv[1];
     const char *value = argv[2];
 
-    int ret = environment_mut_variable(&environment, name, value);
-
-    if (ret) {
+    if (!action_mutate_variable(name, value)) {
         fprintf(stderr, "Flint: mut: variable '%s' doesn't exists\n", name);
         fprintf(stderr, "Flint: declare like this: let %s \"%s\"\n", name, value);
         return 1;

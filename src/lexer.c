@@ -16,7 +16,8 @@ static Scanner scanner;
 extern Keyword keywords[];
 extern int keywords_len;
 
-static void error(const char *fmt, ...) {
+static void error(const char *fmt, ...)
+{
   va_list ap;
   va_start(ap, fmt);
   syntax_error_va(fmt, ap);
@@ -24,9 +25,13 @@ static void error(const char *fmt, ...) {
   va_end(ap);
 }
 
-bool is_space(char c) { return strchr(" \t\r", c); }
+bool is_space(char c)
+{
+  return strchr(" \t\r", c);
+}
 
-void skip_spaces() {
+void skip_spaces()
+{
   while (!scanner_is_at_end(&scanner) && is_space(scanner_peek(&scanner))) {
     scanner_advance(&scanner);
   }
@@ -34,9 +39,11 @@ void skip_spaces() {
   scanner.start = scanner.curr;
 }
 
-static Token create_token(Token_Type type) {
+static Token create_token(Token_Type type)
+{
   Token token = {
-      .lexeme = Z_SV(scanner.start, scanner.curr - scanner.start),
+      .lexeme =
+          z_str_new_from(Z_SV(scanner.start, scanner.curr - scanner.start)),
       .type = type,
       .line = scanner.line,
       .column = scanner.column,
@@ -45,13 +52,17 @@ static Token create_token(Token_Type type) {
   return token;
 }
 
-static bool is_argument(char c) { return !strchr(" &|;()\n\"'", c); }
+static bool is_argument(char c)
+{
+  return !strchr(" &|;()\n\"'", c);
+}
 
 static void advance_command_substitution();
 static void advance_double_quoted_string();
 static void advance_single_quoted_string();
 
-static void advance_command_substitution() {
+static void advance_command_substitution()
+{
   while (!scanner_is_at_end(&scanner)) {
     switch (scanner_advance(&scanner)) {
     case '(':
@@ -79,7 +90,8 @@ static void advance_command_substitution() {
   }
 }
 
-static void advance_double_quoted_string() {
+static void advance_double_quoted_string()
+{
   while (!scanner_is_at_end(&scanner) && !scanner_check(&scanner, '"')) {
     if (scanner_match_string(&scanner, "$(")) {
       advance_command_substitution();
@@ -89,11 +101,13 @@ static void advance_double_quoted_string() {
   }
 }
 
-static void advance_single_quoted_string() {
+static void advance_single_quoted_string()
+{
   scanner_advance_untill(&scanner, '\'');
 }
 
-Token multi_double_quoted_string() {
+Token multi_double_quoted_string()
+{
   scanner_match(&scanner, '\n');
   scanner.start = scanner.curr;
 
@@ -116,7 +130,8 @@ Token multi_double_quoted_string() {
   return token;
 }
 
-Token double_quoted_string() {
+Token double_quoted_string()
+{
   scanner.start = scanner.curr;
 
   advance_double_quoted_string();
@@ -132,7 +147,8 @@ Token double_quoted_string() {
   return token;
 }
 
-Token single_quoted_string() {
+Token single_quoted_string()
+{
   scanner.start = scanner.curr;
 
   advance_single_quoted_string(&scanner);
@@ -148,7 +164,8 @@ Token single_quoted_string() {
   return token;
 }
 
-Token argument() {
+Token argument()
+{
   while (!scanner_is_at_end(&scanner)) {
     if (scanner_previous(&scanner) == '$' && scanner_match(&scanner, '(')) {
       advance_command_substitution();
@@ -166,13 +183,15 @@ Token argument() {
   return create_token(keyword ? keyword->type : TOKEN_WORD);
 }
 
-void skip_comment() {
+void skip_comment()
+{
   while (!scanner_is_at_end(&scanner) && !scanner_check(&scanner, '\n')) {
     scanner_advance(&scanner);
   }
 }
 
-Token lexer_next() {
+Token lexer_next()
+{
   skip_spaces(&scanner);
 
   if (scanner_is_at_end(&scanner)) {
@@ -186,15 +205,13 @@ Token lexer_next() {
     return create_token(scanner_match(&scanner, '|') ? TOKEN_OR : TOKEN_PIPE);
 
   case '&':
-    return create_token(scanner_match(&scanner, '&') ? TOKEN_AND
-                                                     : TOKEN_AMPERSAND);
+    return create_token(scanner_match(&scanner, '&') ? TOKEN_AND : TOKEN_AMPERSAND);
 
   case '\'':
     return single_quoted_string(&scanner);
 
   case '"':
-    return scanner_match_string(&scanner, "\"\"") ? multi_double_quoted_string()
-                                                  : double_quoted_string();
+    return scanner_match_string(&scanner, "\"\"") ? multi_double_quoted_string() : double_quoted_string();
 
   case '#':
     skip_comment();
@@ -211,7 +228,8 @@ Token lexer_next() {
   }
 }
 
-Token_Vec lexer_get_tokens(Z_String_View source) {
+Token_Vec lexer_get_tokens(Z_String_View source)
+{
   scanner = scanner_new(source);
   had_error = false;
 
@@ -234,7 +252,8 @@ Token_Vec lexer_get_tokens(Z_String_View source) {
   return tokens;
 }
 
-void lexer_print_tokens(const Token_Vec *tokens) {
+void lexer_print_tokens(const Token_Vec *tokens)
+{
   for (int i = 0; i < tokens->len; i++) {
     print_token(tokens->ptr[i]);
   }
