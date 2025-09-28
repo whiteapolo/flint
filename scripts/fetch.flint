@@ -1,8 +1,8 @@
 #!./exe
 
-let C0 '\e[0m'      # Reset
-let C3 '\e[0;33m'   # Yellow
-let C8 '\e[0;90m'   # Gray
+let C0 '\\e[0m'      # Reset
+let C3 '\\e[0;33m'   # Yellow
+let C8 '\\e[0;90m'   # Gray
 
 let LOGO """
         ${C8}#####${C0}
