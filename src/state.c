@@ -8,28 +8,35 @@ typedef void (*FreeFn)(void *);
 
 State state = {0};
 
-Environment environment_new()
+Scope new_scope()
 {
-  Environment environment = {
+  Scope scope = {
       .variables = {.compare_keys = (Z_Compare_Fn)strcmp},
       .functions = {.compare_keys = (Z_Compare_Fn)strcmp},
   };
 
-  return environment;
+  return scope;
+}
+
+void free_scope(Scope scope)
+{
+  z_map_free(&scope.variables, free, free);
+  z_map_free(&scope.functions, free, (FreeFn)free_function_statement);
 }
 
 void initialize_state()
 {
-  action_push_environment();
+  action_push_scope();
   state.alias = (Z_Map){.compare_keys = (Z_Compare_Fn)strcmp};
-  state.buf = (Z_String){0};
 }
 
 bool action_mutate_variable(const char *name, const char *value)
 {
-  for (int i = state.env.len - 1; i >= 0; i++) {
-    if (z_map_get(&state.env.ptr[i].variables, name)) {
-      z_map_put(&state.env.ptr[i].variables, strdup(name), strdup(value), free, free);
+  for (int i = state.scopes.len - 1; i >= 0; i++)
+  {
+    if (z_map_get(&state.scopes.ptr[i].variables, name))
+    {
+      z_map_put(&state.scopes.ptr[i].variables, strdup(name), strdup(value), free, free);
       return true;
     }
   }
@@ -39,12 +46,12 @@ bool action_mutate_variable(const char *name, const char *value)
 
 void action_create_variable(Z_String_View name, Z_String_View value)
 {
-  z_map_put(&z_da_peek(&state.env).variables, strndup(name.ptr, name.len), strndup(value.ptr, value.len), free, free);
+  z_map_put(&z_da_peek(&state.scopes).variables, strndup(name.ptr, name.len), strndup(value.ptr, value.len), free, free);
 }
 
 void action_create_fuction(Z_String_View name, Statement_Function *fn)
 {
-  z_map_put(&z_da_peek(&state.env).functions, strndup(name.ptr, name.len), fn, free, (FreeFn)free_function_statement);
+  z_map_put(&z_da_peek(&state.scopes).functions, strndup(name.ptr, name.len), fn, free, (FreeFn)free_function_statement);
 }
 
 void action_put_alias(Z_String_View key, Z_String_View value)
@@ -54,9 +61,11 @@ void action_put_alias(Z_String_View key, Z_String_View value)
 
 const char *select_variable(const char *name)
 {
-  for (int i = state.env.len - 1; i >= 0; i--) {
-    void *tmp = z_map_get(&state.env.ptr[i].variables, name);
-    if (tmp) {
+  for (int i = state.scopes.len - 1; i >= 0; i--)
+  {
+    void *tmp = z_map_get(&state.scopes.ptr[i].variables, name);
+    if (tmp)
+    {
       return tmp;
     }
   }
@@ -66,9 +75,11 @@ const char *select_variable(const char *name)
 
 Statement_Function *select_function(const char *name)
 {
-  for (int i = state.env.len - 1; i >= 0; i--) {
-    void *fn = z_map_get(&state.env.ptr[i].functions, name);
-    if (fn) {
+  for (int i = state.scopes.len - 1; i >= 0; i--)
+  {
+    void *fn = z_map_get(&state.scopes.ptr[i].functions, name);
+    if (fn)
+    {
       return (Statement_Function *)fn;
     }
   }
@@ -81,14 +92,13 @@ const char *select_alias(const char *name)
   return z_map_get(&state.alias, name);
 }
 
-void action_push_environment()
+void action_push_scope()
 {
-  z_da_append(&state.env, environment_new());
+  z_da_append(&state.scopes, new_scope());
 }
 
-void action_pop_environment()
+void action_pop_scope()
 {
-  Environment env = z_da_pop(&state.env);
-  z_map_free(&env.variables, free, free);
-  z_map_free(&env.functions, free, (FreeFn)free_function_statement);
+  Scope scope = z_da_pop(&state.scopes);
+  free_scope(scope);
 }

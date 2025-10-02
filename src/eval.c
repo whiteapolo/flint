@@ -86,10 +86,10 @@ void initialize_function_arguments(char **argv)
 
 void call_function(Statement_Function *f, char **argv)
 {
-  action_push_environment();
+  action_push_scope();
   initialize_function_arguments(argv);
   evaluate_statements(f->body);
-  action_pop_environment();
+  action_pop_scope();
 }
 
 int exec_command(char **argv)
@@ -248,9 +248,9 @@ int evaluate_job(Job *job)
 
 void evaluate_block(Statement_Vec statements)
 {
-  action_push_environment();
+  action_push_scope();
   evaluate_statements(statements);
-  action_pop_environment();
+  action_pop_scope();
 }
 
 void evaluate_if(Statement_If *statement)
@@ -271,7 +271,7 @@ void evaluate_while(Statement_While *statement)
 
 void evaluate_for(Statement_For *statement)
 {
-  action_push_environment();
+  action_push_scope();
 
   String_Vec delim = {0};
   String_Vec string = {0};
@@ -297,7 +297,7 @@ void evaluate_for(Statement_For *statement)
   free_string_array(delim.ptr);
   free_string_array(string.ptr);
 
-  action_pop_environment();
+  action_pop_scope();
 }
 
 void evaluate_function(Statement_Function *function)

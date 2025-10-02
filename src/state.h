@@ -7,17 +7,16 @@
 typedef struct {
   Z_Map variables;
   Z_Map functions;
-} Environment;
+} Scope;
 
 typedef struct {
-  Environment *ptr;
+  Scope *ptr;
   int len;
   int cap;
-} Environment_Vec;
+} Scope_Vec;
 
 typedef struct {
-  Environment_Vec env;
-  Z_String buf;
+  Scope_Vec scopes;
   Z_Map alias;
 } State;
 
@@ -27,8 +26,8 @@ void initialize_state();
 bool action_mutate_variable(const char *name, const char *value);
 void action_create_variable(Z_String_View name, Z_String_View value);
 void action_create_fuction(Z_String_View name, Statement_Function *fn);
-void action_push_environment();
-void action_pop_environment();
+void action_push_scope();
+void action_pop_scope();
 void action_put_alias(Z_String_View key, Z_String_View value);
 
 // selectors that don't change the state
