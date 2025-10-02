@@ -58,13 +58,10 @@ void action_put_alias(Z_String_View key, Z_String_View value)
   z_map_put(&state.alias, _key, _value, free, free);
 }
 
-const char *select_variable(Z_String_View name)
+const char *select_variable(const char *name)
 {
-  z_str_clear(&state.buf);
-  z_str_append_str(&state.buf, name);
-
   for (int i = state.env.len - 1; i >= 0; i--) {
-    void *tmp = z_map_get(&state.env.ptr[i].variables, z_str_to_cstr(&state.buf));
+    void *tmp = z_map_get(&state.env.ptr[i].variables, name);
     if (tmp) {
       return tmp;
     }

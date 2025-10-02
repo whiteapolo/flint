@@ -32,7 +32,7 @@ void action_pop_environment();
 void action_put_alias(Z_String_View key, Z_String_View value);
 
 // selectors that don't change the state
-const char *select_variable(Z_String_View name);
+const char *select_variable(const char *name);
 Statement_Function *select_function(Z_String_View name);
 const char *select_alias(Z_String_View name);
 

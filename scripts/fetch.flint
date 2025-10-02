@@ -4,6 +4,12 @@ let C0 '\\e[0m'      # Reset
 let C3 '\\e[0;33m'   # Yellow
 let C8 '\\e[0;90m'   # Gray
 
+let battery "$(cat /sys/class/power_supply/BAT0/capacity)"
+let os "$(cat /etc/os-release | sed -nE 's/^PRETTY_NAME="(.*)"$/\\1/p')"
+let shell "$SHELL"
+
+echo $SHELL
+
 let LOGO """
         ${C8}#####${C0}
        ${C8}#######${C0}

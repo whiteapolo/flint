@@ -12,7 +12,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-void resolve_var(Z_String_View var, Z_String *output)
+void resolve_var(const char *var, Z_String *output)
 {
   z_str_append_format(output, "%s", select_variable(var));
 }
@@ -88,10 +88,10 @@ void braced_variable(Scanner *scanner, Z_String *output)
     return;
   }
 
-  Z_String_View variable_name =
-      Z_SV(scanner->start, scanner->curr - scanner->start);
+  char *var_name = strndup(scanner->start, scanner->curr - scanner->start);
+  z_str_append_format(output, "%s", select_variable(var_name));
+  free(var_name);
 
-  z_str_append_format(output, "%s", select_variable(variable_name));
   scanner_advance(scanner); // eat the '}'
 }
 
@@ -108,10 +108,9 @@ void variable(Scanner *scanner, Z_String *output)
     scanner_advance(scanner);
   }
 
-  z_str_append_format(
-      output, "%s",
-      select_variable(Z_SV(scanner->start, scanner->curr - scanner->start))
-  );
+  char *var_name = strndup(scanner->start, scanner->curr - scanner->start);
+  z_str_append_format(output, "%s", select_variable(var_name));
+  free(var_name);
 }
 
 char escaped_char(char c)
