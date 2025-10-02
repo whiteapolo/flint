@@ -7,6 +7,7 @@
 #include "state.h"
 #include "token.h"
 #include <ctype.h>
+#include <endian.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -220,7 +221,7 @@ char **expand_argv(Argv argv)
 
 void expand_alias(Token key, Token_Vec *output)
 {
-  const char *value = select_alias(Z_STR(key.lexeme));
+  const char *value = select_alias(z_str_to_cstr(&key.lexeme));
 
   if (!value) {
     z_da_append(output, key);

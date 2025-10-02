@@ -29,8 +29,7 @@ bool action_mutate_variable(const char *name, const char *value)
 {
   for (int i = state.env.len - 1; i >= 0; i++) {
     if (z_map_get(&state.env.ptr[i].variables, name)) {
-      z_map_put(&state.env.ptr[i].variables, strdup(name), strdup(value), free,
-                free);
+      z_map_put(&state.env.ptr[i].variables, strdup(name), strdup(value), free, free);
       return true;
     }
   }
@@ -40,9 +39,7 @@ bool action_mutate_variable(const char *name, const char *value)
 
 void action_create_variable(Z_String_View name, Z_String_View value)
 {
-  char *_name = strndup(name.ptr, name.len);
-  char *_value = strndup(value.ptr, value.len);
-  z_map_put(&z_da_peek(&state.env).variables, _name, _value, free, free);
+  z_map_put(&z_da_peek(&state.env).variables, strndup(name.ptr, name.len), strndup(value.ptr, value.len), free, free);
 }
 
 void action_create_fuction(Z_String_View name, Statement_Function *fn)
@@ -52,10 +49,7 @@ void action_create_fuction(Z_String_View name, Statement_Function *fn)
 
 void action_put_alias(Z_String_View key, Z_String_View value)
 {
-  char *_key = strndup(key.ptr, key.len);
-  char *_value = strndup(value.ptr, value.len);
-
-  z_map_put(&state.alias, _key, _value, free, free);
+  z_map_put(&state.alias, strndup(key.ptr, key.len), strndup(value.ptr, value.len), free, free);
 }
 
 const char *select_variable(const char *name)
@@ -70,13 +64,10 @@ const char *select_variable(const char *name)
   return "";
 }
 
-Statement_Function *select_function(Z_String_View name)
+Statement_Function *select_function(const char *name)
 {
-  z_str_clear(&state.buf);
-  z_str_append_str(&state.buf, name);
-
   for (int i = state.env.len - 1; i >= 0; i--) {
-    void *fn = z_map_get(&state.env.ptr[i].functions, z_str_to_cstr(&state.buf));
+    void *fn = z_map_get(&state.env.ptr[i].functions, name);
     if (fn) {
       return (Statement_Function *)fn;
     }
@@ -85,17 +76,9 @@ Statement_Function *select_function(Z_String_View name)
   return NULL;
 }
 
-const char *select_alias(Z_String_View name)
+const char *select_alias(const char *name)
 {
-  z_str_clear(&state.buf);
-  z_str_append_str(&state.buf, name);
-
-  void *alias = z_map_get(&state.alias, z_str_to_cstr(&state.buf));
-  if (alias) {
-    return alias;
-  }
-
-  return NULL;
+  return z_map_get(&state.alias, name);
 }
 
 void action_push_environment()

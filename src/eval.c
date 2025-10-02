@@ -98,7 +98,7 @@ int exec_command(char **argv)
     return 0;
   }
 
-  Statement_Function *f = select_function(Z_CSTR(argv[0]));
+  Statement_Function *f = select_function(argv[0]);
 
   if (f) {
     call_function(f, argv);
