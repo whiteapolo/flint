@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include <string.h>
 
-typedef void (*FreeFn)(void *);
+typedef void (*Free_Fn)(void *);
 
 State state = {0};
 
@@ -21,7 +21,7 @@ Scope new_scope()
 void free_scope(Scope scope)
 {
   z_map_free(&scope.variables, free, free);
-  z_map_free(&scope.functions, free, (FreeFn)free_function_statement);
+  z_map_free(&scope.functions, free, (Free_Fn)free_function_statement);
 }
 
 void initialize_state()
@@ -32,10 +32,8 @@ void initialize_state()
 
 bool action_mutate_variable(const char *name, const char *value)
 {
-  for (int i = state.scopes.len - 1; i >= 0; i++)
-  {
-    if (z_map_get(&state.scopes.ptr[i].variables, name))
-    {
+  for (int i = state.scopes.len - 1; i >= 0; i++) {
+    if (z_map_get(&state.scopes.ptr[i].variables, name)) {
       z_map_put(&state.scopes.ptr[i].variables, strdup(name), strdup(value), free, free);
       return true;
     }
@@ -51,7 +49,7 @@ void action_create_variable(Z_String_View name, Z_String_View value)
 
 void action_create_fuction(Z_String_View name, Statement_Function *fn)
 {
-  z_map_put(&z_da_peek(&state.scopes).functions, strndup(name.ptr, name.len), fn, free, (FreeFn)free_function_statement);
+  z_map_put(&z_da_peek(&state.scopes).functions, strndup(name.ptr, name.len), fn, free, (Free_Fn)free_function_statement);
 }
 
 void action_put_alias(Z_String_View key, Z_String_View value)
@@ -61,11 +59,9 @@ void action_put_alias(Z_String_View key, Z_String_View value)
 
 const char *select_variable(const char *name)
 {
-  for (int i = state.scopes.len - 1; i >= 0; i--)
-  {
+  for (int i = state.scopes.len - 1; i >= 0; i--) {
     void *tmp = z_map_get(&state.scopes.ptr[i].variables, name);
-    if (tmp)
-    {
+    if (tmp) {
       return tmp;
     }
   }
@@ -75,11 +71,9 @@ const char *select_variable(const char *name)
 
 Statement_Function *select_function(const char *name)
 {
-  for (int i = state.scopes.len - 1; i >= 0; i--)
-  {
+  for (int i = state.scopes.len - 1; i >= 0; i--) {
     void *fn = z_map_get(&state.scopes.ptr[i].functions, name);
-    if (fn)
-    {
+    if (fn) {
       return (Statement_Function *)fn;
     }
   }
