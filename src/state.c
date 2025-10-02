@@ -69,7 +69,7 @@ const char *select_variable(const char *name)
   return "";
 }
 
-Statement_Function *select_function(const char *name)
+const Statement_Function *select_function(const char *name)
 {
   for (int i = state.scopes.len - 1; i >= 0; i--) {
     void *fn = z_map_get(&state.scopes.ptr[i].functions, name);

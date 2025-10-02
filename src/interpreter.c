@@ -7,6 +7,7 @@
 #include "token.h"
 #include <endian.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <unistd.h>
 
 void interpret(Z_String_View source)
@@ -16,9 +17,9 @@ void interpret(Z_String_View source)
   // lexer_print_tokens(&tokens);
   Statement_Vec statements = parse(&tokens, source);
   // print_statements(statements);
+  free_tokens(&tokens);
   evaluate_statements(statements);
   parser_free(&statements);
-  free_tokens(&tokens);
 }
 
 void interpret_to(Z_String_View source, Z_String *output)

@@ -80,7 +80,7 @@ static bool check_array(Token_Type types[], int len)
 static bool check_keyword()
 {
   Token_Type keywords[] = {
-      TOKEN_FOR, TOKEN_IN, TOKEN_FUN, TOKEN_END, TOKEN_ELSE, TOKEN_WHILE,
+    TOKEN_FOR, TOKEN_IN, TOKEN_FUN, TOKEN_END, TOKEN_ELSE, TOKEN_WHILE,
   };
 
   return check_array(keywords, Z_ARRAY_LEN(keywords));
@@ -89,9 +89,9 @@ static bool check_keyword()
 static bool check_string()
 {
   Token_Type string_types[] = {
-      TOKEN_WORD,
-      TOKEN_DQUOTED_STRING,
-      TOKEN_SQUOTED_STRING,
+    TOKEN_WORD,
+    TOKEN_DQUOTED_STRING,
+    TOKEN_SQUOTED_STRING,
   };
 
   return check_array(string_types, Z_ARRAY_LEN(string_types));
@@ -267,7 +267,7 @@ Job *parse_simple_command()
 
   while (check_argument()) {
     Token token = advance();
-    z_da_append(&argv, token);
+    z_da_append(&argv, dup_token(token));
   }
 
   if (argv.len == 0) {
@@ -373,7 +373,7 @@ Statement *parse_if_statement()
   skip_empty_statements();
 
   Statement_Vec ifBranch =
-      parse_block_utill(if_body_end, Z_ARRAY_LEN(if_body_end));
+    parse_block_utill(if_body_end, Z_ARRAY_LEN(if_body_end));
   Statement_Vec elseBranch = {0};
 
   skip_empty_statements();
@@ -460,6 +460,36 @@ Statement_Vec parse(const Token_Vec *t, Z_String_View s)
   return statements;
 }
 
+void free_argv(Argv argv)
+{
+  z_da_foreach(arg, &argv) {
+    free_token(arg);
+  }
+
+  free(argv.ptr);
+}
+
+void free_job_command(Job_Command *cmd)
+{
+  free_argv(cmd->argv);
+  free(cmd);
+}
+
+void free_job_unary(Job_Unary *un)
+{
+  free_token(&un->operator);
+  free_job(un->child);
+  free(un);
+}
+
+void free_job_binary(Job_Binary *bin)
+{
+  free_token(&bin->operator);
+  free_job(bin->left);
+  free_job(bin->right);
+  free(bin);
+}
+
 void free_job(Job *job)
 {
   if (job == NULL) {
@@ -467,21 +497,18 @@ void free_job(Job *job)
   }
 
   switch (job->type) {
-  case JOB_COMMAND:
-    free(((Job_Command *)job)->argv.ptr);
-    break;
+    case JOB_COMMAND:
+      free_job_command((Job_Command *)job);
+      break;
 
-  case JOB_UNARY:
-    free_job(((Job_Unary *)job)->child);
-    break;
+    case JOB_UNARY:
+      free_job_unary((Job_Unary *)job);
+      break;
 
-  case JOB_BINARY:
-    free_job(((Job_Binary *)job)->left);
-    free_job(((Job_Binary *)job)->right);
-    break;
+    case JOB_BINARY:
+      free_job_binary((Job_Binary *)job);
+      break;
   }
-
-  free(job);
 }
 
 void free_if_statement(Statement_If *statement)
@@ -521,25 +548,25 @@ void free_job_statement(Statement_Job *statement)
 void free_statement(Statement *statement)
 {
   switch (statement->type) {
-  case STATEMENT_JOB:
-    free_job_statement((Statement_Job *)statement);
-    break;
+    case STATEMENT_JOB:
+      free_job_statement((Statement_Job *)statement);
+      break;
 
-  case STATEMENT_IF:
-    free_if_statement((Statement_If *)statement);
-    break;
+    case STATEMENT_IF:
+      free_if_statement((Statement_If *)statement);
+      break;
 
-  case STATEMENT_WHILE:
-    free_while_statement((Statement_While *)statement);
-    break;
+    case STATEMENT_WHILE:
+      free_while_statement((Statement_While *)statement);
+      break;
 
-  case STATEMENT_FOR:
-    free_for_statement((Statement_For *)statement);
-    break;
+    case STATEMENT_FOR:
+      free_for_statement((Statement_For *)statement);
+      break;
 
-  case STATEMENT_FUNCTION:
-    free_function_statement((Statement_Function *)statement);
-    break;
+    case STATEMENT_FUNCTION:
+      free_function_statement((Statement_Function *)statement);
+      break;
   }
 }
 
@@ -616,7 +643,7 @@ Statement *dup_statement_if(const Statement_If *statement)
       dup_job(statement->condition),
       dup_statements(statement->ifBranch),
       dup_statements(statement->elseBranch)
-  );
+      );
 }
 
 Statement *dup_statement_for(const Statement_For *statement)
@@ -626,7 +653,7 @@ Statement *dup_statement_for(const Statement_For *statement)
       dup_token(statement->string),
       dup_token(statement->delim),
       dup_statements(statement->body)
-  );
+      );
 }
 
 Statement *dup_statement_job(const Statement_Job *statement)

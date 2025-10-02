@@ -78,8 +78,7 @@ void execute_file(Z_String_View pathname)
 
 void execute_init_file()
 {
-  Z_String_View init_file = Z_CSTR(INIT_FILE_PATH);
-  execute_file(init_file);
+  execute_file(Z_CSTR(INIT_FILE_PATH));
 }
 
 int main(int argc, char **argv)

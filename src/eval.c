@@ -84,7 +84,7 @@ void initialize_function_arguments(char **argv)
   z_str_free(&name);
 }
 
-void call_function(Statement_Function *f, char **argv)
+void call_function(const Statement_Function *f, char **argv)
 {
   action_push_scope();
   initialize_function_arguments(argv);
@@ -98,10 +98,10 @@ int exec_command(char **argv)
     return 0;
   }
 
-  Statement_Function *f = select_function(argv[0]);
+  const Statement_Function *fn = select_function(argv[0]);
 
-  if (f) {
-    call_function(f, argv);
+  if (fn) {
+    call_function(fn, argv);
     return 0;
   }
 
@@ -233,14 +233,14 @@ int evaluate_job(Job *job)
   }
 
   switch (job->type) {
-  case JOB_COMMAND:
-    return evaluate_command((Job_Command *)job);
+    case JOB_COMMAND:
+      return evaluate_command((Job_Command *)job);
 
-  case JOB_UNARY:
-    return evaluate_unary((Job_Unary *)job);
+    case JOB_UNARY:
+      return evaluate_unary((Job_Unary *)job);
 
-  case JOB_BINARY:
-    return evaluate_binary((Job_Binary *)job);
+    case JOB_BINARY:
+      return evaluate_binary((Job_Binary *)job);
   }
 
   return 0;
