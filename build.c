@@ -34,7 +34,7 @@ int main(int argc, char **argv)
   append_folder(&cmd, "src/builtins");
   append_folder(&cmd, "src");
   z_cmd_append(&cmd, "-Wextra", "-Wall", "-Wno-unused-result");
-  z_cmd_append(&cmd, "-lreadline");
+  z_cmd_append(&cmd, "-lreadline", "-lm");
   z_cmd_append(&cmd, "-g");
   z_cmd_append(&cmd, "-O0");
 

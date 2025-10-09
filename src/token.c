@@ -33,7 +33,7 @@ void free_token(Token *token)
 
 void free_tokens(Token_Vec *tokens)
 {
-  z_da_foreach(token, tokens) {
+  z_da_foreach(Token *, token, tokens) {
     free_token(token);
   }
   z_da_free(tokens);
@@ -44,7 +44,7 @@ const int keywords_len = Z_ARRAY_LEN(keywords);
 const Keyword *get_keyword(Z_String_View lexeme)
 {
   for (int i = 0; i < keywords_len; i++) {
-    if (!z_str_compare(lexeme, Z_CSTR(keywords[i].lexeme))) {
+    if (!z_sv_compare(lexeme, Z_CSTR(keywords[i].lexeme))) {
       return &keywords[i];
     }
   }

@@ -60,7 +60,7 @@ void print_job(Job *job)
   render_job(job, &s);
 
   if (s.len > 0) {
-    z_str_println(Z_STR(s));
+    z_sv_println(Z_STR(s));
   }
 
   free(s.ptr);
@@ -90,16 +90,16 @@ void print_statement_while(Statement_While *statement)
 void print_statement_for(Statement_For *statement)
 {
   printf("for (\"");
-  z_str_print(Z_STR(statement->string.lexeme));
+  z_sv_print(Z_STR(statement->string.lexeme));
   printf("\" \"");
-  z_str_print(Z_STR(statement->delim.lexeme));
+  z_sv_print(Z_STR(statement->delim.lexeme));
   printf("\")\n");
   print_statements(statement->body);
 }
 
 void print_statement_function(Statement_Function *statement)
 {
-  z_str_print(Z_STR(statement->name.lexeme));
+  z_sv_print(Z_STR(statement->name.lexeme));
   printf("() {\n");
   print_statements(statement->body);
   printf("}\n");

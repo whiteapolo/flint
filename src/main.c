@@ -1,6 +1,3 @@
-#define LIBZATAR_IMPLEMENTATION
-#include "libzatar.h"
-
 #include <ctype.h>
 #include <linux/limits.h>
 #include <readline/history.h>
@@ -33,7 +30,8 @@ void update_prompt()
     return;
   }
 
-  Z_String compressed_pwd = z_compress_path(Z_CSTR(pwd));
+  Z_String compressed_pwd = {0};
+  z_compress_path(Z_CSTR(pwd), &compressed_pwd);
   z_str_append_format(&prompt, Z_COLOR_MAGENTA);
   z_str_append_str(&prompt, Z_STR(compressed_pwd));
   z_str_append_format(&prompt, Z_COLOR_GREEN);
@@ -71,7 +69,7 @@ void execute_file_from_raw_path(const char *pathname)
 void execute_file(Z_String_View pathname)
 {
   Z_String expanded_path = {0};
-  z_expand_path(pathname, &expanded_path);
+  z_expand_tilde(pathname, &expanded_path);
   execute_file_from_raw_path(z_str_to_cstr(&expanded_path));
   z_str_free(&expanded_path);
 }
@@ -94,3 +92,6 @@ int main(int argc, char **argv)
     z_die_format("Flint: Usage: Flint <path>\n");
   }
 }
+
+#define LIBZATAR_IMPLEMENTATION
+#include "libzatar.h"

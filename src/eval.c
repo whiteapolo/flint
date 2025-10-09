@@ -283,7 +283,7 @@ void evaluate_for(Statement_For *statement)
 
   action_create_variable(Z_STR(name), Z_CSTR(""));
 
-  z_str_split_cset_foreach(Z_CSTR(string.ptr[0]), Z_CSTR(delim.ptr[0]), tok) {
+  z_sv_split_cset_foreach(Z_CSTR(string.ptr[0]), Z_CSTR(delim.ptr[0]), tok) {
     value.len = 0;
     z_str_append_str(&value, tok);
     action_mutate_variable(z_str_to_cstr(&name), z_str_to_cstr(&value));

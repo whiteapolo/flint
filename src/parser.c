@@ -462,7 +462,7 @@ Statement_Vec parse(const Token_Vec *t, Z_String_View s)
 
 void free_argv(Argv argv)
 {
-  z_da_foreach(arg, &argv) {
+  z_da_foreach(Token*, arg, &argv) {
     free_token(arg);
   }
 
@@ -600,7 +600,7 @@ Statement_Vec dup_statements(Statement_Vec statements)
 {
   Statement_Vec new_statements = {0};
 
-  z_da_foreach(statement, &statements) {
+  z_da_foreach(Statement **, statement, &statements) {
     z_da_append(&new_statements, dup_statement(*statement));
   }
 
@@ -670,7 +670,7 @@ Argv dup_argv(Argv argv)
 {
   Argv new_argv = {0};
 
-  z_da_foreach(arg, &argv) {
+  z_da_foreach(Token *, arg, &argv) {
     z_da_append(&new_argv, dup_token(*arg));
   }
 
