@@ -178,9 +178,9 @@ Token argument()
 
   Z_String_View arg = Z_SV(scanner.start, scanner.curr - scanner.start);
 
-  const Keyword *keyword = get_keyword(arg);
+  Optional_Token_Type keyword_type = get_keyword_type(arg);
 
-  return create_token(keyword ? keyword->type : TOKEN_WORD);
+  return create_token(keyword_type.ok ? keyword_type.value : TOKEN_WORD);
 }
 
 void skip_comment()

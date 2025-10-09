@@ -50,6 +50,10 @@
     statements                                                                 \
   } while (0)
 
+#define Z_DEFINE_OPTIONAL(Type) typedef struct { bool ok; Type value; } Optional_##Type
+#define Z_Optional_Ok(_value) { .ok = true, .value = _value }
+#define Z_Optional_None() { .ok = false }
+
 typedef int (*Z_Compare_Fn)(const void *, const void *);
 
 int z_get_file_size(FILE *fp);
