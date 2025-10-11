@@ -8,7 +8,7 @@ void render_job(Job *job, Z_String *output);
 void render_job_binary(Job_Binary *job, Z_String *output)
 {
   z_str_append_format(output, "(");
-  z_str_append_str(output, Z_STR(job->operator.lexeme));
+  z_str_append_str(output, Z_CSTR(job->operator.lexeme));
   z_str_append_format(output, " ");
   render_job(job->left, output);
   z_str_append_format(output, " ");
@@ -19,7 +19,7 @@ void render_job_binary(Job_Binary *job, Z_String *output)
 void render_job_unary(Job_Unary *job, Z_String *output)
 {
   z_str_append_format(output, "(");
-  z_str_append_str(output, Z_STR(job->operator.lexeme));
+  z_str_append_str(output, Z_CSTR(job->operator.lexeme));
   z_str_append_format(output, " ");
   render_job(job->child, output);
   z_str_append_format(output, ")");
@@ -29,11 +29,11 @@ void render_job_command(Job_Command *job, Z_String *output)
 {
   z_str_append_format(output, "(");
 
-  z_str_append_str(output, Z_STR(job->argv.ptr[0].lexeme));
+  z_str_append_str(output, Z_CSTR(job->argv.ptr[0].lexeme));
 
   for (int i = 1; i < job->argv.len; i++) {
     Token token = job->argv.ptr[i];
-    z_str_append_format(output, " \"%.*s\"", token.lexeme.len, token.lexeme.ptr);
+    z_str_append_format(output, " \"%s\"", token.lexeme);
   }
 
   z_str_append_format(output, ")");
@@ -90,16 +90,16 @@ void print_statement_while(Statement_While *statement)
 void print_statement_for(Statement_For *statement)
 {
   printf("for (\"");
-  z_sv_print(Z_STR(statement->string.lexeme));
+  z_sv_print(Z_CSTR(statement->string.lexeme));
   printf("\" \"");
-  z_sv_print(Z_STR(statement->delim.lexeme));
+  z_sv_print(Z_CSTR(statement->delim.lexeme));
   printf("\")\n");
   print_statements(statement->body);
 }
 
 void print_statement_function(Statement_Function *statement)
 {
-  z_sv_print(Z_STR(statement->name.lexeme));
+  z_sv_print(Z_CSTR(statement->name.lexeme));
   printf("() {\n");
   print_statements(statement->body);
   printf("}\n");

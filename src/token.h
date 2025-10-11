@@ -31,12 +31,7 @@ typedef enum {
 
 typedef struct {
   Token_Type type;
-  const char *lexeme;
-} Keyword;
-
-typedef struct {
-  Token_Type type;
-  Z_String lexeme;
+  char *lexeme;
   int line;
   int column;
 } Token;

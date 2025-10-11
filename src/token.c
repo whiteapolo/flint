@@ -3,15 +3,20 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+typedef struct {
+  Token_Type type;
+  const char *lexeme;
+} Keyword;
+
 const Keyword keywords[] = {
-    {.type = TOKEN_FOR, .lexeme = "for"},
-    {.type = TOKEN_IF, .lexeme = "if"},
-    {.type = TOKEN_END, .lexeme = "end"},
-    {.type = TOKEN_IN, .lexeme = "in"},
-    {.type = TOKEN_FUN, .lexeme = "fn"},
-    {.type = TOKEN_ELSE, .lexeme = "else"},
-    {.type = TOKEN_WHILE, .lexeme = "while"},
-    {.type = TOKEN_BY, .lexeme = "by"},
+    { .type = TOKEN_FOR,   .lexeme = "for"   },
+    { .type = TOKEN_IF,    .lexeme = "if"    },
+    { .type = TOKEN_END,   .lexeme = "end"   },
+    { .type = TOKEN_IN,    .lexeme = "in"    },
+    { .type = TOKEN_FUN,   .lexeme = "fn"    },
+    { .type = TOKEN_ELSE, .lexeme = "else"   },
+    { .type = TOKEN_WHILE, .lexeme = "while" },
+    { .type = TOKEN_BY,    .lexeme = "by"    },
 };
 
 Token dup_token(Token token)
@@ -20,7 +25,7 @@ Token dup_token(Token token)
       .column = token.column,
       .line = token.line,
       .type = token.type,
-      .lexeme = z_str_new_from(Z_STR(token.lexeme)),
+      .lexeme = strdup(token.lexeme),
   };
 
   return new_token;
@@ -28,7 +33,7 @@ Token dup_token(Token token)
 
 void free_token(Token *token)
 {
-  z_str_free(&token->lexeme);
+  free(token->lexeme);
 }
 
 void free_tokens(Token_Vec *tokens)
@@ -54,12 +59,6 @@ Optional_Token_Type get_keyword_type(Z_String_View lexeme)
 
 const char *token_type_to_string(Token_Type type)
 {
-  for (int i = 0; i < keywords_len; i++) {
-    if (type == keywords[i].type) {
-      return keywords[i].lexeme;
-    }
-  }
-
   switch (type) {
     case TOKEN_PIPE: return "PIPE";
     case TOKEN_AND: return "AND";
@@ -68,16 +67,17 @@ const char *token_type_to_string(Token_Type type)
     case TOKEN_ERROR: return "ERROR";
     case TOKEN_EOD: return "EOD";
     case TOKEN_STATEMENT_END: return "STATEMENT_END";
-    case TOKEN_FOR: return "FOR";
-    case TOKEN_IF: return "IF";
-    case TOKEN_IN: return "IN";
-    case TOKEN_FUN: return "FUN";
-    case TOKEN_END: return "END";
-    case TOKEN_ELSE: return "ELSE";
-    case TOKEN_WHILE: return "WHILE";
     case TOKEN_WORD: return "TOKEN_WORD";
     case TOKEN_DQUOTED_STRING: return "TOKEN_DQUOTED_STRING";
     case TOKEN_SQUOTED_STRING: return "TOKEN_SQUOTED_STRING";
+    case TOKEN_FOR: return "for";
+    case TOKEN_IF: return "if";
+    case TOKEN_IN: return "in";
+    case TOKEN_FUN: return "fn";
+    case TOKEN_END: return "end";
+    case TOKEN_ELSE: return "else";
+    case TOKEN_WHILE: return "while";
+    case TOKEN_BY: return "by";
     default: return "UNKNOWN";
   }
 }
@@ -85,5 +85,5 @@ const char *token_type_to_string(Token_Type type)
 void print_token(Token token)
 {
   const char *type_str = token_type_to_string(token.type);
-  printf("Token(%s, \"%.*s\")\n", type_str, token.lexeme.len, token.lexeme.ptr);
+  printf("Token(%s, \"%s\")\n", type_str, token.lexeme);
 }

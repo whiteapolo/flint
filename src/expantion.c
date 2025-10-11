@@ -137,7 +137,7 @@ void escape_sequence(Scanner *scanner, Z_String *output)
 
 void expand_dqouted_string(Token token, String_Vec *output)
 {
-  Scanner scanner = scanner_new(Z_STR(token.lexeme));
+  Scanner scanner = scanner_new(Z_CSTR(token.lexeme));
 
   Z_String exapnded = {0};
 
@@ -177,7 +177,7 @@ void expand_word(Token token, String_Vec *output)
 
 void expand_sqouted_string(Token token, String_Vec *output)
 {
-  Scanner scanner = scanner_new(Z_STR(token.lexeme));
+  Scanner scanner = scanner_new(Z_CSTR(token.lexeme));
   Z_String expanded = {0};
 
   while (!scanner_is_at_end(&scanner)) {
@@ -221,7 +221,7 @@ char **expand_argv(Argv argv)
 
 void expand_alias(Token key, Token_Vec *output)
 {
-  const char *value = select_alias(z_str_to_cstr(&key.lexeme));
+  const char *value = select_alias(key.lexeme);
 
   if (!value) {
     z_da_append(output, key);

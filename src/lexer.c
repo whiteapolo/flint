@@ -1,5 +1,6 @@
 #include "lexer.h"
 #include "builtins/builtin.h"
+#include "cstr.h"
 #include "error.h"
 #include "libzatar.h"
 #include "scanner.h"
@@ -13,8 +14,6 @@
 
 static bool had_error;
 static Scanner scanner;
-extern Keyword keywords[];
-extern int keywords_len;
 
 static void error(const char *fmt, ...)
 {
@@ -42,8 +41,7 @@ void skip_spaces()
 static Token create_token(Token_Type type)
 {
   Token token = {
-      .lexeme =
-          z_str_new_from(Z_SV(scanner.start, scanner.curr - scanner.start)),
+      .lexeme = strndup(scanner.start, scanner.curr - scanner.start),
       .type = type,
       .line = scanner.line,
       .column = scanner.column,

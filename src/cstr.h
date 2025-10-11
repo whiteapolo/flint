@@ -109,4 +109,20 @@ char *str_read_file(const char *pathname)
   return content;
 }
 
+void str_free_string_array(char **array)
+{
+  for (char **s = array; *s; s++) {
+    free(*s);
+  }
+
+  free(array);
+}
+
+char **str_split(const char *s, const char *delim)
+{
+  (void)s;
+  (void)delim;
+  return NULL;
+}
+
 #endif

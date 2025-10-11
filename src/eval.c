@@ -278,7 +278,7 @@ void evaluate_for(Statement_For *statement)
   expand_token(statement->delim, &delim);
   expand_token(statement->string, &string);
 
-  Z_String name = z_str_new_from(Z_STR(statement->var_name.lexeme));
+  Z_String name = z_str_new_from(Z_CSTR(statement->var_name.lexeme));
   Z_String value = {0};
 
   action_create_variable(Z_STR(name), Z_CSTR(""));
@@ -302,7 +302,7 @@ void evaluate_for(Statement_For *statement)
 
 void evaluate_function(Statement_Function *function)
 {
-  action_create_fuction(Z_STR(function->name.lexeme), (Statement_Function *)dup_statement_function(function));
+  action_create_fuction(Z_CSTR(function->name.lexeme), (Statement_Function *)dup_statement_function(function));
 }
 
 int evaluate_statement(Statement *statement)
