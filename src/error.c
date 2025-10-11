@@ -17,7 +17,7 @@ void syntax_error(const char *fmt, ...)
 
 void syntax_error_va(const char *fmt, va_list ap)
 {
-  fprintf(stderr, "" Z_COLOR_RED "YOU SUCK. here is why" Z_COLOR_RESET ": ");
+  fprintf(stderr, "%sYOU SUCK%s:", Z_COLOR_RED, Z_COLOR_RESET);
   vfprintf(stderr, fmt, ap);
   fprintf(stderr, "\n");
 }
@@ -39,11 +39,7 @@ void print_str_without_tabs(FILE *out, const char *s)
 
 void syntax_error_at_token_va(const char * const *source, Token token, const char *fmt, va_list ap)
 {
-  fprintf(
-      stderr,
-      "%d:%d: " Z_COLOR_RED "YOU SUCK" Z_COLOR_RESET ": ",
-      token.line, token.column
-  );
+  fprintf(stderr, "%d:%d: %sYOU SUCK%s: \n", token.line, token.column, Z_COLOR_RED, Z_COLOR_RESET);
 
   if (token.type == TOKEN_EOD || token.type == TOKEN_STATEMENT_END) {
     fprintf(stderr, "at end: ");
@@ -54,15 +50,9 @@ void syntax_error_at_token_va(const char * const *source, Token token, const cha
   vfprintf(stderr, fmt, ap);
   fprintf(stderr, "\n");
 
-  const char *line = source[token.line];
-
   fprintf(stderr, "%5d | ", token.line);
-  print_str_without_tabs(stderr, line);
-  fprintf(
-      stderr,
-      "\n      | %*s" Z_COLOR_RED "^" Z_COLOR_RESET "\n",
-      token.column, ""
-  );
+  print_str_without_tabs(stderr, source[token.line]);
+  fprintf(stderr, "\n      | %*s%s^%s\n", token.column, "", Z_COLOR_RED, Z_COLOR_RESET);
 }
 
 // const char *get_random_assult()

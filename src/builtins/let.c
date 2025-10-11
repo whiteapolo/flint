@@ -10,10 +10,7 @@ int builtin_let(int argc, char **argv)
         return 1;
     }
 
-    const char *name = argv[1];
-    const char *value = argv[2];
-
-    action_create_variable(Z_CSTR(name), Z_CSTR(value));
+    action_create_variable(argv[1], argv[2]);
 
     return 0;
 }

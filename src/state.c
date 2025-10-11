@@ -42,9 +42,14 @@ bool action_mutate_variable(const char *name, const char *value)
   return false;
 }
 
-void action_create_variable(Z_String_View name, Z_String_View value)
+// void action_create_variable(Z_String_View name, Z_String_View value)
+// {
+//   z_map_put(&z_da_peek(&state.scopes).variables, strndup(name.ptr, name.len), strndup(value.ptr, value.len), free, free);
+// }
+
+void action_create_variable(const char *name, const char *value)
 {
-  z_map_put(&z_da_peek(&state.scopes).variables, strndup(name.ptr, name.len), strndup(value.ptr, value.len), free, free);
+  z_map_put(&z_da_peek(&state.scopes).variables, strdup(name), strdup(value), free, free);
 }
 
 void action_create_fuction(Z_String_View name, Statement_Function *fn)

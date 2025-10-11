@@ -24,7 +24,7 @@ void initialize_state();
 
 // actions that change the state
 bool action_mutate_variable(const char *name, const char *value);
-void action_create_variable(Z_String_View name, Z_String_View value);
+void action_create_variable(const char *name, const char *value);
 void action_create_fuction(Z_String_View name, Statement_Function *fn);
 void action_push_scope();
 void action_pop_scope();

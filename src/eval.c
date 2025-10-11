@@ -73,12 +73,12 @@ void initialize_function_arguments(char **argv)
     name.len = 0;
     z_str_append_format(&name, "%d", i);
     z_str_append_format(&all, "%s ", argv[i]);
-    action_create_variable(Z_STR(name), Z_CSTR(argv[i]));
+    action_create_variable(z_str_to_cstr(&name), argv[i]);
   }
 
   z_str_trim(&all);
 
-  action_create_variable(Z_CSTR("@"), Z_STR(all));
+  action_create_variable("@", z_str_to_cstr(&all));
 
   z_str_free(&all);
   z_str_free(&name);
@@ -281,7 +281,7 @@ void evaluate_for(Statement_For *statement)
   Z_String name = z_str_new_from(Z_CSTR(statement->var_name.lexeme));
   Z_String value = {0};
 
-  action_create_variable(Z_STR(name), Z_CSTR(""));
+  action_create_variable(z_str_to_cstr(&name), "");
 
   z_sv_split_cset_foreach(Z_CSTR(string.ptr[0]), Z_CSTR(delim.ptr[0]), tok) {
     value.len = 0;
