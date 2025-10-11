@@ -25,10 +25,10 @@ void initialize_state();
 // actions that change the state
 bool action_mutate_variable(const char *name, const char *value);
 void action_create_variable(const char *name, const char *value);
-void action_create_fuction(Z_String_View name, Statement_Function *fn);
+void action_create_fuction(const char *name, const Statement_Function *fn);
 void action_push_scope();
 void action_pop_scope();
-void action_put_alias(Z_String_View key, Z_String_View value);
+void action_put_alias(const char *key, const char *value);
 
 // selectors that don't change the state
 const char *select_variable(const char *name);

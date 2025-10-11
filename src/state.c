@@ -42,24 +42,19 @@ bool action_mutate_variable(const char *name, const char *value)
   return false;
 }
 
-// void action_create_variable(Z_String_View name, Z_String_View value)
-// {
-//   z_map_put(&z_da_peek(&state.scopes).variables, strndup(name.ptr, name.len), strndup(value.ptr, value.len), free, free);
-// }
-
 void action_create_variable(const char *name, const char *value)
 {
   z_map_put(&z_da_peek(&state.scopes).variables, strdup(name), strdup(value), free, free);
 }
 
-void action_create_fuction(Z_String_View name, Statement_Function *fn)
+void action_create_fuction(const char *name, const Statement_Function *fn)
 {
-  z_map_put(&z_da_peek(&state.scopes).functions, strndup(name.ptr, name.len), fn, free, (Free_Fn)free_function_statement);
+  z_map_put(&z_da_peek(&state.scopes).functions, strdup(name), dup_statement_function(fn), free, (Free_Fn)free_function_statement);
 }
 
-void action_put_alias(Z_String_View key, Z_String_View value)
+void action_put_alias(const char *key, const char *value)
 {
-  z_map_put(&state.alias, strndup(key.ptr, key.len), strndup(value.ptr, value.len), free, free);
+  z_map_put(&state.alias, strdup(key), strdup(value), free, free);
 }
 
 const char *select_variable(const char *name)

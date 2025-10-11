@@ -302,7 +302,7 @@ void evaluate_for(Statement_For *statement)
 
 void evaluate_function(Statement_Function *function)
 {
-  action_create_fuction(Z_CSTR(function->name.lexeme), (Statement_Function *)dup_statement_function(function));
+  action_create_fuction(function->name.lexeme, function);
 }
 
 int evaluate_statement(Statement *statement)
