@@ -18,82 +18,83 @@ void resolve_var(const char *var, Z_String *output)
   z_str_append_format(output, "%s", select_variable(var));
 }
 
-static void command_substitution(Scanner *scanner, Z_String *output);
-static void scanner_advance_single_quoted_string(Scanner *scanner);
-static void scanner_advance_double_quoted_string(Scanner *scanner);
-static void scanner_advance_command_substitution(Scanner *scanner);
+static void command_substitution(Z_Scanner *scanner, Z_String *output);
+static void scanner_advance_single_quoted_string(Z_Scanner *scanner);
+static void scanner_advance_double_quoted_string(Z_Scanner *scanner);
+static void scanner_advance_command_substitution(Z_Scanner *scanner);
 
-static void scanner_advance_command_substitution(Scanner *scanner)
+static void scanner_advance_command_substitution(Z_Scanner *scanner)
 {
-  while (!scanner_is_at_end(scanner)) {
-    switch (scanner_advance(scanner)) {
-    case '(':
-      scanner_advance_command_substitution(scanner);
-      break;
+  while (!z_scanner_is_at_end(*scanner)) {
+    switch (z_scanner_advance(scanner)) {
+      case '(':
+        scanner_advance_command_substitution(scanner);
+        break;
 
-    case ')':
-      return;
+      case ')': return;
 
-    case '\'':
-      scanner_advance_single_quoted_string(scanner);
-      if (scanner_is_at_end(scanner))
-        return;
-      scanner_advance(scanner);
-      break;
+      case '\'': {
+         scanner_advance_single_quoted_string(scanner);
+         if (z_scanner_is_at_end(*scanner)) return;
+         z_scanner_advance(scanner);
+         break;
+      }
 
-    case '"': {
-      scanner_advance_double_quoted_string(scanner);
-      if (scanner_is_at_end(scanner))
-        return;
-      scanner_advance(scanner);
-      break;
-    }
+      case '"': {
+        scanner_advance_double_quoted_string(scanner);
+        if (z_scanner_is_at_end(*scanner)) return;
+        z_scanner_advance(scanner);
+        break;
+      }
     }
   }
 }
 
-static void scanner_advance_double_quoted_string(Scanner *scanner)
+static void scanner_advance_double_quoted_string(Z_Scanner *scanner)
 {
-  while (!scanner_is_at_end(scanner) && !scanner_check(scanner, '"')) {
-    if (scanner_match_string(scanner, "$(")) {
+  while (!z_scanner_is_at_end(*scanner) && !z_scanner_check(*scanner, '"')) {
+    if (z_scanner_match_string(scanner, Z_CSTR("$("))) {
       scanner_advance_command_substitution(scanner);
     } else {
-      scanner_advance(scanner);
+      z_scanner_advance(scanner);
     }
   }
 }
 
-static void scanner_advance_single_quoted_string(Scanner *scanner)
+static void scanner_advance_single_quoted_string(Z_Scanner *scanner)
 {
-  scanner_advance_untill(scanner, '\'');
+  while (!z_scanner_is_at_end(*scanner) && !z_scanner_check(*scanner, '\'')) {
+    z_scanner_advance(scanner);
+  }
 }
 
-static void command_substitution(Scanner *scanner, Z_String *output)
+static void command_substitution(Z_Scanner *scanner, Z_String *output)
 {
-  const char *start = scanner->curr;
+  z_scanner_reset_mark(scanner);
   scanner_advance_command_substitution(scanner);
-
-  interpret_to(Z_SV(start, scanner->curr - start - 1), output);
+  Z_String_View command = z_scanner_capture(*scanner);
+  command.len--;
+  interpret_to(command, output);
 }
 
-void braced_variable(Scanner *scanner, Z_String *output)
+void braced_variable(Z_Scanner *scanner, Z_String *output)
 {
-  scanner->start = scanner->curr;
+  z_scanner_reset_mark(scanner);
 
-  while (!scanner_is_at_end(scanner) && scanner_peek(scanner) != '}') {
-    scanner_advance(scanner);
+  while (!z_scanner_is_at_end(*scanner) && z_scanner_peek(*scanner) != '}') {
+    z_scanner_advance(scanner);
   }
 
-  if (scanner_is_at_end(scanner)) {
-    z_str_append_str(output, Z_SV(scanner->start, scanner->curr - scanner->start));
+  if (z_scanner_is_at_end(*scanner)) {
+    z_str_append_str(output, z_scanner_capture(*scanner));
     return;
   }
 
-  char *var_name = strndup(scanner->start, scanner->curr - scanner->start);
+  char *var_name = z_sv_to_cstr(z_scanner_capture(*scanner));
   z_str_append_format(output, "%s", select_variable(var_name));
   free(var_name);
 
-  scanner_advance(scanner); // eat the '}'
+  z_scanner_advance(scanner); // eat the '}'
 }
 
 bool is_variable_char(char c)
@@ -101,15 +102,15 @@ bool is_variable_char(char c)
   return isdigit(c) || isalpha(c) || strchr("_?@", c);
 }
 
-void variable(Scanner *scanner, Z_String *output)
+void variable(Z_Scanner *scanner, Z_String *output)
 {
-  scanner->start = scanner->curr;
+  z_scanner_reset_mark(scanner);
 
-  while (!scanner_is_at_end(scanner) && is_variable_char(scanner_peek(scanner))) {
-    scanner_advance(scanner);
+  while (!z_scanner_is_at_end(*scanner) && is_variable_char(z_scanner_peek(*scanner))) {
+    z_scanner_advance(scanner);
   }
 
-  char *var_name = strndup(scanner->start, scanner->curr - scanner->start);
+  char *var_name = z_sv_to_cstr(z_scanner_capture(*scanner));
   z_str_append_format(output, "%s", select_variable(var_name));
   free(var_name);
 }
@@ -124,32 +125,58 @@ char escaped_char(char c)
   }
 }
 
-void escape_sequence(Scanner *scanner, Z_String *output)
+void escape_sequence(Z_Scanner *scanner, Z_String *output)
 {
-  char c = scanner_advance(scanner);
+  char c = z_scanner_advance(scanner);
 
-  if (c == '\\' && !scanner_is_at_end(scanner)) {
-    z_str_append_char(output, escaped_char(scanner_advance(scanner)));
+  if (c == '\\' && !z_scanner_is_at_end(*scanner)) {
+    z_str_append_char(output, escaped_char(z_scanner_advance(scanner)));
   } else {
     z_str_append_char(output, c);
   }
 }
 
+// void expand_dqouted_string(Token token, String_Vec *output)
+// {
+//   Scanner scanner = scanner_new(Z_CSTR(token.lexeme));
+
+//   Z_String exapnded = {0};
+
+//   if (scanner_match(&scanner, '~')) {
+//     z_str_append_str(&exapnded, z_get_home_path());
+//   }
+
+//   while (!scanner_is_at_end(&scanner)) {
+//     if (scanner_match(&scanner, '$')) {
+//       if (scanner_match(&scanner, '(')) {
+//         command_substitution(&scanner, &exapnded);
+//       } else if (scanner_match(&scanner, '{')) {
+//         braced_variable(&scanner, &exapnded);
+//       } else {
+//         variable(&scanner, &exapnded);
+//       }
+//     } else {
+//       escape_sequence(&scanner, &exapnded);
+//     }
+//   }
+
+//   z_da_append(output, (char *)z_str_to_cstr(&exapnded));
+// }
+
 void expand_dqouted_string(Token token, String_Vec *output)
 {
-  Scanner scanner = scanner_new(Z_CSTR(token.lexeme));
-
+  Z_Scanner scanner = z_scanner_new(Z_CSTR(token.lexeme));
   Z_String exapnded = {0};
 
-  if (scanner_match(&scanner, '~')) {
+  if (z_scanner_match(&scanner, '~')) {
     z_str_append_str(&exapnded, z_get_home_path());
   }
 
-  while (!scanner_is_at_end(&scanner)) {
-    if (scanner_match(&scanner, '$')) {
-      if (scanner_match(&scanner, '(')) {
+  while (!z_scanner_is_at_end(scanner)) {
+    if (z_scanner_match(&scanner, '$')) {
+      if (z_scanner_match(&scanner, '(')) {
         command_substitution(&scanner, &exapnded);
-      } else if (scanner_match(&scanner, '{')) {
+      } else if (z_scanner_match(&scanner, '{')) {
         braced_variable(&scanner, &exapnded);
       } else {
         variable(&scanner, &exapnded);
@@ -177,10 +204,10 @@ void expand_word(Token token, String_Vec *output)
 
 void expand_sqouted_string(Token token, String_Vec *output)
 {
-  Scanner scanner = scanner_new(Z_CSTR(token.lexeme));
+  Z_Scanner scanner = z_scanner_new(Z_CSTR(token.lexeme));
   Z_String expanded = {0};
 
-  while (!scanner_is_at_end(&scanner)) {
+  while (!z_scanner_is_at_end(scanner)) {
     escape_sequence(&scanner, &expanded);
   }
 

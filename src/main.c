@@ -16,10 +16,6 @@
 
 #define INIT_FILE_PATH "~/.config/flint/init.flint"
 
-#ifndef PATH_MAX
-#define PATH_MAX 4096
-#endif
-
 char *get_prompt()
 {
   char *pwd = getcwd(NULL, 0);
