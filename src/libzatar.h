@@ -415,6 +415,7 @@ Z_Scanner z_scanner_new(Z_String_View s);
 bool z_scanner_is_at_end(Z_Scanner scanner);
 char z_scanner_advance(Z_Scanner *scanner);
 char z_scanner_peek(Z_Scanner scanner);
+char z_scanner_previous(Z_Scanner scanner);
 bool z_scanner_check(Z_Scanner scanner, char c);
 bool z_scanner_match(Z_Scanner *scanner, char expected);
 bool z_scanner_check_string(Z_Scanner scanner, Z_String_View s);
@@ -1065,6 +1066,11 @@ char z_scanner_advance(Z_Scanner *scanner)
 char z_scanner_peek(Z_Scanner scanner)
 {
   return scanner.source.ptr[scanner.end];
+}
+
+char z_scanner_previous(Z_Scanner scanner)
+{
+  return scanner.source.ptr[scanner.end - 1];
 }
 
 bool z_scanner_check(Z_Scanner scanner, char c)
