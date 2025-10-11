@@ -14,6 +14,7 @@ int str_array_len(char **array);
 char **str_split(const char *s, const char *delim);
 void str_free_array(char **array);
 char *str_replace(const char *s, const char *old, const char *new);
+int str_array_len(char **array);
 
 #endif
 #ifdef CSTR_IMPLEMENTATION

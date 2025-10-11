@@ -4,8 +4,6 @@
 #include <stdio.h>
 #include <string.h>
 
-typedef void (*Free_Fn)(void *);
-
 State state = {0};
 
 Scope new_scope()
@@ -21,7 +19,7 @@ Scope new_scope()
 void free_scope(Scope scope)
 {
   z_map_free(&scope.variables, free, free);
-  z_map_free(&scope.functions, free, (Free_Fn)free_function_statement);
+  z_map_free(&scope.functions, free, (Z_Free_Fn)free_function_statement);
 }
 
 void initialize_state()
@@ -49,7 +47,7 @@ void action_create_variable(const char *name, const char *value)
 
 void action_create_fuction(const char *name, const Statement_Function *fn)
 {
-  z_map_put(&z_da_peek(&state.scopes).functions, strdup(name), dup_statement_function(fn), free, (Free_Fn)free_function_statement);
+  z_map_put(&z_da_peek(&state.scopes).functions, strdup(name), dup_statement_function(fn), free, (Z_Free_Fn)free_function_statement);
 }
 
 void action_put_alias(const char *key, const char *value)

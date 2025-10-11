@@ -55,6 +55,7 @@
 #define Z_Optional_None() { .ok = false }
 
 typedef int (*Z_Compare_Fn)(const void *, const void *);
+typedef void (*Z_Free_Fn)(void *);
 
 int z_get_file_size(FILE *fp);
 int z_get_fmt_size(const char *fmt, ...);

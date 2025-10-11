@@ -117,10 +117,10 @@ void variable(Scanner *scanner, Z_String *output)
 char escaped_char(char c)
 {
   switch (c) {
-  case 'n': return '\n';
-  case 't': return '\t';
-  case 'r': return '\r';
-  default: return c;
+    case 'n': return '\n';
+    case 't': return '\t';
+    case 'r': return '\r';
+    default: return c;
   }
 }
 

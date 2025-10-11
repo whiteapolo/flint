@@ -13,29 +13,10 @@
 #include "parser.h"
 #include "state.h"
 #include "token.h"
+#include "cstr.h"
 
 int evaluate_job(Job *job);
 void evaluate_block(Statement_Vec statements);
-
-int count_argc(char **argv)
-{
-  int i = 0;
-
-  while (argv[i] != NULL) {
-    i++;
-  }
-
-  return i;
-}
-
-void free_string_array(char **s)
-{
-  for (char **curr = s; *curr; curr++) {
-    free(*curr);
-  }
-
-  free(s);
-}
 
 int safe_fork()
 {
@@ -98,17 +79,17 @@ int exec_command(char **argv)
     return 0;
   }
 
-  const Statement_Function *fn = select_function(argv[0]);
+  const Statement_Function *function = select_function(argv[0]);
 
-  if (fn) {
-    call_function(fn, argv);
+  if (function) {
+    call_function(function, argv);
     return 0;
   }
 
-  BuiltinFn fun = get_builtin(argv[0]);
+  BuiltinFn builtin = get_builtin(argv[0]);
 
-  if (fun) {
-    return fun(count_argc(argv), argv);
+  if (builtin) {
+    return builtin(str_array_len(argv), argv);
   }
 
   int status = 0;
@@ -129,8 +110,7 @@ int evaluate_command(Job_Command *job)
 {
   char **argv = expand_argv(job->argv);
   int status = exec_command(argv);
-
-  free_string_array(argv);
+  str_free_array(argv);
 
   return status;
 }
@@ -207,22 +187,22 @@ int evaluate_ampersand(Job_Unary *job)
 int evaluate_unary(Job_Unary *job)
 {
   switch (job->operator.type) {
-  case TOKEN_AMPERSAND: return evaluate_ampersand(job);
-  default:
-    assert(0 && "Unknown operator\n");
-    return 0; // unreachable
+    case TOKEN_AMPERSAND: return evaluate_ampersand(job);
+    default:
+      assert(0 && "Unknown operator\n");
+      return 0; // unreachable
   }
 }
 
 int evaluate_binary(Job_Binary *job)
 {
   switch (job->operator.type) {
-  case TOKEN_AND: return evaluate_and(job);
-  case TOKEN_OR: return evaluate_or(job);
-  case TOKEN_PIPE: return evaluate_pipe(job);
-  default:
-    assert(0 && "Unknown operator\n");
-    return 0; // unreachable
+    case TOKEN_AND: return evaluate_and(job);
+    case TOKEN_OR: return evaluate_or(job);
+    case TOKEN_PIPE: return evaluate_pipe(job);
+    default:
+      assert(0 && "Unknown operator\n");
+      return 0; // unreachable
   }
 }
 
@@ -233,14 +213,9 @@ int evaluate_job(Job *job)
   }
 
   switch (job->type) {
-    case JOB_COMMAND:
-      return evaluate_command((Job_Command *)job);
-
-    case JOB_UNARY:
-      return evaluate_unary((Job_Unary *)job);
-
-    case JOB_BINARY:
-      return evaluate_binary((Job_Binary *)job);
+    case JOB_COMMAND: return evaluate_command((Job_Command *)job);
+    case JOB_UNARY: return evaluate_unary((Job_Unary *)job);
+    case JOB_BINARY: return evaluate_binary((Job_Binary *)job);
   }
 
   return 0;
@@ -294,8 +269,8 @@ void evaluate_for(Statement_For *statement)
   z_str_free(&name);
   z_da_append(&delim, NULL);
   z_da_append(&string, NULL);
-  free_string_array(delim.ptr);
-  free_string_array(string.ptr);
+  str_free_array(delim.ptr);
+  str_free_array(string.ptr);
 
   action_pop_scope();
 }
