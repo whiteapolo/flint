@@ -8,11 +8,12 @@
 #include <endian.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 
-void interpret(Z_String_View source)
+void interpret(const char *source)
 {
-  Token_Vec tokens = lexer_get_tokens(source);
+  Token_Vec tokens = lexer_get_tokens(Z_CSTR(source));
   expand_aliases(&tokens);
   // lexer_print_tokens(&tokens);
   Statement_Vec statements = parse(&tokens, source);
@@ -31,7 +32,9 @@ void interpret_to(Z_String_View source, Z_String *output)
   dup2(fd[1], STDOUT_FILENO);
   close(fd[1]);
 
-  interpret(source);
+  char *_source = strndup(source.ptr, source.len);
+  interpret(_source);
+  free(_source);
 
   fflush(stdout);
 

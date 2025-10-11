@@ -42,7 +42,7 @@ void repl()
 
   for (char *line = readline(prompt); line; line = readline(prompt)) {
     add_history(line);
-    interpret(Z_CSTR(line));
+    interpret(line);
     free(line);
     free(prompt);
     prompt = get_prompt();
@@ -62,7 +62,7 @@ void execute_file(const char *pathname)
     return;
   }
 
-  interpret(Z_CSTR(content));
+  interpret(content);
   free(content);
 }
 

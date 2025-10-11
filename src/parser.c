@@ -1,4 +1,5 @@
 #include "parser.h"
+#include "cstr.h"
 #include "error.h"
 #include "lexer.h"
 #include "libzatar.h"
@@ -39,7 +40,7 @@ static const Token_Vec *tokens;
 static int curr;
 static bool had_error;
 static bool panic_mode;
-static Z_String_View source;
+static char **source;
 
 static Token advance()
 {
@@ -124,7 +125,7 @@ static void error(Token token, const char *fmt, ...)
   va_start(ap, fmt);
 
   if (!panic_mode) {
-    syntax_error_at_token_va(source, token, fmt, ap);
+    syntax_error_at_token_va((const char *const *)source, token, fmt, ap);
   }
 
   had_error = true;
@@ -442,13 +443,13 @@ Statement *parse_statement()
   return parse_job_statement();
 }
 
-Statement_Vec parse(const Token_Vec *t, Z_String_View s)
+Statement_Vec parse(const Token_Vec *t, const char *_source)
 {
   tokens = t;
   curr = 0;
   had_error = false;
   panic_mode = false;
-  source = s;
+  source = str_split(_source, "\n");
 
   Statement_Vec statements = parse_block_utill(NULL, 0);
 

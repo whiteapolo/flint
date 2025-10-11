@@ -3,7 +3,7 @@
 
 #include "libzatar.h"
 
-void interpret(Z_String_View source);
+void interpret(const char *source);
 void interpret_to(Z_String_View source, Z_String *output);
 
 #endif

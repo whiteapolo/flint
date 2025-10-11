@@ -90,7 +90,7 @@ typedef struct {
   Statement_Vec body;
 } Statement_Function;
 
-Statement_Vec parse(const Token_Vec *t, Z_String_View s);
+Statement_Vec parse(const Token_Vec *t, const char *_source);
 void parser_free(Statement_Vec *node);
 void free_function_statement(Statement_Function *statement);
 
