@@ -2,6 +2,7 @@
 #include <linux/limits.h>
 #include <readline/history.h>
 #include <readline/readline.h>
+#include <stdarg.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -11,6 +12,7 @@
 
 #include "interpreter.h"
 #include "state.h"
+#include "cstr.h"
 
 #define INIT_FILE_PATH "~/.config/flint/init.flint"
 
@@ -18,76 +20,61 @@
 #define PATH_MAX 4096
 #endif
 
-static Z_String prompt = {0};
-
-void update_prompt()
+char *get_prompt()
 {
-  char pwd[PATH_MAX];
-  z_str_clear(&prompt);
+  char *pwd = getcwd(NULL, 0);
 
-  if (getcwd(pwd, PATH_MAX) == NULL) {
-    z_str_append_format(&prompt, "couldn't retrive cwd > ");
-    return;
+  if (!pwd) {
+    return str_format("couldn't retrive cwd > ");
   }
 
-  Z_String compressed_pwd = {0};
-  z_compress_path(Z_CSTR(pwd), &compressed_pwd);
-  z_str_append_format(&prompt, Z_COLOR_MAGENTA);
-  z_str_append_str(&prompt, Z_STR(compressed_pwd));
-  z_str_append_format(&prompt, Z_COLOR_GREEN);
-  z_str_append_format(&prompt, "::dev:: ");
-  z_str_append_format(&prompt, Z_COLOR_RESET);
-  z_str_free(&compressed_pwd);
+  char *home = str_compress_tilde(pwd);
+  char *prompt = str_format("%s%s%s%s%s", Z_COLOR_MAGENTA, home, Z_COLOR_GREEN, "::dev:: ", Z_COLOR_RESET);
+  free(home);
+  free(pwd);
+
+  return prompt;
 }
 
 void repl()
 {
-  char *line;
-  update_prompt();
+  char *prompt = get_prompt();
 
-  while ((line = readline(z_str_to_cstr(&prompt)))) {
+  for (char *line = readline(prompt); line; line = readline(prompt)) {
     add_history(line);
     interpret(Z_CSTR(line));
-    update_prompt();
     free(line);
+    free(prompt);
+    prompt = get_prompt();
   }
+
+  free(prompt);
 }
 
-void execute_file_from_raw_path(const char *pathname)
+void execute_file(const char *pathname)
 {
-  Z_String file_content = {0};
+  char *expanded_path = str_expand_tilde(pathname);
+  char *content = str_read_file(expanded_path);
+  free(expanded_path);
 
-  if (!z_read_whole_file(pathname, &file_content)) {
+  if (!content) {
     z_print_warning("Flint: No such file or directory: '%s'", pathname);
     return;
   }
 
-  interpret(Z_STR(file_content));
-  z_str_free(&file_content);
-}
-
-void execute_file(Z_String_View pathname)
-{
-  Z_String expanded_path = {0};
-  z_expand_tilde(pathname, &expanded_path);
-  execute_file_from_raw_path(z_str_to_cstr(&expanded_path));
-  z_str_free(&expanded_path);
-}
-
-void execute_init_file()
-{
-  execute_file(Z_CSTR(INIT_FILE_PATH));
+  interpret(Z_CSTR(content));
+  free(content);
 }
 
 int main(int argc, char **argv)
 {
   initialize_state();
-  execute_init_file();
+  execute_file(INIT_FILE_PATH);
 
   if (argc == 1) {
     repl();
   } else if (argc == 2) {
-    execute_file(Z_CSTR(argv[1]));
+    execute_file(argv[1]);
   } else {
     z_die_format("Flint: Usage: Flint <path>\n");
   }
@@ -95,3 +82,6 @@ int main(int argc, char **argv)
 
 #define LIBZATAR_IMPLEMENTATION
 #include "libzatar.h"
+
+#define CSTR_IMPLEMENTATION
+#include "cstr.h"
