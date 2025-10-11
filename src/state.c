@@ -32,9 +32,9 @@ void initialize_state()
 
 bool action_mutate_variable(const char *name, const char *value)
 {
-  for (int i = state.scopes.len - 1; i >= 0; i++) {
-    if (z_map_get(&state.scopes.ptr[i].variables, name)) {
-      z_map_put(&state.scopes.ptr[i].variables, strdup(name), strdup(value), free, free);
+  z_da_foreach_reversed(Scope *, scope, &state.scopes) {
+    if (z_map_get(&scope->variables, name)) {
+      z_map_put(&scope->variables, strdup(name), strdup(value), free, free);
       return true;
     }
   }
@@ -59,10 +59,10 @@ void action_put_alias(const char *key, const char *value)
 
 const char *select_variable(const char *name)
 {
-  for (int i = state.scopes.len - 1; i >= 0; i--) {
-    void *tmp = z_map_get(&state.scopes.ptr[i].variables, name);
-    if (tmp) {
-      return tmp;
+  z_da_foreach_reversed(Scope *, scope, &state.scopes) {
+    void *value = z_map_get(&scope->variables, name);
+    if (value) {
+      return value;
     }
   }
 
@@ -71,10 +71,10 @@ const char *select_variable(const char *name)
 
 const Statement_Function *select_function(const char *name)
 {
-  for (int i = state.scopes.len - 1; i >= 0; i--) {
-    void *fn = z_map_get(&state.scopes.ptr[i].functions, name);
+  z_da_foreach_reversed(Scope *, scope, &state.scopes) {
+    void *fn = z_map_get(&scope->functions, name);
     if (fn) {
-      return (Statement_Function *)fn;
+      return fn;
     }
   }
 

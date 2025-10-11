@@ -106,6 +106,9 @@ int z_print_warning(const char *fmt, ...);
 #define z_da_foreach(Type, it, da)                                             \
   for (Type it = (da)->ptr; it < (da)->ptr + (da)->len; it++)
 
+#define z_da_foreach_reversed(Type, it, da)                                    \
+  for (Type it = (da)->ptr + (da)->len - 1; it >= (da)->ptr; it--)
+
 #define z_da_remove(da, i)                                                     \
   do {                                                                         \
     memmove(&((da)->ptr[(i)]), &((da)->ptr[(i) + 1]),                          \
