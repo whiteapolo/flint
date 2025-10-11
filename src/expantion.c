@@ -3,7 +3,6 @@
 #include "eval.h"
 #include "interpreter.h"
 #include "libzatar.h"
-#include "scanner.h"
 #include "state.h"
 #include "token.h"
 #include <ctype.h>
@@ -135,33 +134,6 @@ void escape_sequence(Z_Scanner *scanner, Z_String *output)
     z_str_append_char(output, c);
   }
 }
-
-// void expand_dqouted_string(Token token, String_Vec *output)
-// {
-//   Scanner scanner = scanner_new(Z_CSTR(token.lexeme));
-
-//   Z_String exapnded = {0};
-
-//   if (scanner_match(&scanner, '~')) {
-//     z_str_append_str(&exapnded, z_get_home_path());
-//   }
-
-//   while (!scanner_is_at_end(&scanner)) {
-//     if (scanner_match(&scanner, '$')) {
-//       if (scanner_match(&scanner, '(')) {
-//         command_substitution(&scanner, &exapnded);
-//       } else if (scanner_match(&scanner, '{')) {
-//         braced_variable(&scanner, &exapnded);
-//       } else {
-//         variable(&scanner, &exapnded);
-//       }
-//     } else {
-//       escape_sequence(&scanner, &exapnded);
-//     }
-//   }
-
-//   z_da_append(output, (char *)z_str_to_cstr(&exapnded));
-// }
 
 void expand_dqouted_string(Token token, String_Vec *output)
 {

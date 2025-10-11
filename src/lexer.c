@@ -3,7 +3,6 @@
 #include "cstr.h"
 #include "error.h"
 #include "libzatar.h"
-#include "scanner.h"
 #include "token.h"
 #include <ctype.h>
 #include <stdarg.h>
