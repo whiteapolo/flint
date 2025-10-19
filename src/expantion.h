@@ -10,7 +10,7 @@ typedef struct {
 } String_Vec;
 
 void expand_token(Token token, String_Vec *out);
-char **expand_argv(Argv argv);
+char **expand_argv(Token_Vec argv);
 void expand_aliases(Token_Vec *tokens);
 
 #endif

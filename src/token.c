@@ -31,6 +31,17 @@ Token dup_token(Token token)
   return new_token;
 }
 
+Token_Vec dup_tokens(Token_Vec tokens)
+{
+  Token_Vec new_tokens = {0};
+
+  z_da_foreach(Token *, token, &tokens) {
+    z_da_append(&new_tokens, dup_token(*token));
+  }
+
+  return new_tokens;
+}
+
 void free_token(Token *token)
 {
   free(token->lexeme);

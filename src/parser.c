@@ -251,7 +251,7 @@ Job *create_unary(Token operator, Job * child)
   return (Job *)node;
 }
 
-Job *create_command(Argv argv)
+Job *create_command(Token_Vec argv)
 {
   Job_Command *node = malloc(sizeof(Job_Command));
   node->type = JOB_COMMAND;
@@ -262,7 +262,7 @@ Job *create_command(Argv argv)
 
 Job *parse_simple_command()
 {
-  Argv argv = {0};
+  Token_Vec argv = {0};
 
   while (check_argument()) {
     Token token = advance();
@@ -338,7 +338,7 @@ Statement *parse_job_statement()
   return job ? create_statement_job(job) : NULL;
 }
 
-Statement_Vec parse_block_utill(Token_Type types[], int len)
+Statement_Vec parse_block_untill(Token_Type types[], int len)
 {
   Statement_Vec statements = {0};
   skip_empty_statements();
@@ -357,10 +357,10 @@ Statement_Vec parse_block_utill(Token_Type types[], int len)
   return statements;
 }
 
-Statement_Vec parse_block_utill_end()
+Statement_Vec parse_block_untill_end()
 {
   Token_Type end[] = {TOKEN_END};
-  return parse_block_utill(end, Z_ARRAY_LEN(end));
+  return parse_block_untill(end, Z_ARRAY_LEN(end));
 }
 
 Statement *parse_if_statement()
@@ -371,14 +371,13 @@ Statement *parse_if_statement()
 
   skip_empty_statements();
 
-  Statement_Vec ifBranch =
-    parse_block_utill(if_body_end, Z_ARRAY_LEN(if_body_end));
+  Statement_Vec ifBranch = parse_block_untill(if_body_end, Z_ARRAY_LEN(if_body_end));
   Statement_Vec elseBranch = {0};
 
   skip_empty_statements();
 
   if (match(TOKEN_ELSE)) {
-    elseBranch = parse_block_utill_end();
+    elseBranch = parse_block_untill_end();
   }
 
   skip_empty_statements();
@@ -394,7 +393,7 @@ Statement *parse_while_statement()
 
   skip_empty_statements();
 
-  Statement_Vec body = parse_block_utill_end();
+  Statement_Vec body = parse_block_untill_end();
 
   consume(TOKEN_END, "Expected 'end' after while statement");
 
@@ -413,7 +412,7 @@ Statement *parse_for_statement()
 
   skip_empty_statements();
 
-  Statement_Vec body = parse_block_utill_end();
+  Statement_Vec body = parse_block_untill_end();
   consume(TOKEN_END, "Expected 'end' after if statement");
 
   return create_statement_for(var_name, string, delim, body);
@@ -425,7 +424,7 @@ Statement *parse_function_statement()
 
   skip_empty_statements();
 
-  Statement_Vec body = parse_block_utill_end();
+  Statement_Vec body = parse_block_untill_end();
 
   consume(TOKEN_END, "Expected 'end' after function body.");
 
@@ -449,7 +448,7 @@ Statement_Vec parse(const Token_Vec *t, const char *_source)
   panic_mode = false;
   source = str_split(_source, "\n");
 
-  Statement_Vec statements = parse_block_utill(NULL, 0);
+  Statement_Vec statements = parse_block_untill(NULL, 0);
 
   if (had_error) {
     parser_free(&statements);
@@ -459,18 +458,9 @@ Statement_Vec parse(const Token_Vec *t, const char *_source)
   return statements;
 }
 
-void free_argv(Argv argv)
-{
-  z_da_foreach(Token*, arg, &argv) {
-    free_token(arg);
-  }
-
-  free(argv.ptr);
-}
-
 void free_job_command(Job_Command *cmd)
 {
-  free_argv(cmd->argv);
+  free_tokens(&cmd->argv);
   free(cmd);
 }
 
@@ -628,7 +618,7 @@ Job *dup_job_unary(const Job_Unary *job)
 
 Job *dup_job_command(const Job_Command *job)
 {
-  return create_command(dup_argv(job->argv));
+  return create_command(dup_tokens(job->argv));
 }
 
 Statement *dup_statement_function(const Statement_Function *fn)
@@ -642,7 +632,7 @@ Statement *dup_statement_if(const Statement_If *statement)
       dup_job(statement->condition),
       dup_statements(statement->ifBranch),
       dup_statements(statement->elseBranch)
-      );
+  );
 }
 
 Statement *dup_statement_for(const Statement_For *statement)
@@ -652,7 +642,7 @@ Statement *dup_statement_for(const Statement_For *statement)
       dup_token(statement->string),
       dup_token(statement->delim),
       dup_statements(statement->body)
-      );
+  );
 }
 
 Statement *dup_statement_job(const Statement_Job *statement)
@@ -663,15 +653,4 @@ Statement *dup_statement_job(const Statement_Job *statement)
 Statement *dup_statement_while(const Statement_While *statement)
 {
   return create_statement_while(dup_job(statement->condition), dup_statements(statement->body));
-}
-
-Argv dup_argv(Argv argv)
-{
-  Argv new_argv = {0};
-
-  z_da_foreach(Token *, arg, &argv) {
-    z_da_append(&new_argv, dup_token(*arg));
-  }
-
-  return new_argv;
 }

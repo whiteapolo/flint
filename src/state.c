@@ -59,9 +59,8 @@ void action_put_alias(const char *key, const char *value)
 const char *select_variable(const char *name)
 {
   z_da_foreach_reversed(Scope **, scope, &state.scopes) {
-    void *value = z_map_get((*scope)->variables, name);
-    if (value) {
-      return value;
+    if (z_map_get((*scope)->variables, name)) {
+      return z_map_get((*scope)->variables, name);
     }
   }
 
@@ -71,9 +70,8 @@ const char *select_variable(const char *name)
 const Statement_Function *select_function(const char *name)
 {
   z_da_foreach_reversed(Scope **, scope, &state.scopes) {
-    void *fn = z_map_get((*scope)->functions, name);
-    if (fn) {
-      return fn;
+    if (z_map_get((*scope)->functions, name)) {
+      return z_map_get((*scope)->functions, name);
     }
   }
 

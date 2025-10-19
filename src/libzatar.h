@@ -104,7 +104,7 @@ int z_print_warning(const char *fmt, ...);
     memset(&(da)->ptr[(da)->len], 0, sizeof(*(da)->ptr));                      \
   } while (0)
 
-#define z_da_foreach(Type, it, da)                                             \
+#define z_da_foreach(Type, it, da)                                         \
   for (Type it = (da)->ptr; it < (da)->ptr + (da)->len; it++)
 
 #define z_da_foreach_reversed(Type, it, da)                                    \

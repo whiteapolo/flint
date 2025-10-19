@@ -6,12 +6,6 @@
 #include "token.h"
 #include <stdbool.h>
 
-typedef struct {
-  Token *ptr;
-  int len;
-  int cap;
-} Argv;
-
 typedef enum {
   JOB_COMMAND,
   JOB_BINARY,
@@ -24,7 +18,7 @@ typedef struct {
 
 typedef struct {
   Job_Type type;
-  Argv argv;
+  Token_Vec argv;
 } Job_Command;
 
 typedef struct {
@@ -103,7 +97,7 @@ Statement *dup_statement_job(const Statement_Job *statement);
 Statement *dup_statement_while(const Statement_While *statement);
 
 
-Argv dup_argv(Argv argv);
+Token_Vec dup_argv(Token_Vec argv);
 Job *dup_job(const Job *job);
 Job *dup_job_binary(const Job_Binary *job);
 Job *dup_job_unary(const Job_Unary *job);

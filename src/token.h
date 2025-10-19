@@ -47,6 +47,7 @@ typedef struct {
 void free_token(Token *token);
 void free_tokens(Token_Vec *tokens);
 Token dup_token(Token token);
+Token_Vec dup_tokens(Token_Vec tokens);
 void print_token(Token token);
 const char *token_type_to_string(Token_Type type);
 Optional_Token_Type get_keyword_type(Z_String_View lexeme);

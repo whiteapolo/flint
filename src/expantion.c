@@ -204,7 +204,7 @@ void expand_token(Token token, String_Vec *out)
   }
 }
 
-char **expand_argv(Argv argv)
+char **expand_argv(Token_Vec argv)
 {
   String_Vec expanded = {0};
 
