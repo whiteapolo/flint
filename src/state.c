@@ -48,7 +48,7 @@ void action_create_variable(const char *name, const char *value)
 
 void action_create_fuction(const char *name, const Statement_Function *fn)
 {
-  z_map_put(z_da_peek(&state.scopes)->functions, strdup(name), dup_statement_function(fn), free, (Z_Free_Fn)free_function_statement);
+  z_map_put(z_da_peek(&state.scopes)->functions, strdup(name), clone_statement_function(fn), free, (Z_Free_Fn)free_function_statement);
 }
 
 void action_put_alias(const char *key, const char *value)

@@ -88,19 +88,19 @@ Statement_Vec parse(const Token_Vec *t, const char *_source);
 void parser_free(Statement_Vec *node);
 void free_function_statement(Statement_Function *statement);
 
-Statement_Vec dup_statements(Statement_Vec statements);
-Job *dup_job(const Job *job);
-Statement *dup_statement_function(const Statement_Function *fn);
-Statement *dup_statement_if(const Statement_If *statement);
-Statement *dup_statement_for(const Statement_For *statement);
-Statement *dup_statement_job(const Statement_Job *statement);
-Statement *dup_statement_while(const Statement_While *statement);
+Statement_Vec clone_statements(Statement_Vec statements);
+Job *clone_job(const Job *job);
+Statement *clone_statement_function(const Statement_Function *fn);
+Statement *clone_statement_if(const Statement_If *statement);
+Statement *clone_statement_for(const Statement_For *statement);
+Statement *clone_statement_job(const Statement_Job *statement);
+Statement *clone_statement_while(const Statement_While *statement);
 
 
-Token_Vec dup_argv(Token_Vec argv);
-Job *dup_job(const Job *job);
-Job *dup_job_binary(const Job_Binary *job);
-Job *dup_job_unary(const Job_Unary *job);
-Job *dup_job_command(const Job_Command *job);
+Token_Vec clone_argv(Token_Vec argv);
+Job *clone_job(const Job *job);
+Job *clone_job_binary(const Job_Binary *job);
+Job *clone_job_unary(const Job_Unary *job);
+Job *clone_job_command(const Job_Command *job);
 
 #endif

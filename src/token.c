@@ -19,7 +19,7 @@ const Keyword keywords[] = {
     { .type = TOKEN_BY,    .lexeme = "by"    },
 };
 
-Token dup_token(Token token)
+Token clone_token(Token token)
 {
   Token new_token = {
       .column = token.column,
@@ -31,12 +31,12 @@ Token dup_token(Token token)
   return new_token;
 }
 
-Token_Vec dup_tokens(Token_Vec tokens)
+Token_Vec clone_tokens(Token_Vec tokens)
 {
   Token_Vec new_tokens = {0};
 
   z_da_foreach(Token *, token, &tokens) {
-    z_da_append(&new_tokens, dup_token(*token));
+    z_da_append(&new_tokens, clone_token(*token));
   }
 
   return new_tokens;
