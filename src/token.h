@@ -36,8 +36,6 @@ typedef struct {
   int column;
 } Token;
 
-Z_DEFINE_OPTIONAL(Token_Type);
-
 typedef struct {
   Token *ptr;
   int len;
@@ -50,6 +48,6 @@ Token clone_token(Token token);
 Token_Vec clone_tokens(Token_Vec tokens);
 void print_token(Token token);
 const char *token_type_to_string(Token_Type type);
-Optional_Token_Type get_keyword_type(Z_String_View lexeme);
+Token_Type get_keyword_type(Z_String_View lexeme, Token_Type fallback);
 
 #endif

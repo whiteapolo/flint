@@ -52,43 +52,42 @@ void free_tokens(Token_Vec *tokens)
   z_da_foreach(Token *, token, tokens) {
     free_token(token);
   }
+
   z_da_free(tokens);
 }
 
-const int keywords_len = Z_ARRAY_LEN(keywords);
-
-Optional_Token_Type get_keyword_type(Z_String_View lexeme)
+Token_Type get_keyword_type(Z_String_View lexeme, Token_Type fallback)
 {
-  for (int i = 0; i < keywords_len; i++) {
-    if (!z_sv_compare(lexeme, Z_CSTR(keywords[i].lexeme))) {
-      return (Optional_Token_Type)Z_Optional_Ok(keywords[i].type);
+  for (int i = 0; i < (int)Z_ARRAY_LEN(keywords); i++) {
+    if (z_sv_equal(lexeme, Z_CSTR(keywords[i].lexeme))) {
+      return keywords[i].type;
     }
   }
 
-  return (Optional_Token_Type)Z_Optional_None();
+  return fallback;
 }
 
 const char *token_type_to_string(Token_Type type)
 {
   switch (type) {
-    case TOKEN_PIPE: return "PIPE";
-    case TOKEN_AND: return "AND";
+    case TOKEN_BY: return "by";
     case TOKEN_OR: return "OR";
-    case TOKEN_AMPERSAND: return "AMPERSAND";
-    case TOKEN_ERROR: return "ERROR";
-    case TOKEN_EOD: return "EOD";
-    case TOKEN_STATEMENT_END: return "STATEMENT_END";
-    case TOKEN_WORD: return "TOKEN_WORD";
-    case TOKEN_DQUOTED_STRING: return "TOKEN_DQUOTED_STRING";
-    case TOKEN_SQUOTED_STRING: return "TOKEN_SQUOTED_STRING";
-    case TOKEN_FOR: return "for";
     case TOKEN_IF: return "if";
     case TOKEN_IN: return "in";
     case TOKEN_FUN: return "fn";
+    case TOKEN_AND: return "AND";
     case TOKEN_END: return "end";
+    case TOKEN_EOD: return "EOD";
+    case TOKEN_FOR: return "for";
+    case TOKEN_PIPE: return "PIPE";
     case TOKEN_ELSE: return "else";
+    case TOKEN_ERROR: return "ERROR";
     case TOKEN_WHILE: return "while";
-    case TOKEN_BY: return "by";
+    case TOKEN_WORD: return "TOKEN_WORD";
+    case TOKEN_AMPERSAND: return "AMPERSAND";
+    case TOKEN_STATEMENT_END: return "STATEMENT_END";
+    case TOKEN_DQUOTED_STRING: return "TOKEN_DQUOTED_STRING";
+    case TOKEN_SQUOTED_STRING: return "TOKEN_SQUOTED_STRING";
     default: return "UNKNOWN";
   }
 }

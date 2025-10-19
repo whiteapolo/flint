@@ -364,7 +364,9 @@ Z_String_View z_sv_trim_cset(Z_String_View s, Z_String_View cset);
 
 char z_str_top_char(Z_String_View s);
 int z_sv_compare(Z_String_View s1, Z_String_View s2);
+bool z_sv_equal(Z_String_View s1, Z_String_View s2);
 int z_sv_compare_n(Z_String_View s1, Z_String_View s2, int n);
+bool z_sv_equal_n(Z_String_View s1, Z_String_View s2, int n);
 char *z_sv_to_cstr(Z_String_View s);
 bool z_sv_ends_with(Z_String_View s, Z_String_View end);
 bool z_sv_starts_with(Z_String_View s, Z_String_View start);
@@ -1340,7 +1342,7 @@ bool z_dir_traverse(const char *dir, bool action(const char *)) {
 }
 
 bool z_extension_eq(Z_String_View pathname, Z_String_View extension) {
-  return z_sv_compare(z_get_path_extension(pathname), extension);
+  return z_sv_equal(z_get_path_extension(pathname), extension);
 }
 
 bool z_is_dir(const char *pathname) {
@@ -1590,12 +1592,20 @@ int z_sv_compare(Z_String_View s1, Z_String_View s2) {
   return cmp_res == 0 ? s1.len - s2.len : cmp_res;
 }
 
+bool z_sv_equal(Z_String_View s1, Z_String_View s2) {
+  return z_sv_compare(s1, s2) == 0;
+}
+
 int z_sv_compare_n(Z_String_View s1, Z_String_View s2, int n) {
   if (s1.len < n)
     return -1;
   if (s2.len < n)
     return 1;
   return memcmp(s1.ptr, s2.ptr, n);
+}
+
+bool z_sv_equal_n(Z_String_View s1, Z_String_View s2, int n) {
+  return z_sv_compare_n(s1, s2, n) == 0;
 }
 
 void z_str_replace(Z_String *s, Z_String_View target,
@@ -1609,7 +1619,7 @@ void z_str_replace(Z_String *s, Z_String_View target,
   char *ptr = s->ptr;
 
   while (ptr + target.len <= s->ptr + s->len) {
-    if (z_sv_compare(Z_SV(ptr, target.len), target) == 0) {
+    if (z_sv_equal(Z_SV(ptr, target.len), target)) {
       z_str_append_str(&tmp, replacement);
       ptr += target.len;
     } else {
@@ -1635,7 +1645,7 @@ bool z_sv_ends_with(Z_String_View s, Z_String_View end) {
       .len = end.len,
   };
 
-  return !z_sv_compare(endings, end);
+  return z_sv_equal(endings, end);
 }
 
 bool z_sv_starts_with(Z_String_View s, Z_String_View start) {
@@ -1689,8 +1699,7 @@ Z_String_View z_sv_split_cset_next(Z_String_View s,
 Z_String_View z_sv_split_start(Z_String_View s, Z_String_View delim) {
   int len = 0;
 
-  while (len <= s.len &&
-         z_sv_compare(z_str_substring(s, len, len + delim.len), delim)) {
+  while (len <= s.len && !z_sv_equal(z_str_substring(s, len, len + delim.len), delim)) {
     len++;
   }
 
@@ -1706,9 +1715,7 @@ bool z_sv_split_next(Z_String_View s, Z_String_View delim,
     return false;
   }
 
-  while (start + len <= s.len &&
-         z_sv_compare(z_str_substring(s, start + len, start + len + delim.len),
-                      delim)) {
+  while (start + len <= s.len && !z_sv_equal(z_str_substring(s, start + len, start + len + delim.len), delim)) {
     len++;
   }
 
