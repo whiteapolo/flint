@@ -264,6 +264,8 @@ typedef struct {
   Z_Avl_Node *root;
 } Z_Map;
 
+Z_Map *z_map_new(Z_Compare_Fn compare_keys);
+
 void z_map_put(Z_Map *m, void *key, void *value, void free_key(void *),
                void free_value(void *));
 
@@ -878,8 +880,17 @@ void z_map_order_traverse(const Z_Map *m,
   z_avl_order_traverse(m->root, action, arg);
 }
 
+Z_Map *z_map_new(Z_Compare_Fn compare_keys) {
+  Z_Map *map = malloc(sizeof(Z_Map));
+  map->root = NULL;
+  map->compare_keys = compare_keys;
+
+  return map;
+}
+
 void z_map_free(Z_Map *m, void free_key(void *), void free_value(void *)) {
   z_avl_free(m->root, free_key, free_value);
+  free(m);
 }
 
 // ----------------------------------------------------------------------

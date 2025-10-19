@@ -5,8 +5,8 @@
 #include "parser.h"
 
 typedef struct {
-  Z_Map variables;
-  Z_Map functions;
+  Z_Map *variables;
+  Z_Map *functions;
 } Scope;
 
 typedef struct {
@@ -17,7 +17,7 @@ typedef struct {
 
 typedef struct {
   Scope_Vec scopes;
-  Z_Map alias;
+  Z_Map *alias;
 } State;
 
 void initialize_state();

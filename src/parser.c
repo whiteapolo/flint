@@ -204,7 +204,6 @@ Statement *create_statement_function(Token name, Statement_Vec body)
   Statement_Function *node = malloc(sizeof(Statement_Function));
   node->type = STATEMENT_FUNCTION;
   node->body = body;
-
   node->name = dup_token(name);
 
   return (Statement *)node;
@@ -215,7 +214,6 @@ Statement *create_statement_for(Token var_name, Token string, Token delim, State
   Statement_For *node = malloc(sizeof(Statement_For));
   node->type = STATEMENT_FOR;
   node->body = body;
-
   node->var_name = dup_token(var_name);
   node->string = dup_token(string);
   node->delim = dup_token(delim);
