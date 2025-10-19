@@ -94,6 +94,5 @@ const char *token_type_to_string(Token_Type type)
 
 void print_token(Token token)
 {
-  const char *type_str = token_type_to_string(token.type);
-  printf("Token(%s, \"%s\")\n", type_str, token.lexeme);
+  printf("Token(%s, \"%s\")\n", token_type_to_string(token.type), token.lexeme);
 }

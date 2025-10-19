@@ -40,28 +40,24 @@ void safe_execvp(const char *file, char *const argv[])
 
 void set_last_status_code(int status)
 {
-  char buf[16];
-  snprintf(buf, 16, "%d", status);
-  setenv("?", buf, 1);
+  char *s = str_format("%d", status);
+  setenv("?", s, 1);
+  free(s);
 }
 
 void initialize_function_arguments(char **argv)
 {
+  Z_String all = z_str_join(argv, " ");
+  action_create_variable("@", z_str_to_cstr(&all));
+  z_str_free(&all);
+
   Z_String name = {0};
-  Z_String all = {0};
 
   for (int i = 1; argv[i]; i++) {
-    name.len = 0;
-    z_str_append_format(&name, "%d", i);
-    z_str_append_format(&all, "%s ", argv[i]);
+    z_str_reset_format(&name, "%d", i);
     action_create_variable(z_str_to_cstr(&name), argv[i]);
   }
 
-  z_str_trim(&all);
-
-  action_create_variable("@", z_str_to_cstr(&all));
-
-  z_str_free(&all);
   z_str_free(&name);
 }
 
@@ -79,24 +75,22 @@ int exec_command(char **argv)
     return 0;
   }
 
-  const Statement_Function *function = select_function(argv[0]);
+  const char *program = argv[0];
 
-  if (function) {
-    call_function(function, argv);
+  if (select_function(program)) {
+    call_function(select_function(program), argv);
     return 0;
   }
 
-  BuiltinFn builtin = get_builtin(argv[0]);
-
-  if (builtin) {
-    return builtin(str_array_len(argv), argv);
+  if (get_builtin(program)) {
+    return get_builtin(program)(str_array_len(argv), argv);
   }
 
   int status = 0;
   int pid = safe_fork();
 
   if (pid == 0) {
-    safe_execvp(argv[0], argv);
+    safe_execvp(program, argv);
   } else {
     waitpid(pid, &status, 0);
   }

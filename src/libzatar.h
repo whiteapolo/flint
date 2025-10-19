@@ -362,6 +362,8 @@ void z_str_trim_cset(Z_String *s, Z_String_View cset);
 Z_String_View z_sv_trim(Z_String_View s);
 Z_String_View z_sv_trim_cset(Z_String_View s, Z_String_View cset);
 
+Z_String z_str_join(char **s, const char *delim);
+
 char z_str_top_char(Z_String_View s);
 int z_sv_compare(Z_String_View s1, Z_String_View s2);
 bool z_sv_equal(Z_String_View s1, Z_String_View s2);
@@ -1745,6 +1747,34 @@ Z_String_View z_str_substring(Z_String_View s, int start, int end) {
 }
 
 const char *z_sv_end(Z_String_View s) { return s.ptr + s.len; }
+
+int z_str_array_len(char **array)
+{
+  int len = 0;
+
+  while (array[len]) {
+    len++;
+  }
+
+  return len;
+}
+
+Z_String z_str_join(char **s, const char *delim)
+{
+  if (z_str_array_len(s) == 0) {
+    return z_str_new_format("");
+  }
+
+  Z_String ret = {0};
+
+  for (int i = 0; i < z_str_array_len(s) - 1; i++) {
+    z_str_append_format(&ret, "%s%s", s[i], delim);
+  }
+
+  z_str_append_format(&ret, "%s", s[z_str_array_len(s) - 1]);
+
+  return ret;
+}
 
 void z_str_trim(Z_String *s) { z_str_trim_cset(s, Z_CSTR(" \f\t\v\n\r")); }
 
