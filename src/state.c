@@ -2,24 +2,25 @@
 #include "libzatar.h"
 #include "parser.h"
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 State state = {0};
 
-Scope new_scope()
+Scope *new_scope()
 {
-  Scope scope = {
-      .variables = z_map_new((Z_Compare_Fn)strcmp),
-      .functions = z_map_new((Z_Compare_Fn)strcmp),
-  };
+  Scope *scope = malloc(sizeof(Scope));
+  scope->variables = z_map_new((Z_Compare_Fn)strcmp);
+  scope->functions = z_map_new((Z_Compare_Fn)strcmp);
 
   return scope;
 }
 
-void free_scope(Scope scope)
+void free_scope(Scope *scope)
 {
-  z_map_free(scope.variables, free, free);
-  z_map_free(scope.functions, free, (Z_Free_Fn)free_function_statement);
+  z_map_free(scope->variables, free, free);
+  z_map_free(scope->functions, free, (Z_Free_Fn)free_function_statement);
+  free(scope);
 }
 
 void initialize_state()
@@ -30,9 +31,9 @@ void initialize_state()
 
 bool action_mutate_variable(const char *name, const char *value)
 {
-  z_da_foreach_reversed(Scope *, scope, &state.scopes) {
-    if (z_map_get(scope->variables, name)) {
-      z_map_put(scope->variables, strdup(name), strdup(value), free, free);
+  z_da_foreach_reversed(Scope **, scope, &state.scopes) {
+    if (z_map_get((*scope)->variables, name)) {
+      z_map_put((*scope)->variables, strdup(name), strdup(value), free, free);
       return true;
     }
   }
@@ -42,12 +43,12 @@ bool action_mutate_variable(const char *name, const char *value)
 
 void action_create_variable(const char *name, const char *value)
 {
-  z_map_put(z_da_peek(&state.scopes).variables, strdup(name), strdup(value), free, free);
+  z_map_put(z_da_peek(&state.scopes)->variables, strdup(name), strdup(value), free, free);
 }
 
 void action_create_fuction(const char *name, const Statement_Function *fn)
 {
-  z_map_put(z_da_peek(&state.scopes).functions, strdup(name), dup_statement_function(fn), free, (Z_Free_Fn)free_function_statement);
+  z_map_put(z_da_peek(&state.scopes)->functions, strdup(name), dup_statement_function(fn), free, (Z_Free_Fn)free_function_statement);
 }
 
 void action_put_alias(const char *key, const char *value)
@@ -57,8 +58,8 @@ void action_put_alias(const char *key, const char *value)
 
 const char *select_variable(const char *name)
 {
-  z_da_foreach_reversed(Scope *, scope, &state.scopes) {
-    void *value = z_map_get(scope->variables, name);
+  z_da_foreach_reversed(Scope **, scope, &state.scopes) {
+    void *value = z_map_get((*scope)->variables, name);
     if (value) {
       return value;
     }
@@ -69,8 +70,8 @@ const char *select_variable(const char *name)
 
 const Statement_Function *select_function(const char *name)
 {
-  z_da_foreach_reversed(Scope *, scope, &state.scopes) {
-    void *fn = z_map_get(scope->functions, name);
+  z_da_foreach_reversed(Scope **, scope, &state.scopes) {
+    void *fn = z_map_get((*scope)->functions, name);
     if (fn) {
       return fn;
     }
@@ -91,6 +92,5 @@ void action_push_scope()
 
 void action_pop_scope()
 {
-  Scope scope = z_da_pop(&state.scopes);
-  free_scope(scope);
+  free_scope(z_da_pop(&state.scopes));
 }

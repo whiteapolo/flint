@@ -10,7 +10,7 @@ typedef struct {
 } Scope;
 
 typedef struct {
-  Scope *ptr;
+  Scope **ptr;
   int len;
   int cap;
 } Scope_Vec;
