@@ -3,35 +3,41 @@
 
 #include "token.h"
 
-typedef enum {
+typedef enum
+{
   JOB_COMMAND,
   JOB_BINARY,
   JOB_UNARY,
 } Job_Type;
 
-typedef struct {
+typedef struct
+{
   Job_Type type;
 } Job;
 
-typedef struct {
+typedef struct
+{
   Job_Type type;
   Token_Vec argv;
 } Job_Command;
 
-typedef struct {
+typedef struct
+{
   Job_Type type;
   Token operator;
   Job *child;
 } Job_Unary;
 
-typedef struct {
+typedef struct
+{
   Job_Type type;
   Token operator;
   Job *left;
   Job *right;
 } Job_Binary;
 
-typedef enum {
+typedef enum
+{
   STATEMENT_JOB,
   STATEMENT_IF,
   STATEMENT_WHILE,
@@ -39,35 +45,41 @@ typedef enum {
   STATEMENT_FUNCTION,
 } Statement_Type;
 
-typedef struct {
+typedef struct
+{
   Statement_Type type;
 } Statement;
 
-typedef struct {
+typedef struct
+{
   Statement **ptr;
   int len;
   int cap;
 } Statement_Vec;
 
-typedef struct {
+typedef struct
+{
   Statement_Type type;
   Job *job;
 } Statement_Job;
 
-typedef struct {
+typedef struct
+{
   Statement_Type type;
   Job *condition;
   Statement_Vec ifBranch;
   Statement_Vec elseBranch;
 } Statement_If;
 
-typedef struct {
+typedef struct
+{
   Statement_Type type;
   Job *condition;
   Statement_Vec body;
 } Statement_While;
 
-typedef struct {
+typedef struct
+{
   Statement_Type type;
   Token var_name;
   Token string;
@@ -75,15 +87,16 @@ typedef struct {
   Statement_Vec body;
 } Statement_For;
 
-typedef struct {
+typedef struct
+{
   Statement_Type type;
   Token name;
   Statement_Vec body;
 } Statement_Function;
 
-Job *create_binary(Job *left, Token operator, Job *right);
-Job *create_unary(Token operator, Job *child);
-Job *create_command(Token_Vec argv);
+Job *create_job_binary(Job *left, Token operator, Job * right);
+Job *create_job_unary(Token operator, Job * child);
+Job *create_job_command(Token_Vec argv);
 Statement *create_statement_if(Job *condition, Statement_Vec ifBranch, Statement_Vec elseBranch);
 Statement *create_statement_while(Job *condition, Statement_Vec body);
 Statement *create_statement_function(Token name, Statement_Vec body);

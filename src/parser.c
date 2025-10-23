@@ -15,7 +15,8 @@ void free_job(Job *job);
 void free_statements(Statement_Vec *statements);
 Statement *parse_statement();
 
-typedef struct {
+typedef struct
+{
   const Token_Vec *tokens;
   int curr;
   bool had_error;
@@ -62,7 +63,8 @@ static bool is_at_end()
 
 static bool check(Token_Type type)
 {
-  if (parser_state->panic_mode) {
+  if (parser_state->panic_mode)
+  {
     return false;
   }
 
@@ -71,8 +73,10 @@ static bool check(Token_Type type)
 
 static bool check_array(Token_Type types[], int len)
 {
-  for (int i = 0; i < len; i++) {
-    if (check(types[i])) {
+  for (int i = 0; i < len; i++)
+  {
+    if (check(types[i]))
+    {
       return true;
     }
   }
@@ -83,7 +87,12 @@ static bool check_array(Token_Type types[], int len)
 static bool check_keyword()
 {
   Token_Type keywords[] = {
-    TOKEN_FOR, TOKEN_IN, TOKEN_FUN, TOKEN_END, TOKEN_ELSE, TOKEN_WHILE,
+      TOKEN_FOR,
+      TOKEN_IN,
+      TOKEN_FUN,
+      TOKEN_END,
+      TOKEN_ELSE,
+      TOKEN_WHILE,
   };
 
   return check_array(keywords, Z_ARRAY_LEN(keywords));
@@ -92,15 +101,16 @@ static bool check_keyword()
 static bool check_string()
 {
   Token_Type string_types[] = {
-    TOKEN_WORD,
-    TOKEN_DQUOTED_STRING,
-    TOKEN_SQUOTED_STRING,
+      TOKEN_WORD,
+      TOKEN_DQUOTED_STRING,
+      TOKEN_SQUOTED_STRING,
   };
 
   return check_array(string_types, Z_ARRAY_LEN(string_types));
 }
 
-static bool check_argument() {
+static bool check_argument()
+{
   // argument override keywords
   // for example:
   // echo if
@@ -109,11 +119,13 @@ static bool check_argument() {
 
 static bool match(Token_Type type)
 {
-  if (parser_state->had_error) {
+  if (parser_state->had_error)
+  {
     return false;
   }
 
-  if (check(type)) {
+  if (check(type))
+  {
     advance();
     return true;
   }
@@ -126,7 +138,8 @@ static void error(Token token, const char *fmt, ...)
   va_list ap;
   va_start(ap, fmt);
 
-  if (!parser_state->panic_mode) {
+  if (!parser_state->panic_mode)
+  {
     syntax_error_at_token_va((const char *const *)parser_state->source_by_lines, token, fmt, ap);
   }
 
@@ -137,7 +150,8 @@ static void error(Token token, const char *fmt, ...)
 
 Token consume(Token_Type type, const char *msg)
 {
-  if (check(type)) {
+  if (check(type))
+  {
     return advance();
   }
 
@@ -148,7 +162,8 @@ Token consume(Token_Type type, const char *msg)
 
 Token consume_string(const char *msg)
 {
-  if (check_string()) {
+  if (check_string())
+  {
     return advance();
   }
 
@@ -159,7 +174,8 @@ Token consume_string(const char *msg)
 
 Token consume_argument(const char *msg)
 {
-  if (check_argument()) {
+  if (check_argument())
+  {
     return advance();
   }
 
@@ -170,13 +186,17 @@ Token consume_argument(const char *msg)
 
 void skip_empty_statements()
 {
-  while (!is_at_end() && match(TOKEN_STATEMENT_END)) { }
+  while (!is_at_end() && match(TOKEN_STATEMENT_END))
+  {
+  }
 }
 
 void synchronize()
 {
   skip_empty_statements();
-  while (!is_at_end() && advance().type != TOKEN_STATEMENT_END) { }
+  while (!is_at_end() && advance().type != TOKEN_STATEMENT_END)
+  {
+  }
   parser_state->panic_mode = false;
 }
 
@@ -184,26 +204,29 @@ Job *parse_simple_command()
 {
   Token_Vec argv = {0};
 
-  while (check_argument()) {
+  while (check_argument())
+  {
     Token token = advance();
     z_da_append(&argv, clone_token(token));
   }
 
-  if (argv.len == 0) {
+  if (argv.len == 0)
+  {
     error(peek(), "Expected command.");
   }
 
-  return create_command(argv);
+  return create_job_command(argv);
 }
 
 Job *parse_pipeline()
 {
   Job *job = parse_simple_command();
 
-  while (check(TOKEN_PIPE)) {
+  while (check(TOKEN_PIPE))
+  {
     Token pipe = advance();
     Job *right = parse_simple_command();
-    job = create_binary(job, clone_token(pipe), right);
+    job = create_job_binary(job, clone_token(pipe), right);
   }
 
   return job;
@@ -213,10 +236,11 @@ Job *parse_and()
 {
   Job *job = parse_pipeline();
 
-  while (check(TOKEN_AND)) {
+  while (check(TOKEN_AND))
+  {
     Token and_if = advance();
     Job *right = parse_pipeline();
-    job = create_binary(job, clone_token(and_if), right);
+    job = create_job_binary(job, clone_token(and_if), right);
   }
 
   return job;
@@ -226,10 +250,11 @@ Job *parse_or()
 {
   Job *job = parse_and();
 
-  while (check(TOKEN_OR)) {
+  while (check(TOKEN_OR))
+  {
     Token or = advance();
     Job *right = parse_and();
-    job = create_binary(job, clone_token(or), right);
+    job = create_job_binary(job, clone_token(or), right);
   }
 
   return job;
@@ -239,9 +264,10 @@ Job *parse_background_job()
 {
   Job *job = parse_or();
 
-  if (check(TOKEN_AMPERSAND)) {
+  if (check(TOKEN_AMPERSAND))
+  {
     Token ampersand = advance();
-    return create_unary(clone_token(ampersand), job);
+    return create_job_unary(clone_token(ampersand), job);
   }
 
   return job;
@@ -263,11 +289,13 @@ Statement_Vec parse_block_untill(Token_Type types[], int len)
   Statement_Vec statements = {0};
   skip_empty_statements();
 
-  while (!is_at_end() && !check_array(types, len)) {
+  while (!is_at_end() && !check_array(types, len))
+  {
 
     z_da_append(&statements, parse_statement());
 
-    if (parser_state->panic_mode) {
+    if (parser_state->panic_mode)
+    {
       synchronize();
     }
 
@@ -296,7 +324,8 @@ Statement *parse_if_statement()
 
   skip_empty_statements();
 
-  if (match(TOKEN_ELSE)) {
+  if (match(TOKEN_ELSE))
+  {
     elseBranch = parse_block_untill_end();
   }
 
@@ -353,10 +382,14 @@ Statement *parse_function_statement()
 
 Statement *parse_statement()
 {
-  if (match(TOKEN_IF)) return parse_if_statement();
-  if (match(TOKEN_WHILE)) return parse_while_statement();
-  if (match(TOKEN_FOR)) return parse_for_statement();
-  if (match(TOKEN_FUN)) return parse_function_statement();
+  if (match(TOKEN_IF))
+    return parse_if_statement();
+  if (match(TOKEN_WHILE))
+    return parse_while_statement();
+  if (match(TOKEN_FOR))
+    return parse_for_statement();
+  if (match(TOKEN_FUN))
+    return parse_function_statement();
   return parse_job_statement();
 }
 
@@ -365,7 +398,8 @@ Statement_Vec parse(const Token_Vec *tokens, const char *source)
   create_new_parser_state(tokens, source);
   Statement_Vec statements = parse_block_untill(NULL, 0);
 
-  if (parser_state->had_error) {
+  if (parser_state->had_error)
+  {
     parser_free(&statements);
     free_parser_state();
     return (Statement_Vec){0};

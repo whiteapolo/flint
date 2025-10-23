@@ -54,7 +54,7 @@ Statement *create_statement_job(Job *job)
   return (Statement *)node;
 }
 
-Job *create_binary(Job *left, Token operator, Job * right)
+Job *create_job_binary(Job *left, Token operator, Job *right)
 {
   Job_Binary *node = malloc(sizeof(Job_Binary));
   node->type = JOB_BINARY;
@@ -65,7 +65,7 @@ Job *create_binary(Job *left, Token operator, Job * right)
   return (Job *)node;
 }
 
-Job *create_unary(Token operator, Job * child)
+Job *create_job_unary(Token operator, Job *child)
 {
   Job_Unary *node = malloc(sizeof(Job_Unary));
   node->type = JOB_UNARY;
@@ -75,7 +75,7 @@ Job *create_unary(Token operator, Job * child)
   return (Job *)node;
 }
 
-Job *create_command(Token_Vec argv)
+Job *create_job_command(Token_Vec argv)
 {
   Job_Command *node = malloc(sizeof(Job_Command));
   node->type = JOB_COMMAND;
@@ -107,22 +107,24 @@ void free_job_binary(Job_Binary *bin)
 
 void free_job(Job *job)
 {
-  if (job == NULL) {
+  if (job == NULL)
+  {
     return;
   }
 
-  switch (job->type) {
-    case JOB_COMMAND:
-      free_job_command((Job_Command *)job);
-      break;
+  switch (job->type)
+  {
+  case JOB_COMMAND:
+    free_job_command((Job_Command *)job);
+    break;
 
-    case JOB_UNARY:
-      free_job_unary((Job_Unary *)job);
-      break;
+  case JOB_UNARY:
+    free_job_unary((Job_Unary *)job);
+    break;
 
-    case JOB_BINARY:
-      free_job_binary((Job_Binary *)job);
-      break;
+  case JOB_BINARY:
+    free_job_binary((Job_Binary *)job);
+    break;
   }
 }
 
@@ -162,32 +164,34 @@ void free_job_statement(Statement_Job *statement)
 
 void free_statement(Statement *statement)
 {
-  switch (statement->type) {
-    case STATEMENT_JOB:
-      free_job_statement((Statement_Job *)statement);
-      break;
+  switch (statement->type)
+  {
+  case STATEMENT_JOB:
+    free_job_statement((Statement_Job *)statement);
+    break;
 
-    case STATEMENT_IF:
-      free_if_statement((Statement_If *)statement);
-      break;
+  case STATEMENT_IF:
+    free_if_statement((Statement_If *)statement);
+    break;
 
-    case STATEMENT_WHILE:
-      free_while_statement((Statement_While *)statement);
-      break;
+  case STATEMENT_WHILE:
+    free_while_statement((Statement_While *)statement);
+    break;
 
-    case STATEMENT_FOR:
-      free_for_statement((Statement_For *)statement);
-      break;
+  case STATEMENT_FOR:
+    free_for_statement((Statement_For *)statement);
+    break;
 
-    case STATEMENT_FUNCTION:
-      free_function_statement((Statement_Function *)statement);
-      break;
+  case STATEMENT_FUNCTION:
+    free_function_statement((Statement_Function *)statement);
+    break;
   }
 }
 
 void free_statements(Statement_Vec *statements)
 {
-  for (int i = 0; i < statements->len; i++) {
+  for (int i = 0; i < statements->len; i++)
+  {
     free_statement(statements->ptr[i]);
   }
 
@@ -196,13 +200,20 @@ void free_statements(Statement_Vec *statements)
 
 Statement *clone_statement(Statement *statement)
 {
-  switch (statement->type) {
-    case STATEMENT_FUNCTION: return clone_statement_function((const Statement_Function *)statement);
-    case STATEMENT_FOR: return clone_statement_for((const Statement_For *)statement);
-    case STATEMENT_IF: return clone_statement_if((const Statement_If *)statement);
-    case STATEMENT_WHILE: return clone_statement_while((const Statement_While *)statement);
-    case STATEMENT_JOB: return clone_statement_job((const Statement_Job *)statement);
-    default: return NULL;
+  switch (statement->type)
+  {
+  case STATEMENT_FUNCTION:
+    return clone_statement_function((const Statement_Function *)statement);
+  case STATEMENT_FOR:
+    return clone_statement_for((const Statement_For *)statement);
+  case STATEMENT_IF:
+    return clone_statement_if((const Statement_If *)statement);
+  case STATEMENT_WHILE:
+    return clone_statement_while((const Statement_While *)statement);
+  case STATEMENT_JOB:
+    return clone_statement_job((const Statement_Job *)statement);
+  default:
+    return NULL;
   }
 }
 
@@ -210,7 +221,8 @@ Statement_Vec clone_statements(Statement_Vec statements)
 {
   Statement_Vec new_statements = {0};
 
-  z_da_foreach(Statement **, statement, &statements) {
+  z_da_foreach(Statement **, statement, &statements)
+  {
     z_da_append(&new_statements, clone_statement(*statement));
   }
 
@@ -219,27 +231,32 @@ Statement_Vec clone_statements(Statement_Vec statements)
 
 Job *clone_job(const Job *job)
 {
-  switch (job->type) {
-    case JOB_BINARY: return clone_job_binary((const Job_Binary *)job);
-    case JOB_UNARY: return clone_job_unary((const Job_Unary *)job);
-    case JOB_COMMAND: return clone_job_command((const Job_Command *)job);
-    default: return NULL;
+  switch (job->type)
+  {
+  case JOB_BINARY:
+    return clone_job_binary((const Job_Binary *)job);
+  case JOB_UNARY:
+    return clone_job_unary((const Job_Unary *)job);
+  case JOB_COMMAND:
+    return clone_job_command((const Job_Command *)job);
+  default:
+    return NULL;
   }
 }
 
 Job *clone_job_binary(const Job_Binary *job)
 {
-  return create_binary(clone_job(job->left), clone_token(job->operator), clone_job(job->right));
+  return create_job_binary(clone_job(job->left), clone_token(job->operator), clone_job(job->right));
 }
 
 Job *clone_job_unary(const Job_Unary *job)
 {
-  return create_unary(clone_token(job->operator), clone_job(job->child));
+  return create_job_unary(clone_token(job->operator), clone_job(job->child));
 }
 
 Job *clone_job_command(const Job_Command *job)
 {
-  return create_command(clone_tokens(job->argv));
+  return create_job_command(clone_tokens(job->argv));
 }
 
 Statement *clone_statement_function(const Statement_Function *fn)
@@ -252,8 +269,7 @@ Statement *clone_statement_if(const Statement_If *statement)
   return create_statement_if(
       clone_job(statement->condition),
       clone_statements(statement->ifBranch),
-      clone_statements(statement->elseBranch)
-  );
+      clone_statements(statement->elseBranch));
 }
 
 Statement *clone_statement_for(const Statement_For *statement)
@@ -262,8 +278,7 @@ Statement *clone_statement_for(const Statement_For *statement)
       clone_token(statement->var_name),
       clone_token(statement->string),
       clone_token(statement->delim),
-      clone_statements(statement->body)
-  );
+      clone_statements(statement->body));
 }
 
 Statement *clone_statement_job(const Statement_Job *statement)
