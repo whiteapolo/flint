@@ -38,9 +38,9 @@ Statement *create_statement_for(Token var_name, Token string, Token delim, State
   Statement_For *node = malloc(sizeof(Statement_For));
   node->type = STATEMENT_FOR;
   node->body = body;
-  node->var_name = clone_token(var_name);
-  node->string = clone_token(string);
-  node->delim = clone_token(delim);
+  node->var_name = var_name;
+  node->string = string;
+  node->delim = delim;
 
   return (Statement *)node;
 }
@@ -59,7 +59,7 @@ Job *create_binary(Job *left, Token operator, Job * right)
   Job_Binary *node = malloc(sizeof(Job_Binary));
   node->type = JOB_BINARY;
   node->left = left;
-  node->operator= clone_token(operator);
+  node->operator = operator;
   node->right = right;
 
   return (Job *)node;
@@ -69,7 +69,7 @@ Job *create_unary(Token operator, Job * child)
 {
   Job_Unary *node = malloc(sizeof(Job_Unary));
   node->type = JOB_UNARY;
-  node->operator= clone_token(operator);
+  node->operator = operator;
   node->child = child;
 
   return (Job *)node;

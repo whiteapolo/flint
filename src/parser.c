@@ -39,7 +39,7 @@ void create_new_parser_state(const Token_Vec *tokens, const char *source)
 
 void free_parser_state()
 {
-  free(parser_state->source_by_lines);
+  str_free_array(parser_state->source_by_lines);
   free(parser_state);
 }
 
@@ -203,7 +203,7 @@ Job *parse_pipeline()
   while (check(TOKEN_PIPE)) {
     Token pipe = advance();
     Job *right = parse_simple_command();
-    job = create_binary(job, pipe, right);
+    job = create_binary(job, clone_token(pipe), right);
   }
 
   return job;
@@ -216,7 +216,7 @@ Job *parse_and()
   while (check(TOKEN_AND)) {
     Token and_if = advance();
     Job *right = parse_pipeline();
-    job = create_binary(job, and_if, right);
+    job = create_binary(job, clone_token(and_if), right);
   }
 
   return job;
@@ -229,7 +229,7 @@ Job *parse_or()
   while (check(TOKEN_OR)) {
     Token or = advance();
     Job *right = parse_and();
-    job = create_binary(job, or, right);
+    job = create_binary(job, clone_token(or), right);
   }
 
   return job;
@@ -241,7 +241,7 @@ Job *parse_background_job()
 
   if (check(TOKEN_AMPERSAND)) {
     Token ampersand = advance();
-    return create_unary(ampersand, job);
+    return create_unary(clone_token(ampersand), job);
   }
 
   return job;
@@ -335,7 +335,7 @@ Statement *parse_for_statement()
   Statement_Vec body = parse_block_untill_end();
   consume(TOKEN_END, "Expected 'end' after if statement");
 
-  return create_statement_for(var_name, string, delim, body);
+  return create_statement_for(clone_token(var_name), clone_token(string), clone_token(delim), body);
 }
 
 Statement *parse_function_statement()
