@@ -193,7 +193,7 @@ Job *parse_simple_command()
     error(peek(), "Expected command.");
   }
 
-  return create_command(argv);
+  return create_job_command(argv);
 }
 
 Job *parse_pipeline()
@@ -203,7 +203,7 @@ Job *parse_pipeline()
   while (check(TOKEN_PIPE)) {
     Token pipe = advance();
     Job *right = parse_simple_command();
-    job = create_binary(job, clone_token(pipe), right);
+    job = create_job_binary(job, clone_token(pipe), right);
   }
 
   return job;
@@ -216,7 +216,7 @@ Job *parse_and()
   while (check(TOKEN_AND)) {
     Token and_if = advance();
     Job *right = parse_pipeline();
-    job = create_binary(job, clone_token(and_if), right);
+    job = create_job_binary(job, clone_token(and_if), right);
   }
 
   return job;
@@ -229,7 +229,7 @@ Job *parse_or()
   while (check(TOKEN_OR)) {
     Token or = advance();
     Job *right = parse_and();
-    job = create_binary(job, clone_token(or), right);
+    job = create_job_binary(job, clone_token(or), right);
   }
 
   return job;
@@ -241,7 +241,7 @@ Job *parse_background_job()
 
   if (check(TOKEN_AMPERSAND)) {
     Token ampersand = advance();
-    return create_unary(clone_token(ampersand), job);
+    return create_job_unary(clone_token(ampersand), job);
   }
 
   return job;

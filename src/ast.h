@@ -81,9 +81,9 @@ typedef struct {
   Statement_Vec body;
 } Statement_Function;
 
-Job *create_binary(Job *left, Token operator, Job *right);
-Job *create_unary(Token operator, Job *child);
-Job *create_command(Token_Vec argv);
+Job *create_job_binary(Job *left, Token operator, Job *right);
+Job *create_job_unary(Token operator, Job *child);
+Job *create_job_command(Token_Vec argv);
 Statement *create_statement_if(Job *condition, Statement_Vec ifBranch, Statement_Vec elseBranch);
 Statement *create_statement_while(Job *condition, Statement_Vec body);
 Statement *create_statement_function(Token name, Statement_Vec body);

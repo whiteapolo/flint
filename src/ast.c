@@ -54,7 +54,7 @@ Statement *create_statement_job(Job *job)
   return (Statement *)node;
 }
 
-Job *create_binary(Job *left, Token operator, Job * right)
+Job *create_job_binary(Job *left, Token operator, Job * right)
 {
   Job_Binary *node = malloc(sizeof(Job_Binary));
   node->type = JOB_BINARY;
@@ -65,7 +65,7 @@ Job *create_binary(Job *left, Token operator, Job * right)
   return (Job *)node;
 }
 
-Job *create_unary(Token operator, Job * child)
+Job *create_job_unary(Token operator, Job * child)
 {
   Job_Unary *node = malloc(sizeof(Job_Unary));
   node->type = JOB_UNARY;
@@ -75,7 +75,7 @@ Job *create_unary(Token operator, Job * child)
   return (Job *)node;
 }
 
-Job *create_command(Token_Vec argv)
+Job *create_job_command(Token_Vec argv)
 {
   Job_Command *node = malloc(sizeof(Job_Command));
   node->type = JOB_COMMAND;
@@ -229,17 +229,17 @@ Job *clone_job(const Job *job)
 
 Job *clone_job_binary(const Job_Binary *job)
 {
-  return create_binary(clone_job(job->left), clone_token(job->operator), clone_job(job->right));
+  return create_job_binary(clone_job(job->left), clone_token(job->operator), clone_job(job->right));
 }
 
 Job *clone_job_unary(const Job_Unary *job)
 {
-  return create_unary(clone_token(job->operator), clone_job(job->child));
+  return create_job_unary(clone_token(job->operator), clone_job(job->child));
 }
 
 Job *clone_job_command(const Job_Command *job)
 {
-  return create_command(clone_tokens(job->argv));
+  return create_job_command(clone_tokens(job->argv));
 }
 
 Statement *clone_statement_function(const Statement_Function *fn)
