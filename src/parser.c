@@ -11,56 +11,58 @@
 #include <stdlib.h>
 #include <string.h>
 
-/*
- * GRAMMER
- * -----------------------------------------------
- * program: statement*
- *
- * statement: for_statement | if_statement | job
- *
- * for_statement: "for" WORD "in" WORD*; statement*; end
- * if_statement: "if" job; statement*; end
- *
- * job: background_job
- * background_job: and_if "&"
- * and: pipeline { "&&" pipeline }*
- * or: and { "||" and }*
- * pipeline: simple_command { "|" simple_command }*
- * simple_command: WORD+
- */
-
 void free_job(Job *job);
-void free_if_statement(Statement_If *statement);
-void free_job_statement(Statement_Job *statement);
-void free_statement(Statement *statement);
 void free_statements(Statement_Vec *statements);
 Statement *parse_statement();
 
-static const Token_Vec *tokens;
-static int curr;
-static bool had_error;
-static bool panic_mode;
-static char **source;
+typedef struct {
+  const Token_Vec *tokens;
+  int curr;
+  bool had_error;
+  bool panic_mode;
+  const char *source;
+  char **source_by_lines;
+} Parser_State;
+
+Parser_State *parser_state = NULL;
+
+void create_new_parser_state(const Token_Vec *tokens, const char *source)
+{
+  parser_state = malloc(sizeof(Parser_State));
+  parser_state->tokens = tokens;
+  parser_state->curr = 0;
+  parser_state->had_error = false;
+  parser_state->panic_mode = false;
+  parser_state->source = source;
+  parser_state->source_by_lines = str_split(source, "\n");
+}
+
+void free_parser_state()
+{
+  free(parser_state->source_by_lines);
+  free(parser_state);
+}
 
 static Token advance()
 {
-  assert(curr < tokens->len);
-  return tokens->ptr[curr++];
+  assert(parser_state->curr < parser_state->tokens->len);
+  return parser_state->tokens->ptr[parser_state->curr++];
 }
 
 static Token peek()
 {
-  assert(curr < tokens->len);
-  return tokens->ptr[curr];
+  assert(parser_state->curr < parser_state->tokens->len);
+  return parser_state->tokens->ptr[parser_state->curr];
 }
 
-static bool is_at_end() {
+static bool is_at_end()
+{
   return peek().type == TOKEN_EOD;
 }
 
 static bool check(Token_Type type)
 {
-  if (panic_mode) {
+  if (parser_state->panic_mode) {
     return false;
   }
 
@@ -107,7 +109,7 @@ static bool check_argument() {
 
 static bool match(Token_Type type)
 {
-  if (had_error) {
+  if (parser_state->had_error) {
     return false;
   }
 
@@ -124,12 +126,12 @@ static void error(Token token, const char *fmt, ...)
   va_list ap;
   va_start(ap, fmt);
 
-  if (!panic_mode) {
-    syntax_error_at_token_va((const char *const *)source, token, fmt, ap);
+  if (!parser_state->panic_mode) {
+    syntax_error_at_token_va((const char *const *)parser_state->source_by_lines, token, fmt, ap);
   }
 
-  had_error = true;
-  panic_mode = true;
+  parser_state->had_error = true;
+  parser_state->panic_mode = true;
   va_end(ap);
 }
 
@@ -175,7 +177,7 @@ void synchronize()
 {
   skip_empty_statements();
   while (!is_at_end() && advance().type != TOKEN_STATEMENT_END) { }
-  panic_mode = false;
+  parser_state->panic_mode = false;
 }
 
 Statement *create_statement_if(Job *condition, Statement_Vec ifBranch, Statement_Vec elseBranch)
@@ -204,7 +206,7 @@ Statement *create_statement_function(Token name, Statement_Vec body)
   Statement_Function *node = malloc(sizeof(Statement_Function));
   node->type = STATEMENT_FUNCTION;
   node->body = body;
-  node->name = clone_token(name);
+  node->name = name;
 
   return (Statement *)node;
 }
@@ -347,7 +349,7 @@ Statement_Vec parse_block_untill(Token_Type types[], int len)
 
     z_da_append(&statements, parse_statement());
 
-    if (panic_mode) {
+    if (parser_state->panic_mode) {
       synchronize();
     }
 
@@ -428,7 +430,7 @@ Statement *parse_function_statement()
 
   consume(TOKEN_END, "Expected 'end' after function body.");
 
-  return create_statement_function(name, body);
+  return create_statement_function(clone_token(name), body);
 }
 
 Statement *parse_statement()
@@ -440,17 +442,13 @@ Statement *parse_statement()
   return parse_job_statement();
 }
 
-Statement_Vec parse(const Token_Vec *t, const char *_source)
+Statement_Vec parse(const Token_Vec *tokens, const char *source)
 {
-  tokens = t;
-  curr = 0;
-  had_error = false;
-  panic_mode = false;
-  source = str_split(_source, "\n");
-
+  create_new_parser_state(tokens, source);
   Statement_Vec statements = parse_block_untill(NULL, 0);
+  free_parser_state();
 
-  if (had_error) {
+  if (parser_state->had_error) {
     parser_free(&statements);
     return (Statement_Vec){0};
   }
@@ -623,7 +621,7 @@ Job *clone_job_command(const Job_Command *job)
 
 Statement *clone_statement_function(const Statement_Function *fn)
 {
-  return create_statement_function(fn->name, clone_statements(fn->body));
+  return create_statement_function(clone_token(fn->name), clone_statements(fn->body));
 }
 
 Statement *clone_statement_if(const Statement_If *statement)
