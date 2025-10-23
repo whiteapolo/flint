@@ -206,7 +206,7 @@ Statement *create_statement_function(Token name, Statement_Vec body)
   Statement_Function *node = malloc(sizeof(Statement_Function));
   node->type = STATEMENT_FUNCTION;
   node->body = body;
-  node->name = name;
+  node->name = clone_token(name);
 
   return (Statement *)node;
 }
@@ -430,7 +430,7 @@ Statement *parse_function_statement()
 
   consume(TOKEN_END, "Expected 'end' after function body.");
 
-  return create_statement_function(clone_token(name), body);
+  return create_statement_function(name, body);
 }
 
 Statement *parse_statement()
@@ -446,13 +446,14 @@ Statement_Vec parse(const Token_Vec *tokens, const char *source)
 {
   create_new_parser_state(tokens, source);
   Statement_Vec statements = parse_block_untill(NULL, 0);
-  free_parser_state();
 
   if (parser_state->had_error) {
     parser_free(&statements);
+    free_parser_state();
     return (Statement_Vec){0};
   }
 
+  free_parser_state();
   return statements;
 }
 
@@ -621,7 +622,7 @@ Job *clone_job_command(const Job_Command *job)
 
 Statement *clone_statement_function(const Statement_Function *fn)
 {
-  return create_statement_function(clone_token(fn->name), clone_statements(fn->body));
+  return create_statement_function(fn->name, clone_statements(fn->body));
 }
 
 Statement *clone_statement_if(const Statement_If *statement)
