@@ -225,30 +225,30 @@ Token lexer_next()
   char c = z_scanner_advance(&lexer_state->scanner);
 
   switch (c) {
-  case '|':
-    return create_token(z_scanner_match(&lexer_state->scanner, '|') ? TOKEN_OR : TOKEN_PIPE);
+    case '|':
+      return create_token(z_scanner_match(&lexer_state->scanner, '|') ? TOKEN_OR : TOKEN_PIPE);
 
-  case '&':
-    return create_token(z_scanner_match(&lexer_state->scanner, '&') ? TOKEN_AND : TOKEN_AMPERSAND);
+    case '&':
+      return create_token(z_scanner_match(&lexer_state->scanner, '&') ? TOKEN_AND : TOKEN_AMPERSAND);
 
-  case '\'':
-    return single_quoted_string(&lexer_state->scanner);
+    case '\'':
+      return single_quoted_string(&lexer_state->scanner);
 
-  case '"':
-    return z_scanner_match_string(&lexer_state->scanner, Z_CSTR("\"\"")) ? multi_double_quoted_string() : double_quoted_string();
+    case '"':
+      return z_scanner_match_string(&lexer_state->scanner, Z_CSTR("\"\"")) ? multi_double_quoted_string() : double_quoted_string();
 
-  case '#':
-    skip_comment();
-    return lexer_next();
+    case '#':
+      skip_comment();
+      return lexer_next();
 
-  case ';':
-    return create_token(TOKEN_STATEMENT_END);
+    case ';':
+      return create_token(TOKEN_STATEMENT_END);
 
-  case '\n':
-    return create_token(TOKEN_STATEMENT_END);
+    case '\n':
+      return create_token(TOKEN_STATEMENT_END);
 
-  default:
-    return argument();
+    default:
+      return argument();
   }
 }
 
