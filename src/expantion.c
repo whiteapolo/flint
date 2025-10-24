@@ -12,11 +12,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-void resolve_var(const char *var, Z_String *output)
-{
-  z_str_append_format(output, "%s", select_variable(var));
-}
-
 static void command_substitution(Z_Scanner *scanner, Z_String *output);
 static void scanner_advance_single_quoted_string(Z_Scanner *scanner);
 static void scanner_advance_double_quoted_string(Z_Scanner *scanner);
