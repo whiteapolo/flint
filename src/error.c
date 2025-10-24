@@ -51,7 +51,7 @@ void syntax_error_at_token_va(const char * const *source, Token token, const cha
   fprintf(stderr, "\n");
 
   fprintf(stderr, "%5d | ", token.line);
-  print_str_without_tabs(stderr, source[token.line]);
+  print_str_without_tabs(stderr, source[token.line - 1]);
   fprintf(stderr, "\n      | %*s%s^%s\n", token.column, "", Z_COLOR_RED, Z_COLOR_RESET);
 }
 
