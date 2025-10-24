@@ -54,15 +54,3 @@ void syntax_error_at_token_va(const char * const *source, Token token, const cha
   print_str_without_tabs(stderr, source[token.line - 1]);
   fprintf(stderr, "\n      | %*s%s^%s\n", token.column, "", Z_COLOR_RED, Z_COLOR_RESET);
 }
-
-// const char *get_random_assult()
-// {
-//     srand(time(NULL));
-//     const char *assults[] = {
-//         "You suck",
-//         "Stupid",
-//         "Dumb you",
-//         "You're like a cloud... when you disappear, it's a beutiful day."
-//     }
-
-// }
