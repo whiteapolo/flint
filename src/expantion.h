@@ -7,10 +7,10 @@ typedef struct {
   char **ptr;
   int len;
   int cap;
-} String_Vec;
+} String_Array;
 
-void expand_token(Token token, String_Vec *out);
-char **expand_argv(Token_Vec argv);
-void expand_aliases(Token_Vec *tokens);
+void expand_token(Token token, String_Array *out);
+char **expand_argv(Token_Array argv);
+void expand_aliases(Token_Array *tokens);
 
 #endif

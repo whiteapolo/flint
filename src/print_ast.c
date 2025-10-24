@@ -130,7 +130,7 @@ void print_statement(Statement *statement)
   }
 }
 
-void print_statements(Statement_Vec statements)
+void print_statements(Statement_Array statements)
 {
   for (int i = 0; i < statements.len; i++) {
     print_statement(statements.ptr[i]);

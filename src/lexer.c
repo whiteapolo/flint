@@ -252,11 +252,11 @@ Token lexer_next()
   }
 }
 
-Token_Vec lexer_get_tokens(Z_String_View source)
+Token_Array lexer_get_tokens(Z_String_View source)
 {
   create_new_lexer_state(source);
 
-  Token_Vec tokens = {0};
+  Token_Array tokens = {0};
   Token token = lexer_next();
 
   while (token.type != TOKEN_EOD) {
@@ -277,7 +277,7 @@ Token_Vec lexer_get_tokens(Z_String_View source)
   return tokens;
 }
 
-void lexer_print_tokens(const Token_Vec *tokens)
+void lexer_print_tokens(const Token_Array *tokens)
 {
   for (int i = 0; i < tokens->len; i++) {
     print_token(tokens->ptr[i]);

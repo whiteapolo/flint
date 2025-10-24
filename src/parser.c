@@ -12,11 +12,11 @@
 #include <string.h>
 
 void free_job(Job *job);
-void free_statements(Statement_Vec *statements);
+void free_statements(Statement_Array *statements);
 Statement *parse_statement();
 
 typedef struct {
-  const Token_Vec *tokens;
+  const Token_Array *tokens;
   int curr;
   bool had_error;
   bool panic_mode;
@@ -26,7 +26,7 @@ typedef struct {
 
 Parser_State *parser_state = NULL;
 
-void create_new_parser_state(const Token_Vec *tokens, const char *source)
+void create_new_parser_state(const Token_Array *tokens, const char *source)
 {
   parser_state = malloc(sizeof(Parser_State));
   parser_state->tokens = tokens;
@@ -182,7 +182,7 @@ void synchronize()
 
 Job *parse_simple_command()
 {
-  Token_Vec argv = {0};
+  Token_Array argv = {0};
 
   while (check_argument()) {
     Token token = advance();
@@ -258,9 +258,9 @@ Statement *parse_job_statement()
   return job ? create_statement_job(job) : NULL;
 }
 
-Statement_Vec parse_block_untill(Token_Type types[], int len)
+Statement_Array parse_block_untill(Token_Type types[], int len)
 {
-  Statement_Vec statements = {0};
+  Statement_Array statements = {0};
   skip_empty_statements();
 
   while (!is_at_end() && !check_array(types, len)) {
@@ -277,7 +277,7 @@ Statement_Vec parse_block_untill(Token_Type types[], int len)
   return statements;
 }
 
-Statement_Vec parse_block_untill_end()
+Statement_Array parse_block_untill_end()
 {
   Token_Type end[] = {TOKEN_END};
   return parse_block_untill(end, Z_ARRAY_LEN(end));
@@ -291,8 +291,8 @@ Statement *parse_if_statement()
 
   skip_empty_statements();
 
-  Statement_Vec ifBranch = parse_block_untill(if_body_end, Z_ARRAY_LEN(if_body_end));
-  Statement_Vec elseBranch = {0};
+  Statement_Array ifBranch = parse_block_untill(if_body_end, Z_ARRAY_LEN(if_body_end));
+  Statement_Array elseBranch = {0};
 
   skip_empty_statements();
 
@@ -313,7 +313,7 @@ Statement *parse_while_statement()
 
   skip_empty_statements();
 
-  Statement_Vec body = parse_block_untill_end();
+  Statement_Array body = parse_block_untill_end();
 
   consume(TOKEN_END, "Expected 'end' after while statement");
 
@@ -332,7 +332,7 @@ Statement *parse_for_statement()
 
   skip_empty_statements();
 
-  Statement_Vec body = parse_block_untill_end();
+  Statement_Array body = parse_block_untill_end();
   consume(TOKEN_END, "Expected 'end' after if statement");
 
   return create_statement_for(clone_token(var_name), clone_token(string), clone_token(delim), body);
@@ -344,7 +344,7 @@ Statement *parse_function_statement()
 
   skip_empty_statements();
 
-  Statement_Vec body = parse_block_untill_end();
+  Statement_Array body = parse_block_untill_end();
 
   consume(TOKEN_END, "Expected 'end' after function body.");
 
@@ -360,22 +360,22 @@ Statement *parse_statement()
   return parse_job_statement();
 }
 
-Statement_Vec parse(const Token_Vec *tokens, const char *source)
+Statement_Array parse(const Token_Array *tokens, const char *source)
 {
   create_new_parser_state(tokens, source);
-  Statement_Vec statements = parse_block_untill(NULL, 0);
+  Statement_Array statements = parse_block_untill(NULL, 0);
 
   if (parser_state->had_error) {
     parser_free(&statements);
     free_parser_state();
-    return (Statement_Vec){0};
+    return (Statement_Array){0};
   }
 
   free_parser_state();
   return statements;
 }
 
-void parser_free(Statement_Vec *statements)
+void parser_free(Statement_Array *statements)
 {
   free_statements(statements);
 }

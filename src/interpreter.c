@@ -13,10 +13,10 @@
 
 void interpret(const char *source)
 {
-  Token_Vec tokens = lexer_get_tokens(Z_CSTR(source));
+  Token_Array tokens = lexer_get_tokens(Z_CSTR(source));
   expand_aliases(&tokens);
   // lexer_print_tokens(&tokens);
-  Statement_Vec statements = parse(&tokens, source);
+  Statement_Array statements = parse(&tokens, source);
   // print_statements(statements);
   free_tokens(&tokens);
   evaluate_statements(statements);

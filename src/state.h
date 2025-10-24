@@ -13,10 +13,10 @@ typedef struct {
   Scope **ptr;
   int len;
   int cap;
-} Scope_Vec;
+} Scope_Array;
 
 typedef struct {
-  Scope_Vec scopes;
+  Scope_Array scopes;
   Z_Map *alias;
 } State;
 

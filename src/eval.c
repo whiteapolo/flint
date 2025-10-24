@@ -16,7 +16,7 @@
 #include "cstr.h"
 
 int evaluate_job(Job *job);
-void evaluate_block(Statement_Vec statements);
+void evaluate_block(Statement_Array statements);
 
 int safe_fork()
 {
@@ -215,7 +215,7 @@ int evaluate_job(Job *job)
   return 0;
 }
 
-void evaluate_block(Statement_Vec statements)
+void evaluate_block(Statement_Array statements)
 {
   action_push_scope();
   evaluate_statements(statements);
@@ -242,8 +242,8 @@ void evaluate_for(Statement_For *statement)
 {
   action_push_scope();
 
-  String_Vec delim = {0};
-  String_Vec string = {0};
+  String_Array delim = {0};
+  String_Array string = {0};
   expand_token(statement->delim, &delim);
   expand_token(statement->string, &string);
 
@@ -301,7 +301,7 @@ int evaluate_statement(Statement *statement)
   }
 }
 
-void evaluate_statements(Statement_Vec statements)
+void evaluate_statements(Statement_Array statements)
 {
   for (int i = 0; i < statements.len; i++) {
     evaluate_statement(statements.ptr[i]);

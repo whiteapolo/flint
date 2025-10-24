@@ -31,9 +31,9 @@ Token clone_token(Token token)
   return new_token;
 }
 
-Token_Vec clone_tokens(Token_Vec tokens)
+Token_Array clone_tokens(Token_Array tokens)
 {
-  Token_Vec new_tokens = {0};
+  Token_Array new_tokens = {0};
 
   z_da_foreach(Token *, token, &tokens) {
     z_da_append(&new_tokens, clone_token(*token));
@@ -47,7 +47,7 @@ void free_token(Token *token)
   free(token->lexeme);
 }
 
-void free_tokens(Token_Vec *tokens)
+void free_tokens(Token_Array *tokens)
 {
   z_da_foreach(Token *, token, tokens) {
     free_token(token);

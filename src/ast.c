@@ -2,7 +2,7 @@
 #include "token.h"
 #include <stdlib.h>
 
-Statement *create_statement_if(Job *condition, Statement_Vec ifBranch, Statement_Vec elseBranch)
+Statement *create_statement_if(Job *condition, Statement_Array ifBranch, Statement_Array elseBranch)
 {
   Statement_If *node = malloc(sizeof(Statement_If));
   node->type = STATEMENT_IF;
@@ -13,7 +13,7 @@ Statement *create_statement_if(Job *condition, Statement_Vec ifBranch, Statement
   return (Statement *)node;
 }
 
-Statement *create_statement_while(Job *condition, Statement_Vec body)
+Statement *create_statement_while(Job *condition, Statement_Array body)
 {
   Statement_While *node = malloc(sizeof(Statement_While));
   node->type = STATEMENT_WHILE;
@@ -23,7 +23,7 @@ Statement *create_statement_while(Job *condition, Statement_Vec body)
   return (Statement *)node;
 }
 
-Statement *create_statement_function(Token name, Statement_Vec body)
+Statement *create_statement_function(Token name, Statement_Array body)
 {
   Statement_Function *node = malloc(sizeof(Statement_Function));
   node->type = STATEMENT_FUNCTION;
@@ -33,7 +33,7 @@ Statement *create_statement_function(Token name, Statement_Vec body)
   return (Statement *)node;
 }
 
-Statement *create_statement_for(Token var_name, Token string, Token delim, Statement_Vec body)
+Statement *create_statement_for(Token var_name, Token string, Token delim, Statement_Array body)
 {
   Statement_For *node = malloc(sizeof(Statement_For));
   node->type = STATEMENT_FOR;
@@ -75,7 +75,7 @@ Job *create_job_unary(Token operator, Job * child)
   return (Job *)node;
 }
 
-Job *create_job_command(Token_Vec argv)
+Job *create_job_command(Token_Array argv)
 {
   Job_Command *node = malloc(sizeof(Job_Command));
   node->type = JOB_COMMAND;
@@ -185,7 +185,7 @@ void free_statement(Statement *statement)
   }
 }
 
-void free_statements(Statement_Vec *statements)
+void free_statements(Statement_Array *statements)
 {
   for (int i = 0; i < statements->len; i++) {
     free_statement(statements->ptr[i]);
@@ -206,9 +206,9 @@ Statement *clone_statement(Statement *statement)
   }
 }
 
-Statement_Vec clone_statements(Statement_Vec statements)
+Statement_Array clone_statements(Statement_Array statements)
 {
-  Statement_Vec new_statements = {0};
+  Statement_Array new_statements = {0};
 
   z_da_foreach(Statement **, statement, &statements) {
     z_da_append(&new_statements, clone_statement(*statement));

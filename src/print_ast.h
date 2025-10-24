@@ -3,6 +3,6 @@
 
 #include "parser.h"
 
-void print_statements(Statement_Vec statements);
+void print_statements(Statement_Array statements);
 
 #endif

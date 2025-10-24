@@ -130,7 +130,7 @@ void escape_sequence(Z_Scanner *scanner, Z_String *output)
   }
 }
 
-void expand_dqouted_string(Token token, String_Vec *output)
+void expand_dqouted_string(Token token, String_Array *output)
 {
   Z_Scanner scanner = z_scanner_new(Z_CSTR(token.lexeme));
   Z_String exapnded = {0};
@@ -156,9 +156,9 @@ void expand_dqouted_string(Token token, String_Vec *output)
   z_da_append(output, (char *)z_str_to_cstr(&exapnded));
 }
 
-void expand_word(Token token, String_Vec *output)
+void expand_word(Token token, String_Array *output)
 {
-  String_Vec tmp = {0};
+  String_Array tmp = {0};
   expand_dqouted_string(token, &tmp);
 
   z_sv_split_cset_foreach(Z_CSTR(tmp.ptr[0]), Z_CSTR(" \n"), word) {
@@ -169,7 +169,7 @@ void expand_word(Token token, String_Vec *output)
   free(tmp.ptr);
 }
 
-void expand_sqouted_string(Token token, String_Vec *output)
+void expand_sqouted_string(Token token, String_Array *output)
 {
   Z_Scanner scanner = z_scanner_new(Z_CSTR(token.lexeme));
   Z_String expanded = {0};
@@ -181,7 +181,7 @@ void expand_sqouted_string(Token token, String_Vec *output)
   z_da_append(output, (char *)z_str_to_cstr(&expanded));
 }
 
-void expand_token(Token token, String_Vec *out)
+void expand_token(Token token, String_Array *out)
 {
   switch (token.type) {
   case TOKEN_WORD:
@@ -199,9 +199,9 @@ void expand_token(Token token, String_Vec *out)
   }
 }
 
-char **expand_argv(Token_Vec argv)
+char **expand_argv(Token_Array argv)
 {
-  String_Vec expanded = {0};
+  String_Array expanded = {0};
 
   for (int i = 0; i < argv.len; i++) {
     Token arg = argv.ptr[i];
@@ -213,14 +213,14 @@ char **expand_argv(Token_Vec argv)
   return expanded.ptr;
 }
 
-void expand_alias(Token key, Token_Vec *output)
+void expand_alias(Token key, Token_Array *output)
 {
   const char *value = select_alias(key.lexeme);
 
   if (!value) {
     z_da_append(output, key);
   } else {
-    Token_Vec tmp = lexer_get_tokens(Z_CSTR(value));
+    Token_Array tmp = lexer_get_tokens(Z_CSTR(value));
     z_da_append_da(output, &tmp);
     output->len--; // remove EOF token
     free(tmp.ptr);
@@ -232,9 +232,9 @@ static bool is_string(Token_Type type)
   return type == TOKEN_WORD || type == TOKEN_DQUOTED_STRING || type == TOKEN_SQUOTED_STRING;
 }
 
-void expand_aliases(Token_Vec *tokens)
+void expand_aliases(Token_Array *tokens)
 {
-  Token_Vec tmp = {0};
+  Token_Array tmp = {0};
   bool is_command_start = true;
 
   for (int i = 0; i < tokens->len; i++) {

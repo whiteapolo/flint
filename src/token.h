@@ -40,12 +40,12 @@ typedef struct {
   Token *ptr;
   int len;
   int cap;
-} Token_Vec;
+} Token_Array;
 
 void free_token(Token *token);
-void free_tokens(Token_Vec *tokens);
+void free_tokens(Token_Array *tokens);
 Token clone_token(Token token);
-Token_Vec clone_tokens(Token_Vec tokens);
+Token_Array clone_tokens(Token_Array tokens);
 void print_token(Token token);
 const char *token_type_to_string(Token_Type type);
 Token_Type get_keyword_type(Z_String_View lexeme, Token_Type fallback);

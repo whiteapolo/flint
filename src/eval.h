@@ -3,7 +3,7 @@
 
 #include "parser.h"
 
-void evaluate_statements(Statement_Vec statements);
+void evaluate_statements(Statement_Array statements);
 int exec_command(char **argv);
 
 #endif
