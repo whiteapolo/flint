@@ -20,7 +20,7 @@ void interpret(const char *source)
   // print_statements(statements);
   free_tokens(&tokens);
   evaluate_statements(statements);
-  parser_free(&statements);
+  free_statements(&statements);
 }
 
 void interpret_to(Z_String_View source, Z_String *output)

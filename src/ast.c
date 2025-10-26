@@ -197,11 +197,11 @@ void free_statements(Statement_Array *statements)
 Statement *clone_statement(Statement *statement)
 {
   switch (statement->type) {
+    case STATEMENT_IF:       return clone_statement_if((const Statement_If *)statement);
+    case STATEMENT_JOB:      return clone_statement_job((const Statement_Job *)statement);
+    case STATEMENT_FOR:      return clone_statement_for((const Statement_For *)statement);
+    case STATEMENT_WHILE:    return clone_statement_while((const Statement_While *)statement);
     case STATEMENT_FUNCTION: return clone_statement_function((const Statement_Function *)statement);
-    case STATEMENT_FOR: return clone_statement_for((const Statement_For *)statement);
-    case STATEMENT_IF: return clone_statement_if((const Statement_If *)statement);
-    case STATEMENT_WHILE: return clone_statement_while((const Statement_While *)statement);
-    case STATEMENT_JOB: return clone_statement_job((const Statement_Job *)statement);
     default: return NULL;
   }
 }
@@ -220,8 +220,8 @@ Statement_Array clone_statements(Statement_Array statements)
 Job *clone_job(const Job *job)
 {
   switch (job->type) {
-    case JOB_BINARY: return clone_job_binary((const Job_Binary *)job);
-    case JOB_UNARY: return clone_job_unary((const Job_Unary *)job);
+    case JOB_UNARY:   return clone_job_unary((const Job_Unary *)job);
+    case JOB_BINARY:  return clone_job_binary((const Job_Binary *)job);
     case JOB_COMMAND: return clone_job_command((const Job_Command *)job);
     default: return NULL;
   }
