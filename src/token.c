@@ -70,24 +70,9 @@ Token_Type get_keyword_type(Z_String_View lexeme, Token_Type fallback)
 const char *token_type_to_string(Token_Type type)
 {
   switch (type) {
-    case TOKEN_BY: return "by";
-    case TOKEN_OR: return "OR";
-    case TOKEN_IF: return "if";
-    case TOKEN_IN: return "in";
-    case TOKEN_FUN: return "fn";
-    case TOKEN_AND: return "AND";
-    case TOKEN_END: return "end";
-    case TOKEN_EOD: return "EOD";
-    case TOKEN_FOR: return "for";
-    case TOKEN_PIPE: return "PIPE";
-    case TOKEN_ELSE: return "else";
-    case TOKEN_ERROR: return "ERROR";
-    case TOKEN_WHILE: return "while";
-    case TOKEN_WORD: return "TOKEN_WORD";
-    case TOKEN_AMPERSAND: return "AMPERSAND";
-    case TOKEN_STATEMENT_END: return "STATEMENT_END";
-    case TOKEN_DQUOTED_STRING: return "TOKEN_DQUOTED_STRING";
-    case TOKEN_SQUOTED_STRING: return "TOKEN_SQUOTED_STRING";
+#define X(type, lexeme) case type: return lexeme;
+    TOKEN_TYPES
+#undef X
     default: return "UNKNOWN";
   }
 }

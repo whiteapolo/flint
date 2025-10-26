@@ -3,30 +3,31 @@
 
 #include "libzatar.h"
 
+#define TOKEN_TYPES                          \
+  X(TOKEN_OR, "OR")                          \
+  X(TOKEN_IF, "IF")                          \
+  X(TOKEN_IN, "IN")                          \
+  X(TOKEN_BY, "BY")                          \
+  X(TOKEN_FOR, "FOR")                        \
+  X(TOKEN_FUN, "FUN")                        \
+  X(TOKEN_END, "END")                        \
+  X(TOKEN_AND, "AND")                        \
+  X(TOKEN_PIPE, "PIPE")                      \
+  X(TOKEN_WORD, "WORD")                      \
+  X(TOKEN_ELSE, "ELSE")                      \
+  X(TOKEN_EOD, "EOD")                        \
+  X(TOKEN_WHILE, "WHILE")                    \
+  X(TOKEN_ERROR, "ERROR")                    \
+  X(TOKEN_UNKOWN, "UNKOWN")                  \
+  X(TOKEN_AMPERSAND, "AMPERSAND")            \
+  X(TOKEN_STATEMENT_END, "STATEMENT_END")    \
+  X(TOKEN_SQUOTED_STRING, "SQUOTED_STRING")  \
+  X(TOKEN_DQUOTED_STRING, "DQUOTED_STRING")
+
 typedef enum {
-  TOKEN_PIPE,
-  TOKEN_AND,
-  TOKEN_OR,
-  TOKEN_AMPERSAND,
-  TOKEN_ERROR,
-  TOKEN_STATEMENT_END,
-  TOKEN_EOD,
-
-  TOKEN_WORD,
-  TOKEN_DQUOTED_STRING,
-  TOKEN_SQUOTED_STRING,
-
-  TOKEN_UNKOWN,
-
-  // keywords
-  TOKEN_IF,
-  TOKEN_FOR,
-  TOKEN_IN,
-  TOKEN_FUN,
-  TOKEN_END,
-  TOKEN_ELSE,
-  TOKEN_WHILE,
-  TOKEN_BY,
+#define X(type, lexeme) type,
+  TOKEN_TYPES
+#undef X
 } Token_Type;
 
 typedef struct {
