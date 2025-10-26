@@ -461,7 +461,7 @@ Z_String_View z_get_path_basename(Z_String_View path);
 Z_String_View z_get_home_path();
 
 void z_expand_tilde(Z_String_View p, Z_String *out);
-void z_compress_path(Z_String_View p, Z_String *out);
+void z_compress_tilde(Z_String_View p, Z_String *out);
 
 bool z_extension_eq(Z_String_View pathname, Z_String_View extension);
 
@@ -1306,7 +1306,7 @@ void z_expand_tilde(Z_String_View p, Z_String *out) {
   }
 }
 
-void z_compress_path(Z_String_View p, Z_String *out) {
+void z_compress_tilde(Z_String_View p, Z_String *out) {
   Z_String_View home = z_get_home_path();
 
   if (home.len <= p.len && z_sv_compare_n(p, home, home.len) == 0) {
