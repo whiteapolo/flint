@@ -5,6 +5,5 @@
 #include "token.h"
 
 Token_Array lexer_get_tokens(Z_String_View source);
-void lexer_print_tokens(const Token_Array *tokens);
 
 #endif

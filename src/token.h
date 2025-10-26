@@ -49,5 +49,6 @@ Token_Array clone_tokens(Token_Array tokens);
 void print_token(Token token);
 const char *token_type_to_string(Token_Type type);
 Token_Type get_keyword_type(Z_String_View lexeme, Token_Type fallback);
+void print_tokens(const Token_Array *tokens);
 
 #endif

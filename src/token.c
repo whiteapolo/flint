@@ -58,11 +58,18 @@ const char *token_type_to_string(Token_Type type)
 #define X(type, lexeme, is_keyword) case type: return lexeme;
     TOKEN_TYPES
 #undef X
-    default: return "UNKNOWN";
+    default: return NULL;
   }
 }
 
 void print_token(Token token)
 {
   printf("Token(%s, \"%s\", line: %d, column: %d)\n", token_type_to_string(token.type), token.lexeme, token.line, token.column);
+}
+
+void print_tokens(const Token_Array *tokens)
+{
+  for (int i = 0; i < tokens->len; i++) {
+    print_token(tokens->ptr[i]);
+  }
 }

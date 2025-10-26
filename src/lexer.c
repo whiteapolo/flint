@@ -18,19 +18,20 @@ typedef struct {
 
 Lexer_State *lexer_state = NULL;
 
-void create_new_lexer_state(Z_String_View source)
+void lexer_init(Z_String_View source)
 {
   lexer_state = malloc(sizeof(Lexer_State));
   lexer_state->had_error = false;
   lexer_state->scanner = z_scanner_new(source);
 }
 
-void free_lexer_state()
+void lexer_free()
 {
   free(lexer_state);
+  lexer_state = NULL;
 }
 
-static void error(const char *fmt, ...)
+static void lexer_error(const char *fmt, ...)
 {
   va_list ap;
   va_start(ap, fmt);
@@ -39,33 +40,26 @@ static void error(const char *fmt, ...)
   va_end(ap);
 }
 
-bool is_space(char c)
+bool is_whitespace(char c)
 {
-  return strchr(" \t\r", c);
+  return strchr(" \t\r", c) != NULL;
 }
 
-void skip_spaces()
+static bool is_argument_char(char c)
 {
-  while (!z_scanner_is_at_end(lexer_state->scanner) && is_space(z_scanner_peek(lexer_state->scanner))) {
+  return strchr(" &|;()\n\"'", c) == NULL;
+}
+
+void skip_whitespaces()
+{
+  while (!z_scanner_is_at_end(lexer_state->scanner) && is_whitespace(z_scanner_peek(lexer_state->scanner))) {
     z_scanner_advance(&lexer_state->scanner);
   }
 
   z_scanner_reset_mark(&lexer_state->scanner);
 }
 
-static Token create_token(Token_Type type)
-{
-  Token token = {
-      .lexeme = z_sv_to_cstr(z_scanner_capture(lexer_state->scanner)),
-      .type = type,
-      .line = lexer_state->scanner.line,
-      .column = lexer_state->scanner.column,
-  };
-
-  return token;
-}
-
-static Token create_token_full(Z_String_View lexeme, Token_Type type, int line, int column)
+static Token make_token(Z_String_View lexeme, Token_Type type, int line, int column)
 {
   Token token = {
       .lexeme = z_sv_to_cstr(lexeme),
@@ -77,14 +71,27 @@ static Token create_token_full(Z_String_View lexeme, Token_Type type, int line, 
   return token;
 }
 
-static bool is_argument(char c)
+static Token make_token_from_state(Token_Type type)
 {
-  return !strchr(" &|;()\n\"'", c);
+  Token token = {
+      .lexeme = z_sv_to_cstr(z_scanner_capture(lexer_state->scanner)),
+      .type = type,
+      .line = lexer_state->scanner.line,
+      .column = lexer_state->scanner.column,
+  };
+
+  return token;
 }
 
 static void advance_command_substitution();
 static void advance_double_quoted_string();
-static void advance_untill(Z_Scanner *scanner, Z_String_View s);
+
+static void advance_untill(Z_Scanner *scanner, Z_String_View s)
+{
+  while (!z_scanner_is_at_end(*scanner) && !z_scanner_check_string(*scanner, s)) {
+    z_scanner_advance(scanner);
+  }
+}
 
 static void advance_command_substitution()
 {
@@ -99,18 +106,13 @@ static void advance_command_substitution()
 
       case '\'':
         advance_untill(&lexer_state->scanner, Z_CSTR("'"));
-        if (z_scanner_is_at_end(lexer_state->scanner))
-          return;
-        z_scanner_advance(&lexer_state->scanner);
+        if (!z_scanner_is_at_end(lexer_state->scanner)) z_scanner_advance(&lexer_state->scanner);      
         break;
 
-      case '"': {
+      case '"':
           advance_double_quoted_string(&lexer_state->scanner);
-          if (z_scanner_is_at_end(lexer_state->scanner))
-            return;
-          z_scanner_advance(&lexer_state->scanner);
+          if (!z_scanner_is_at_end(lexer_state->scanner)) z_scanner_advance(&lexer_state->scanner);        
           break;
-      }
     }
   }
 }
@@ -126,13 +128,6 @@ static void advance_double_quoted_string()
   }
 }
 
-static void advance_untill(Z_Scanner *scanner, Z_String_View s)
-{
-  while (!z_scanner_is_at_end(*scanner) && !z_scanner_check_string(*scanner, s)) {
-    z_scanner_advance(scanner);
-  }
-}
-
 Token multi_double_quoted_string()
 {
   z_scanner_match(&lexer_state->scanner, '\n');
@@ -141,8 +136,8 @@ Token multi_double_quoted_string()
   advance_untill(&lexer_state->scanner, Z_CSTR("\"\"\""));
 
   if (z_scanner_is_at_end(lexer_state->scanner)) {
-    error("Unexpected end of file while looking for matching '\"\"\"'");
-    return create_token(TOKEN_ERROR);
+    lexer_error("Unexpected end of file while looking for matching '\"\"\"'");
+    return make_token_from_state(TOKEN_ERROR);
   }
 
   Z_String_View string = z_scanner_capture(lexer_state->scanner);
@@ -151,7 +146,7 @@ Token multi_double_quoted_string()
     string.len--;
   }
 
-  Token token = create_token_full(string, TOKEN_DQUOTED_STRING, lexer_state->scanner.line, lexer_state->scanner.column);
+  Token token = make_token(string, TOKEN_DQUOTED_STRING, lexer_state->scanner.line, lexer_state->scanner.column);
   lexer_state->scanner.end += 3;
 
   return token;
@@ -160,15 +155,14 @@ Token multi_double_quoted_string()
 Token double_quoted_string()
 {
   z_scanner_reset_mark(&lexer_state->scanner);
-
   advance_double_quoted_string();
 
   if (z_scanner_is_at_end(lexer_state->scanner)) {
-    error("Unexpected end of file while looking for matching \"");
-    return create_token(TOKEN_ERROR);
+    lexer_error("Unexpected end of file while looking for matching \"");
+    return make_token_from_state(TOKEN_ERROR);
   }
 
-  Token token = create_token(TOKEN_DQUOTED_STRING);
+  Token token = make_token_from_state(TOKEN_DQUOTED_STRING);
   z_scanner_advance(&lexer_state->scanner);
 
   return token;
@@ -180,11 +174,11 @@ Token single_quoted_string()
   advance_untill(&lexer_state->scanner, Z_CSTR("'"));
 
   if (z_scanner_is_at_end(lexer_state->scanner)) {
-    error("Unexpected end of file while looking for matching '");
-    return create_token(TOKEN_ERROR);
+    lexer_error("Unexpected end of file while looking for matching '");
+    return make_token_from_state(TOKEN_ERROR);
   }
 
-  Token token = create_token(TOKEN_SQUOTED_STRING);
+  Token token = make_token_from_state(TOKEN_SQUOTED_STRING);
   z_scanner_advance(&lexer_state->scanner);
 
   return token;
@@ -195,7 +189,7 @@ Token argument()
   while (!z_scanner_is_at_end(lexer_state->scanner)) {
     if (z_scanner_previous(lexer_state->scanner) == '$' && z_scanner_match(&lexer_state->scanner, '(')) {
       advance_command_substitution();
-    } else if (is_argument(z_scanner_peek(lexer_state->scanner))) {
+    } else if (is_argument_char(z_scanner_peek(lexer_state->scanner))) {
       z_scanner_advance(&lexer_state->scanner);
     } else {
       break;
@@ -204,7 +198,7 @@ Token argument()
 
   Z_String_View arg = z_scanner_capture(lexer_state->scanner);
 
-  return create_token(get_keyword_type(arg, TOKEN_WORD));
+  return make_token_from_state(get_keyword_type(arg, TOKEN_WORD));
 }
 
 void skip_comment()
@@ -216,20 +210,20 @@ void skip_comment()
 
 Token lexer_next()
 {
-  skip_spaces(&lexer_state->scanner);
+  skip_whitespaces(&lexer_state->scanner);
 
   if (z_scanner_is_at_end(lexer_state->scanner)) {
-    return create_token(TOKEN_EOD);
+    return make_token_from_state(TOKEN_EOD);
   }
 
   char c = z_scanner_advance(&lexer_state->scanner);
 
   switch (c) {
     case '|':
-      return create_token(z_scanner_match(&lexer_state->scanner, '|') ? TOKEN_OR : TOKEN_PIPE);
+      return make_token_from_state(z_scanner_match(&lexer_state->scanner, '|') ? TOKEN_OR : TOKEN_PIPE);
 
     case '&':
-      return create_token(z_scanner_match(&lexer_state->scanner, '&') ? TOKEN_AND : TOKEN_AMPERSAND);
+      return make_token_from_state(z_scanner_match(&lexer_state->scanner, '&') ? TOKEN_AND : TOKEN_AMPERSAND);
 
     case '\'':
       return single_quoted_string(&lexer_state->scanner);
@@ -242,10 +236,10 @@ Token lexer_next()
       return lexer_next();
 
     case ';':
-      return create_token(TOKEN_STATEMENT_END);
+      return make_token_from_state(TOKEN_STATEMENT_END);
 
     case '\n':
-      return create_token(TOKEN_STATEMENT_END);
+      return make_token_from_state(TOKEN_STATEMENT_END);
 
     default:
       return argument();
@@ -254,7 +248,7 @@ Token lexer_next()
 
 Token_Array lexer_get_tokens(Z_String_View source)
 {
-  create_new_lexer_state(source);
+  lexer_init(source);
 
   Token_Array tokens = {0};
   Token token = lexer_next();
@@ -268,18 +262,12 @@ Token_Array lexer_get_tokens(Z_String_View source)
 
   if (lexer_state->had_error) {
     tokens.len = 0;
-    z_da_append(&tokens, create_token(TOKEN_EOD));
-    free_lexer_state();
+    z_da_append(&tokens, make_token_from_state(TOKEN_EOD));
+    lexer_free();
     return tokens;
   }
 
-  free_lexer_state();
+  lexer_free();
   return tokens;
 }
 
-void lexer_print_tokens(const Token_Array *tokens)
-{
-  for (int i = 0; i < tokens->len; i++) {
-    print_token(tokens->ptr[i]);
-  }
-}
