@@ -3,29 +3,28 @@
 
 #include "libzatar.h"
 
-#define TOKEN_TYPES                          \
-  X(TOKEN_OR, "OR")                          \
-  X(TOKEN_IF, "IF")                          \
-  X(TOKEN_IN, "IN")                          \
-  X(TOKEN_BY, "BY")                          \
-  X(TOKEN_FOR, "FOR")                        \
-  X(TOKEN_FUN, "FUN")                        \
-  X(TOKEN_END, "END")                        \
-  X(TOKEN_AND, "AND")                        \
-  X(TOKEN_PIPE, "PIPE")                      \
-  X(TOKEN_WORD, "WORD")                      \
-  X(TOKEN_ELSE, "ELSE")                      \
-  X(TOKEN_EOD, "EOD")                        \
-  X(TOKEN_WHILE, "WHILE")                    \
-  X(TOKEN_ERROR, "ERROR")                    \
-  X(TOKEN_UNKOWN, "UNKOWN")                  \
-  X(TOKEN_AMPERSAND, "AMPERSAND")            \
-  X(TOKEN_STATEMENT_END, "STATEMENT_END")    \
-  X(TOKEN_SQUOTED_STRING, "SQUOTED_STRING")  \
-  X(TOKEN_DQUOTED_STRING, "DQUOTED_STRING")
+#define TOKEN_TYPES                              \
+  X(TOKEN_OR,             "or",             1)   \
+  X(TOKEN_IF,             "if",             1)   \
+  X(TOKEN_IN,             "in",             1)   \
+  X(TOKEN_BY,             "by",             1)   \
+  X(TOKEN_FOR,            "for",            1)   \
+  X(TOKEN_FUN,            "fun",            1)   \
+  X(TOKEN_END,            "end",            1)   \
+  X(TOKEN_AND,            "and",            1)   \
+  X(TOKEN_EOD,            "eod",            0)   \
+  X(TOKEN_PIPE,           "pipe",           0)   \
+  X(TOKEN_WORD,           "word",           0)   \
+  X(TOKEN_ELSE,           "else",           1)   \
+  X(TOKEN_WHILE,          "while",          1)   \
+  X(TOKEN_ERROR,          "error",          0)   \
+  X(TOKEN_AMPERSAND,      "ampersand",      0)   \
+  X(TOKEN_STATEMENT_END,  "statement_end",  0)   \
+  X(TOKEN_SQUOTED_STRING, "squoted_string", 0)   \
+  X(TOKEN_DQUOTED_STRING, "dquoted_string", 0)
 
 typedef enum {
-#define X(type, lexeme) type,
+#define X(type, lexeme, is_keyword) type,
   TOKEN_TYPES
 #undef X
 } Token_Type;

@@ -142,7 +142,7 @@ Token multi_double_quoted_string()
 
   if (z_scanner_is_at_end(lexer_state->scanner)) {
     error("Unexpected end of file while looking for matching '\"\"\"'");
-    return create_token(TOKEN_UNKOWN);
+    return create_token(TOKEN_ERROR);
   }
 
   Z_String_View string = z_scanner_capture(lexer_state->scanner);
@@ -165,7 +165,7 @@ Token double_quoted_string()
 
   if (z_scanner_is_at_end(lexer_state->scanner)) {
     error("Unexpected end of file while looking for matching \"");
-    return create_token(TOKEN_UNKOWN);
+    return create_token(TOKEN_ERROR);
   }
 
   Token token = create_token(TOKEN_DQUOTED_STRING);
@@ -181,7 +181,7 @@ Token single_quoted_string()
 
   if (z_scanner_is_at_end(lexer_state->scanner)) {
     error("Unexpected end of file while looking for matching '");
-    return create_token(TOKEN_UNKOWN);
+    return create_token(TOKEN_ERROR);
   }
 
   Token token = create_token(TOKEN_SQUOTED_STRING);
