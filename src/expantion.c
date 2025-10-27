@@ -238,7 +238,7 @@ void expand_aliases(Token_Array *tokens)
   bool is_command_start = true;
 
   for (int i = 0; i < tokens->len; i++) {
-    Token token = tokens->ptr[i];
+    Token token = z_da_at(tokens, i);
 
     if (!is_string(token.type) && token.type != TOKEN_FUN) {
       is_command_start = true;
@@ -251,7 +251,7 @@ void expand_aliases(Token_Array *tokens)
     }
   }
 
-  tokens->len = 0;
+  z_da_clear(tokens);
   z_da_append_da(tokens, &tmp);
-  free(tmp.ptr);
+  z_da_free(&tmp);
 }

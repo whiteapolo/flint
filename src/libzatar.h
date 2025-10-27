@@ -41,18 +41,6 @@
 #define Z_DEFAULT_GROWTH_RATE 2
 #define Z_ARRAY_LEN(arr) (sizeof(arr) / sizeof((arr)[0]))
 #define Z_HEAP_ALLOC(Type, value) z_memdup(&(Type){value}, sizeof(Type))
-#define ONCE(statements)                                                       \
-  do {                                                                         \
-    static bool _first_time = true;                                            \
-    if (!_first_time)                                                          \
-      break;                                                                   \
-    _first_time = false;                                                       \
-    statements                                                                 \
-  } while (0)
-
-#define Z_DEFINE_OPTIONAL(Type) typedef struct { bool ok; Type value; } Optional_##Type
-#define Z_Optional_Ok(_value) { .ok = true, .value = _value }
-#define Z_Optional_None() { .ok = false }
 
 typedef int (*Z_Compare_Fn)(const void *, const void *);
 typedef void (*Z_Free_Fn)(void *);
@@ -95,8 +83,10 @@ int z_print_warning(const char *fmt, ...);
     }                                                                          \
   } while (0)
 
-#define z_da_peek(da) ((da)->ptr[(da)->len - 1])
+#define z_da_at(da, i) ((da)->ptr[i])
+#define z_da_peek(da) z_da_at(da, (da)->len - 1)
 #define z_da_pop(da) ((da)->ptr[--(da)->len])
+#define z_da_clear(da) (da->len = 0)
 
 #define z_da_null_terminate(da)                                                \
   do {                                                                         \
