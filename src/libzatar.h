@@ -83,10 +83,10 @@ int z_print_warning(const char *fmt, ...);
     }                                                                          \
   } while (0)
 
-#define z_da_at(da, i) ((da)->ptr[i])
-#define z_da_peek(da) z_da_at(da, (da)->len - 1)
-#define z_da_pop(da) ((da)->ptr[--(da)->len])
-#define z_da_clear(da) (da->len = 0)
+#define z_da_at(da, i)  ((da)->ptr[i])
+#define z_da_peek(da)   (z_da_at(da, (da)->len - 1))
+#define z_da_pop(da)    ((da)->ptr[--(da)->len])
+#define z_da_clear(da)  (da->len = 0)
 
 #define z_da_null_terminate(da)                                                \
   do {                                                                         \
@@ -94,7 +94,7 @@ int z_print_warning(const char *fmt, ...);
     memset(&(da)->ptr[(da)->len], 0, sizeof(*(da)->ptr));                      \
   } while (0)
 
-#define z_da_foreach(Type, it, da)                                         \
+#define z_da_foreach(Type, it, da)                                             \
   for (Type it = (da)->ptr; it < (da)->ptr + (da)->len; it++)
 
 #define z_da_foreach_reversed(Type, it, da)                                    \
@@ -175,25 +175,24 @@ typedef enum {
   Z_CURSOR_STYLE_BEAM_BLINKING = 5,
 } Z_CURSOR_STYLE;
 
-#define z_set_cursor_style(style) printf("\033[%dq", (int)(style))
-#define z_disable_line_wrap() printf("\033[?7l")
-#define z_enbale_line_wrap() printf("\033[?7h")
-#define z_hide_cursor() printf("\033[?25l")
-#define z_show_cursor() printf("\033[?25h")
-#define z_set_cursor_pos(x, y) printf("\033[%d;%dH", (y), (x))
-#define z_set_cursor_x(x) printf("\033[%dG", (x))
-#define z_cursor_up(n) printf("\033[%dA", (n))
-#define z_cursor_down(n) printf("\033[%dB", (n))
-#define z_cursor_right(n) printf("\033[%dC", (n))
-#define z_cursor_left(n) printf("\033[%dD", (n))
-// unsupported on some terminals
-#define z_save_cursor_pos() printf("\033[s")
-#define z_restore_cursor_pos() printf("\033[u")
-#define z_enter_alternative_screen() printf("\033[?1049h")
-#define z_exit_alternative_screen() printf("\033[?1049l")
-#define z_clear_line() printf("\033[K")
-#define z_clear_screen() printf("\033[2J")
-#define z_update_screen() fflush(stdout)
+#define z_set_cursor_style(style)     printf("\033[%dq", (int)(style))
+#define z_disable_line_wrap()         printf("\033[?7l")
+#define z_enbale_line_wrap()          printf("\033[?7h")
+#define z_hide_cursor()               printf("\033[?25l")
+#define z_show_cursor()               printf("\033[?25h")
+#define z_set_cursor_pos(x, y)        printf("\033[%d;%dH", (y), (x))
+#define z_set_cursor_x(x)             printf("\033[%dG", (x))
+#define z_cursor_up(n)                printf("\033[%dA", (n))
+#define z_cursor_down(n)              printf("\033[%dB", (n))
+#define z_cursor_right(n)             printf("\033[%dC", (n))
+#define z_cursor_left(n)              printf("\033[%dD", (n))
+#define z_save_cursor_pos()           printf("\033[s") // unsupported on some terminals
+#define z_restore_cursor_pos()        printf("\033[u") // unsupported on some terminals
+#define z_enter_alternative_screen()  printf("\033[?1049h")
+#define z_exit_alternative_screen()   printf("\033[?1049l")
+#define z_clear_line()                printf("\033[K")
+#define z_clear_screen()              printf("\033[2J")
+#define z_update_screen()             fflush(stdout)
 
 bool z_enable_raw_mode(int vminKeys, int vtime);
 bool z_disable_raw_mode();
@@ -330,10 +329,10 @@ typedef struct {
   int len;
 } Z_String_View;
 
-#define Z_SV(p, l) ((Z_String_View){.ptr = (p), .len = (l)})
-#define Z_STR(s) ((Z_String_View){.ptr = (s).ptr, .len = (s).len})
-#define Z_CSTR(s) ((Z_String_View){.ptr = (s), .len = strlen(s)})
-#define Z_EMPTY_SV() ((Z_String_View){.ptr = "", .len = 0})
+#define Z_SV(p, l)    ((Z_String_View){.ptr = (p), .len = (l)})
+#define Z_STR(s)      ((Z_String_View){.ptr = (s).ptr, .len = (s).len})
+#define Z_CSTR(s)     ((Z_String_View){.ptr = (s), .len = strlen(s)})
+#define Z_EMPTY_SV()  ((Z_String_View){.ptr = "", .len = 0})
 
 char *z_str_to_cstr(Z_String *s);
 Z_String z_str_new_format(const char *fmt, ...);
@@ -384,7 +383,7 @@ bool z_sv_split_next(Z_String_View s, Z_String_View delim,
                      Z_String_View *slice);
 
 Z_String_View z_sv_split_part(Z_String_View s, Z_String_View delim, int n);
-Z_String_View z_str_substring(Z_String_View s, int start, int end);
+Z_String_View z_sv_substring(Z_String_View s, int start, int end);
 
 const char *z_sv_end(Z_String_View s);
 
@@ -510,7 +509,8 @@ void z_cmd_clear(Z_Cmd *cmd);
 //
 // ----------------------------------------------------------------------
 
-int z_print_error(const char *fmt, ...) {
+int z_print_error(const char *fmt, ...)
+{
   va_list ap;
   va_start(ap, fmt);
   printf("[" Z_COLOR_RED "ERROR" Z_COLOR_RESET "]: ");
@@ -521,7 +521,8 @@ int z_print_error(const char *fmt, ...) {
   return n;
 }
 
-int z_print_warning(const char *fmt, ...) {
+int z_print_warning(const char *fmt, ...)
+{
   va_list ap;
   va_start(ap, fmt);
   printf("[" Z_COLOR_YELLOW "WARNING" Z_COLOR_RESET "]: ");
@@ -532,7 +533,8 @@ int z_print_warning(const char *fmt, ...) {
   return n;
 }
 
-int z_print_info(const char *fmt, ...) {
+int z_print_info(const char *fmt, ...)
+{
   va_list ap;
   va_start(ap, fmt);
   printf("[" Z_COLOR_GREEN "INFO" Z_COLOR_RESET "]: ");
@@ -543,14 +545,16 @@ int z_print_info(const char *fmt, ...) {
   return n;
 }
 
-void z_swap(void *a, void *b, const size_t size) {
+void z_swap(void *a, void *b, const size_t size)
+{
   char tmp[size];
   memcpy(tmp, a, size);
   memcpy(a, b, size);
   memcpy(b, tmp, size);
 }
 
-int z_get_file_size(FILE *fp) {
+int z_get_file_size(FILE *fp)
+{
   int curr = ftell(fp);
   fseek(fp, 0, SEEK_END);
 
@@ -560,7 +564,8 @@ int z_get_file_size(FILE *fp) {
   return size;
 }
 
-int z_get_fmt_size(const char *fmt, ...) {
+int z_get_fmt_size(const char *fmt, ...)
+{
   va_list ap;
   va_start(ap, fmt);
 
@@ -570,7 +575,8 @@ int z_get_fmt_size(const char *fmt, ...) {
   return size;
 }
 
-int z_get_fmt_size_va(const char *fmt, va_list ap) {
+int z_get_fmt_size_va(const char *fmt, va_list ap)
+{
   va_list ap1;
   va_copy(ap1, ap);
 
@@ -580,19 +586,32 @@ int z_get_fmt_size_va(const char *fmt, va_list ap) {
   return size;
 }
 
-void *z_memdup(const void *mem, const size_t size) {
+void *z_memdup(const void *mem, const size_t size)
+{
   void *newMem = malloc(size);
   memcpy(newMem, mem, size);
   return newMem;
 }
 
-int z_max(int a, int b) { return a > b ? a : b; }
+int z_max(int a, int b)
+{
+  return a > b ? a : b;
+}
 
-int z_min(int a, int b) { return a > b ? b : a; }
+int z_min(int a, int b) 
+{
+  return a > b ? b : a;
+}
 
-int z_min3(int a, int b, int c) { return z_min(a, z_min(b, c)); }
+int z_min3(int a, int b, int c)
+{
+  return z_min(a, z_min(b, c));
+}
 
-int z_max3(int a, int b, int c) { return z_max(a, z_max(b, c)); }
+int z_max3(int a, int b, int c)
+{
+  return z_max(a, z_max(b, c));
+}
 
 int z_count_digits(int num)
 {
@@ -606,7 +625,8 @@ int z_count_digits(int num)
   return n;
 }
 
-void z_die_format(const char *fmt, ...) {
+void z_die_format(const char *fmt, ...) 
+{
   va_list ap;
   va_start(ap, fmt);
   vfprintf(stderr, fmt, ap);
@@ -619,21 +639,18 @@ void z_die_format(const char *fmt, ...) {
 //
 // ----------------------------------------------------------------------
 
-int z_avl_get_height(const Z_Avl_Node *node) {
-
-  if (node == NULL) {
-    return 0;
-  }
-
-  return node->height;
+int z_avl_get_height(const Z_Avl_Node *node) 
+{
+  return node ? node->height : 0;
 }
 
-void z_avl_update_height(Z_Avl_Node *node) {
-  node->height =
-      1 + z_max(z_avl_get_height(node->right), z_avl_get_height(node->left));
+void z_avl_update_height(Z_Avl_Node *node)
+{
+  node->height = 1 + z_max(z_avl_get_height(node->right), z_avl_get_height(node->left));
 }
 
-int z_avl_get_balance_factor(const Z_Avl_Node *node) {
+int z_avl_get_balance_factor(const Z_Avl_Node *node)
+{
   if (node == NULL) {
     return 0;
   }
@@ -641,7 +658,8 @@ int z_avl_get_balance_factor(const Z_Avl_Node *node) {
   return z_avl_get_height(node->left) - z_avl_get_height(node->right);
 }
 
-void z_avl_left_rotate(Z_Avl_Node **root) {
+void z_avl_left_rotate(Z_Avl_Node **root)
+{
   Z_Avl_Node *newRoot = (*root)->right;
   Z_Avl_Node *tmp = newRoot->left;
   newRoot->left = *root;
@@ -651,7 +669,8 @@ void z_avl_left_rotate(Z_Avl_Node **root) {
   *root = newRoot;
 }
 
-void z_avl_right_rotate(Z_Avl_Node **root) {
+void z_avl_right_rotate(Z_Avl_Node **root) 
+{
   Z_Avl_Node *newRoot = (*root)->left;
   Z_Avl_Node *tmp = newRoot->right;
   newRoot->right = *root;
@@ -661,17 +680,20 @@ void z_avl_right_rotate(Z_Avl_Node **root) {
   *root = newRoot;
 }
 
-void z_avl_left_right_rotate(Z_Avl_Node **root) {
+void z_avl_left_right_rotate(Z_Avl_Node **root) 
+{
   z_avl_left_rotate(&(*root)->left);
   z_avl_right_rotate(root);
 }
 
-void z_avl_right_left_rotate(Z_Avl_Node **root) {
+void z_avl_right_left_rotate(Z_Avl_Node **root)
+{
   z_avl_right_rotate(&(*root)->right);
   z_avl_left_rotate(root);
 }
 
-Z_Avl_Node *z_avl_new(void *key, void *value) {
+Z_Avl_Node *z_avl_new(void *key, void *value)
+{
   Z_Avl_Node *n = malloc(sizeof(Z_Avl_Node));
   n->key = key;
   n->value = value;
@@ -681,7 +703,8 @@ Z_Avl_Node *z_avl_new(void *key, void *value) {
   return n;
 }
 
-Z_Avl_Node *z_avl_get_min(Z_Avl_Node *root) {
+Z_Avl_Node *z_avl_get_min(Z_Avl_Node *root)
+{
   Z_Avl_Node *curr = root;
 
   while (curr->left != NULL) {
@@ -691,9 +714,8 @@ Z_Avl_Node *z_avl_get_min(Z_Avl_Node *root) {
   return curr;
 }
 
-Z_Avl_Node *z_avl_get_node(Z_Avl_Node *root, const void *key,
-                           Z_Compare_Fn compare_keys) {
-
+Z_Avl_Node *z_avl_get_node(Z_Avl_Node *root, const void *key, Z_Compare_Fn compare_keys)
+{
   Z_Avl_Node *curr = root;
 
   while (curr != NULL) {
@@ -710,18 +732,21 @@ Z_Avl_Node *z_avl_get_node(Z_Avl_Node *root, const void *key,
   return NULL;
 }
 
-bool z_avl_is_exists(Z_Avl_Node *root, void *key, Z_Compare_Fn compare_keys) {
+bool z_avl_is_exists(Z_Avl_Node *root, void *key, Z_Compare_Fn compare_keys)
+{
   return z_avl_get_node(root, key, compare_keys) != NULL;
 }
 
-void *z_avl_get(Z_Avl_Node *root, const void *key, Z_Compare_Fn compare_keys) {
+void *z_avl_get(Z_Avl_Node *root, const void *key, Z_Compare_Fn compare_keys)
+{
   Z_Avl_Node *node = z_avl_get_node(root, key, compare_keys);
   return node ? node->value : NULL;
 }
 
 void z_avl_put(Z_Avl_Node **root, void *key, void *value,
                Z_Compare_Fn compare_keys, void free_key(void *),
-               void free_value(void *)) {
+               void free_value(void *))
+{
   if (*root == NULL) {
     *root = z_avl_new(key, value);
     return;
@@ -750,8 +775,10 @@ void z_avl_put(Z_Avl_Node **root, void *key, void *value,
     z_avl_right_left_rotate(root);
   }
 }
+
 void z_avl_remove(Z_Avl_Node **root, void *key, Z_Compare_Fn compare_keys,
-                  void free_key(void *), void free_value(void *)) {
+                  void free_key(void *), void free_value(void *))
+{
   if (*root == NULL) {
     return;
   }
@@ -806,7 +833,8 @@ void z_avl_remove(Z_Avl_Node **root, void *key, Z_Compare_Fn compare_keys,
 }
 void z_avl_order_traverse(Z_Avl_Node *root,
                           void action(void *key, void *value, void *arg),
-                          void *arg) {
+                          void *arg)
+{
   if (root == NULL) {
     return;
   }
@@ -818,7 +846,8 @@ void z_avl_order_traverse(Z_Avl_Node *root,
 
 void z_avl_print(Z_Avl_Node *root,
                  void print(void *key, void *value, void *arg), void *arg,
-                 int padding) {
+                 int padding)
+{
   if (root == NULL) {
     return;
   }
@@ -828,22 +857,27 @@ void z_avl_print(Z_Avl_Node *root,
   z_avl_print(root->right, print, arg, padding + 4);
   z_avl_print(root->left, print, arg, padding + 4);
 }
+
 void z_avl_free(Z_Avl_Node *root, void free_key(void *),
-                void free_value(void *)) {
+                void free_value(void *))
+{
   if (root == NULL) {
     return;
   }
 
-  if (free_key)
+  if (free_key) {
     free_key(root->key);
+  }
 
-  if (free_value)
+  if (free_value) {
     free_value(root->value);
+  }
 
   z_avl_free(root->left, free_key, free_value);
   z_avl_free(root->right, free_key, free_value);
   free(root);
 }
+
 // ----------------------------------------------------------------------
 //
 //   map implementation
@@ -851,30 +885,36 @@ void z_avl_free(Z_Avl_Node *root, void free_key(void *),
 // ----------------------------------------------------------------------
 
 void z_map_put(Z_Map *m, void *key, void *value, void free_key(void *),
-               void free_value(void *)) {
+               void free_value(void *))
+{
   z_avl_put(&m->root, key, value, m->compare_keys, free_key, free_value);
 }
 
-void *z_map_get(const Z_Map *m, const void *key) {
+void *z_map_get(const Z_Map *m, const void *key)
+{
   return z_avl_get(m->root, key, m->compare_keys);
 }
 
-bool z_map_is_exists(const Z_Map *m, void *key) {
+bool z_map_is_exists(const Z_Map *m, void *key)
+{
   return z_avl_is_exists(m->root, key, m->compare_keys);
 }
 
 void z_map_remove(Z_Map *m, void *key, void free_key(void *),
-                  void free_value(void *)) {
+                  void free_value(void *))
+{
   z_avl_remove(&m->root, key, m->compare_keys, free_key, free_value);
 }
 
 void z_map_order_traverse(const Z_Map *m,
                           void action(void *key, void *value, void *arg),
-                          void *arg) {
+                          void *arg)
+{
   z_avl_order_traverse(m->root, action, arg);
 }
 
-Z_Map *z_map_new(Z_Compare_Fn compare_keys) {
+Z_Map *z_map_new(Z_Compare_Fn compare_keys)
+{
   Z_Map *map = malloc(sizeof(Z_Map));
   map->root = NULL;
   map->compare_keys = compare_keys;
@@ -882,7 +922,8 @@ Z_Map *z_map_new(Z_Compare_Fn compare_keys) {
   return map;
 }
 
-void z_map_free(Z_Map *m, void free_key(void *), void free_value(void *)) {
+void z_map_free(Z_Map *m, void free_key(void *), void free_value(void *))
+{
   z_avl_free(m->root, free_key, free_value);
   free(m);
 }
@@ -895,7 +936,8 @@ void z_map_free(Z_Map *m, void free_key(void *), void free_value(void *)) {
 
 static struct termios original_termios;
 
-bool z_enable_raw_mode(int vminKeys, int vtime) {
+bool z_enable_raw_mode(int vminKeys, int vtime)
+{
   if (tcgetattr(STDIN_FILENO, &original_termios) == -1) {
     return false;
   }
@@ -915,7 +957,8 @@ bool z_enable_raw_mode(int vminKeys, int vtime) {
   return true;
 }
 
-bool z_disable_raw_mode() {
+bool z_disable_raw_mode()
+{
   if (tcsetattr(STDIN_FILENO, TCSAFLUSH, &original_termios) == -1) {
     return false;
   }
@@ -923,7 +966,8 @@ bool z_disable_raw_mode() {
   return true;
 }
 
-bool z_get_cursor_pos(int *x, int *y) {
+bool z_get_cursor_pos(int *x, int *y)
+{
   printf("\033[6n");
 
   if (scanf("\033[%d;%dR", y, x) == 2) {
@@ -933,13 +977,14 @@ bool z_get_cursor_pos(int *x, int *y) {
   return false;
 }
 
-bool z_get_screen_size_by_cursor(int *width, int *height) {
+bool z_get_screen_size_by_cursor(int *width, int *height)
+{
   z_set_cursor_pos(999, 999);
-
   return z_get_cursor_pos(width, height);
 }
 
-bool z_get_screen_size_by_ioctl(int *width, int *height) {
+bool z_get_screen_size_by_ioctl(int *width, int *height)
+{
   struct winsize ws;
 
   if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &ws) != 0) {
@@ -952,7 +997,8 @@ bool z_get_screen_size_by_ioctl(int *width, int *height) {
   return true;
 }
 
-bool z_get_screen_size(int *width, int *height) {
+bool z_get_screen_size(int *width, int *height)
+{
   if (z_get_screen_size_by_ioctl(width, height) == true) {
     return true;
   }
@@ -960,7 +1006,8 @@ bool z_get_screen_size(int *width, int *height) {
   return z_get_screen_size_by_cursor(width, height);
 }
 
-bool z_register_change_in_window_size(void funciton(int)) {
+bool z_register_change_in_window_size(void funciton(int))
+{
   struct sigaction sa;
   sa.sa_handler = funciton;
   sa.sa_flags = 0;
@@ -973,7 +1020,8 @@ bool z_register_change_in_window_size(void funciton(int)) {
   return true;
 }
 
-bool z_enable_full_buffering(FILE *fp) {
+bool z_enable_full_buffering(FILE *fp)
+{
   // do not flush on '\n'
   if (setvbuf(fp, NULL, _IOFBF, BUFSIZ) != 0) {
     return false;
@@ -982,7 +1030,8 @@ bool z_enable_full_buffering(FILE *fp) {
   return true;
 }
 
-int z_wait_for_byte() {
+int z_wait_for_byte()
+{
   char c;
 
   if (read(STDIN_FILENO, &c, 1) != 1) {
@@ -994,7 +1043,8 @@ int z_wait_for_byte() {
 
 #define CHAR2_TO_INT(a, b) ((unsigned short)((((unsigned short)b) << 8) | a))
 
-int z_read_escape_key() {
+int z_read_escape_key()
+{
   unsigned short key;
 
   if (read(STDIN_FILENO, &key, 2) != 2) {
@@ -1002,26 +1052,19 @@ int z_read_escape_key() {
   }
 
   switch (key) {
-  case CHAR2_TO_INT('[', 'A'):
-    return Z_KEY_ARROW_UP;
-  case CHAR2_TO_INT('[', 'B'):
-    return Z_KEY_ARROW_DOWN;
-  case CHAR2_TO_INT('[', 'C'):
-    return Z_KEY_ARROW_RIGHT;
-  case CHAR2_TO_INT('[', 'D'):
-    return Z_KEY_ARROW_LEFT;
-  case CHAR2_TO_INT('[', '1'):
-    return Z_KEY_HOME; // might be with a ~
-  case CHAR2_TO_INT('[', '5'):
-    return Z_KEY_PAGE_UP; // might be with a ~
-  case CHAR2_TO_INT('[', '6'):
-    return Z_KEY_PAGE_DOWN; // might be with a ~
+    case CHAR2_TO_INT('[', 'A'): return Z_KEY_ARROW_UP;
+    case CHAR2_TO_INT('[', 'B'): return Z_KEY_ARROW_DOWN;
+    case CHAR2_TO_INT('[', 'C'): return Z_KEY_ARROW_RIGHT;
+    case CHAR2_TO_INT('[', 'D'): return Z_KEY_ARROW_LEFT;
+    case CHAR2_TO_INT('[', '1'): return Z_KEY_HOME; // might be with a ~
+    case CHAR2_TO_INT('[', '5'): return Z_KEY_PAGE_UP; // might be with a ~
+    case CHAR2_TO_INT('[', '6'): return Z_KEY_PAGE_DOWN; // might be with a ~
+    default: return '\033';
   }
-
-  return '\033';
 }
 
-int z_read_key() {
+int z_read_key()
+{
   char c = z_wait_for_byte();
 
   if (c == '\033') {
@@ -1118,7 +1161,7 @@ bool z_scanner_match_string(Z_Scanner *scanner, Z_String_View s)
 
 Z_String_View z_scanner_capture(Z_Scanner scanner)
 {
-  return z_str_substring(scanner.source, scanner.start, scanner.end);
+  return z_sv_substring(scanner.source, scanner.start, scanner.end);
 }
 
 void z_scanner_reset_mark(Z_Scanner *scanner)
@@ -1239,7 +1282,8 @@ bool z_scanner_match_number(Z_Scanner *scanner, double *num)
 //
 // ----------------------------------------------------------------------
 
-Z_String_View z_get_path_extension(Z_String_View path) {
+Z_String_View z_get_path_extension(Z_String_View path)
+{
   int start = path.len - 1;
 
   while (start > 0 && path.ptr[start] != '.') {
@@ -1266,22 +1310,20 @@ Z_String_View z_get_path_extension(Z_String_View path) {
   return extension;
 }
 
-Z_String_View z_get_path_basename(Z_String_View pathname) {
+Z_String_View z_get_path_basename(Z_String_View pathname)
+{
   (void)pathname;
   return Z_EMPTY_SV();
 }
 
-Z_String_View z_get_home_path() {
+Z_String_View z_get_home_path()
+{
   const char *home = getenv("HOME");
-
-  if (home == NULL) {
-    return Z_CSTR(".");
-  }
-
-  return Z_CSTR(home);
+  return home ? Z_CSTR(home) : Z_CSTR(".");
 }
 
-void z_expand_tilde(Z_String_View p, Z_String *out) {
+void z_expand_tilde(Z_String_View p, Z_String *out)
+{
   if (p.len == 0) {
     return;
   }
@@ -1289,14 +1331,14 @@ void z_expand_tilde(Z_String_View p, Z_String *out) {
   Z_String_View home = z_get_home_path();
 
   if (p.ptr[0] == '~') {
-    z_str_append_format(out, "%.*s%.*s", home.len, home.ptr, p.len - 1,
-                        p.ptr + 1);
+    z_str_append_format(out, "%.*s%.*s", home.len, home.ptr, p.len - 1, p.ptr + 1);
   } else {
     z_str_append_format(out, "%.*s", p.len, p.ptr);
   }
 }
 
-void z_compress_tilde(Z_String_View p, Z_String *out) {
+void z_compress_tilde(Z_String_View p, Z_String *out)
+{
   Z_String_View home = z_get_home_path();
 
   if (home.len <= p.len && z_sv_compare_n(p, home, home.len) == 0) {
@@ -1306,7 +1348,8 @@ void z_compress_tilde(Z_String_View p, Z_String *out) {
   }
 }
 
-bool z_dir_traverse(const char *dir, bool action(const char *)) {
+bool z_dir_traverse(const char *dir, bool action(const char *))
+{
   DIR *dr = opendir(dir);
 
   if (dr == NULL) {
@@ -1318,7 +1361,6 @@ bool z_dir_traverse(const char *dir, bool action(const char *)) {
   Z_String full_path = {0};
 
   while ((de = readdir(dr))) {
-
     z_str_clear(&full_path);
     z_str_append_format(&full_path, "%s/%s", dir, de->d_name);
 
@@ -1333,27 +1375,34 @@ bool z_dir_traverse(const char *dir, bool action(const char *)) {
   return true;
 }
 
-bool z_extension_eq(Z_String_View pathname, Z_String_View extension) {
+bool z_extension_eq(Z_String_View pathname, Z_String_View extension)
+{
   return z_sv_equal(z_get_path_extension(pathname), extension);
 }
 
-bool z_is_dir(const char *pathname) {
+bool z_is_dir(const char *pathname)
+{
   struct stat sb;
   stat(pathname, &sb);
 
   return S_ISDIR(sb.st_mode);
 }
 
-bool z_is_regular_file(const char *pathname) {
+bool z_is_regular_file(const char *pathname)
+{
   struct stat sb;
   stat(pathname, &sb);
 
   return S_ISREG(sb.st_mode);
 }
 
-bool z_is_path_exists(const char *pathname) { return !access(pathname, F_OK); }
+bool z_is_path_exists(const char *pathname)
+{
+  return !access(pathname, F_OK);
+}
 
-bool z_write_file(const char *fileName, const char *fmt, ...) {
+bool z_write_file(const char *fileName, const char *fmt, ...)
+{
   va_list ap;
   va_start(ap, fmt);
 
@@ -1369,7 +1418,8 @@ bool z_write_file(const char *fileName, const char *fmt, ...) {
   return true;
 }
 
-bool z_append_file(const char *fileName, const char *fmt, ...) {
+bool z_append_file(const char *fileName, const char *fmt, ...)
+{
   va_list ap;
   va_start(ap, fmt);
 
@@ -1385,7 +1435,8 @@ bool z_append_file(const char *fileName, const char *fmt, ...) {
   return true;
 }
 
-bool z_read_file(const char *fileName, const char *fmt, ...) {
+bool z_read_file(const char *fileName, const char *fmt, ...)
+{
   va_list ap;
   va_start(ap, fmt);
 
@@ -1406,7 +1457,8 @@ bool z_read_file(const char *fileName, const char *fmt, ...) {
   return true;
 }
 
-bool z_redirect_fd(int srcFd, const char *destFileName) {
+bool z_redirect_fd(int srcFd, const char *destFileName)
+{
   int destFd = open(destFileName, O_WRONLY);
 
   if (destFd == -1) {
@@ -1423,7 +1475,8 @@ bool z_redirect_fd(int srcFd, const char *destFileName) {
   return true;
 }
 
-bool z_popen2(char *pathname, char *argv[], FILE *ppipe[2]) {
+bool z_popen2(char *pathname, char *argv[], FILE *ppipe[2])
+{
   int output[2];
   int input[2];
 
@@ -1457,7 +1510,8 @@ bool z_popen2(char *pathname, char *argv[], FILE *ppipe[2]) {
   return true;
 }
 
-bool z_mkdir(const char *pathname) {
+bool z_mkdir(const char *pathname)
+{
   int status = mkdir(pathname, 0777);
 
   if (status == 0) {
@@ -1471,7 +1525,8 @@ bool z_mkdir(const char *pathname) {
   return false;
 }
 
-bool z_read_whole_file(const char *pathname, Z_String *out) {
+bool z_read_whole_file(const char *pathname, Z_String *out)
+{
   FILE *fp = fopen(pathname, "r");
 
   if (fp == NULL) {
@@ -1488,7 +1543,8 @@ bool z_read_whole_file(const char *pathname, Z_String *out) {
   return true;
 }
 
-bool z_read_whole_dir(const char *pathname, Z_File_Paths *out) {
+bool z_read_whole_dir(const char *pathname, Z_File_Paths *out)
+{
   DIR *dr = opendir(pathname);
 
   if (dr == NULL) {
@@ -1506,7 +1562,8 @@ bool z_read_whole_dir(const char *pathname, Z_File_Paths *out) {
   return true;
 }
 
-void z_free_file_paths(Z_File_Paths *paths) {
+void z_free_file_paths(Z_File_Paths *paths)
+{
   z_arena_free_all(&paths->arena);
   z_da_free(paths);
 }
@@ -1517,12 +1574,14 @@ void z_free_file_paths(Z_File_Paths *paths) {
 //
 // ----------------------------------------------------------------------
 
-char *z_str_to_cstr(Z_String *s) {
+char *z_str_to_cstr(Z_String *s)
+{
   z_da_null_terminate(s);
   return s->ptr;
 }
 
-Z_String z_str_new_format(const char *fmt, ...) {
+Z_String z_str_new_format(const char *fmt, ...)
+{
   va_list ap;
   va_start(ap, fmt);
   Z_String s = z_str_new_format_va(fmt, ap);
@@ -1531,25 +1590,29 @@ Z_String z_str_new_format(const char *fmt, ...) {
   return s;
 }
 
-Z_String z_str_new_format_va(const char *fmt, va_list ap) {
+Z_String z_str_new_format_va(const char *fmt, va_list ap)
+{
   Z_String s = {0};
   z_str_append_format_va(&s, fmt, ap);
 
   return s;
 }
 
-Z_String z_str_new_from(Z_String_View s) {
+Z_String z_str_new_from(Z_String_View s)
+{
   return z_str_new_format("%.*s", s.len, s.ptr);
 }
 
-void z_str_append_format(Z_String *s, const char *fmt, ...) {
+void z_str_append_format(Z_String *s, const char *fmt, ...)
+{
   va_list ap;
   va_start(ap, fmt);
   z_str_append_format_va(s, fmt, ap);
   va_end(ap);
 }
 
-void z_str_reset_format(Z_String *s, const char *fmt, ...) {
+void z_str_reset_format(Z_String *s, const char *fmt, ...)
+{
   z_str_clear(s);
   va_list ap;
   va_start(ap, fmt);
@@ -1557,7 +1620,8 @@ void z_str_reset_format(Z_String *s, const char *fmt, ...) {
   va_end(ap);
 }
 
-void z_str_append_format_va(Z_String *s, const char *fmt, va_list ap) {
+void z_str_append_format_va(Z_String *s, const char *fmt, va_list ap)
+{
   int len = z_get_fmt_size_va(fmt, ap);
   z_da_ensure_capacity(s, s->len + len + 1);
 
@@ -1569,39 +1633,51 @@ void z_str_append_format_va(Z_String *s, const char *fmt, va_list ap) {
   s->len = s->len + len;
 }
 
-void z_str_append_str(Z_String *dst, Z_String_View src) {
+void z_str_append_str(Z_String *dst, Z_String_View src)
+{
   z_str_append_format(dst, "%.*s", src.len, src.ptr);
 }
 
-void z_str_append_char(Z_String *s, char c) { z_str_append_format(s, "%c", c); }
+void z_str_append_char(Z_String *s, char c)
+{
+  z_str_append_format(s, "%c", c);
+}
 
-char z_str_pop_char(Z_String *s) { return s->ptr[--s->len]; }
+char z_str_pop_char(Z_String *s)
+{
+  return s->ptr[--s->len];
+}
 
-char z_str_top_char(Z_String_View s) { return s.ptr[s.len - 1]; }
+char z_str_top_char(Z_String_View s)
+{
+  return s.ptr[s.len - 1];
+}
 
-int z_sv_compare(Z_String_View s1, Z_String_View s2) {
+int z_sv_compare(Z_String_View s1, Z_String_View s2)
+{
   int cmp_res = memcmp(s1.ptr, s2.ptr, z_min(s1.len, s2.len));
   return cmp_res == 0 ? s1.len - s2.len : cmp_res;
 }
 
-bool z_sv_equal(Z_String_View s1, Z_String_View s2) {
+bool z_sv_equal(Z_String_View s1, Z_String_View s2)
+{
   return z_sv_compare(s1, s2) == 0;
 }
 
-int z_sv_compare_n(Z_String_View s1, Z_String_View s2, int n) {
-  if (s1.len < n)
-    return -1;
-  if (s2.len < n)
-    return 1;
+int z_sv_compare_n(Z_String_View s1, Z_String_View s2, int n)
+{
+  if (s1.len < n) return -1;
+  if (s2.len < n) return 1;
   return memcmp(s1.ptr, s2.ptr, n);
 }
 
-bool z_sv_equal_n(Z_String_View s1, Z_String_View s2, int n) {
+bool z_sv_equal_n(Z_String_View s1, Z_String_View s2, int n)
+{
   return z_sv_compare_n(s1, s2, n) == 0;
 }
 
-void z_str_replace(Z_String *s, Z_String_View target,
-                   Z_String_View replacement) {
+void z_str_replace(Z_String *s, Z_String_View target, Z_String_View replacement)
+{
   if (target.len == 0) {
     return;
   }
@@ -1625,9 +1701,13 @@ void z_str_replace(Z_String *s, Z_String_View target,
   z_str_free(&tmp);
 }
 
-char *z_sv_to_cstr(Z_String_View s) { return strndup(s.ptr, s.len); }
+char *z_sv_to_cstr(Z_String_View s)
+{
+  return strndup(s.ptr, s.len);
+}
 
-bool z_sv_ends_with(Z_String_View s, Z_String_View end) {
+bool z_sv_ends_with(Z_String_View s, Z_String_View end)
+{
   if (s.len < end.len) {
     return false;
   }
@@ -1640,7 +1720,8 @@ bool z_sv_ends_with(Z_String_View s, Z_String_View end) {
   return z_sv_equal(endings, end);
 }
 
-bool z_sv_starts_with(Z_String_View s, Z_String_View start) {
+bool z_sv_starts_with(Z_String_View s, Z_String_View start)
+{
   if (start.len > s.len) {
     return false;
   }
@@ -1648,9 +1729,13 @@ bool z_sv_starts_with(Z_String_View s, Z_String_View start) {
   return z_sv_compare_n(s, start, start.len) == 0;
 }
 
-bool z_sv_contains(Z_String_View s, char c) { return z_sv_chr(s, c) >= 0; }
+bool z_sv_contains(Z_String_View s, char c)
+{
+  return z_sv_chr(s, c) >= 0;
+}
 
-int z_sv_chr(Z_String_View s, char c) {
+int z_sv_chr(Z_String_View s, char c)
+{
   for (int i = 0; i < s.len; i++) {
     if (s.ptr[i] == c) {
       return i;
@@ -1660,8 +1745,8 @@ int z_sv_chr(Z_String_View s, char c) {
   return -1;
 }
 
-Z_String_View z_sv_split_cset_from(Z_String_View s, int start_offset,
-                                   Z_String_View cset) {
+Z_String_View z_sv_split_cset_from(Z_String_View s, int start_offset, Z_String_View cset)
+{
   const char *end = s.ptr + s.len;
   const char *ptr = s.ptr + start_offset;
   int len = 0;
@@ -1677,29 +1762,32 @@ Z_String_View z_sv_split_cset_from(Z_String_View s, int start_offset,
   return Z_SV(ptr, len);
 }
 
-Z_String_View z_sv_split_cset_start(Z_String_View s, Z_String_View cset) {
+Z_String_View z_sv_split_cset_start(Z_String_View s, Z_String_View cset)
+{
   return z_sv_split_cset_from(s, 0, cset);
 }
 
 Z_String_View z_sv_split_cset_next(Z_String_View s,
                                    Z_String_View previous_split,
-                                   Z_String_View cset) {
+                                   Z_String_View cset)
+{
   int start_offset = previous_split.ptr + previous_split.len - s.ptr;
   return z_sv_split_cset_from(s, start_offset, cset);
 }
 
-Z_String_View z_sv_split_start(Z_String_View s, Z_String_View delim) {
+Z_String_View z_sv_split_start(Z_String_View s, Z_String_View delim)
+{
   int len = 0;
 
-  while (len <= s.len && !z_sv_equal(z_str_substring(s, len, len + delim.len), delim)) {
+  while (len <= s.len && !z_sv_equal(z_sv_substring(s, len, len + delim.len), delim)) {
     len++;
   }
 
-  return z_str_substring(s, 0, z_min(len, s.len));
+  return z_sv_substring(s, 0, z_min(len, s.len));
 }
 
-bool z_sv_split_next(Z_String_View s, Z_String_View delim,
-                     Z_String_View *slice) {
+bool z_sv_split_next(Z_String_View s, Z_String_View delim, Z_String_View *slice)
+{
   int len = 0;
   int start = z_sv_end(*slice) - s.ptr + delim.len;
 
@@ -1707,28 +1795,16 @@ bool z_sv_split_next(Z_String_View s, Z_String_View delim,
     return false;
   }
 
-  while (start + len <= s.len && !z_sv_equal(z_str_substring(s, start + len, start + len + delim.len), delim)) {
+  while (start + len <= s.len && !z_sv_equal(z_sv_substring(s, start + len, start + len + delim.len), delim)) {
     len++;
   }
 
-  *slice = z_str_substring(s, start, z_min(start + len, s.len));
+  *slice = z_sv_substring(s, start, z_min(start + len, s.len));
   return true;
 }
 
-// Z_String_View z_sv_split_part(Z_String_View s, Z_String_View delim, int n)
-// {
-//   // z_str_tok_foreach(s, delim, tok) {
-//   //   if (n == 0) {
-//   //     return tok;
-//   //   }
-
-//   //   n--;
-//   // }
-
-//   return Z_EMPTY_SV();
-// }
-
-Z_String_View z_str_substring(Z_String_View s, int start, int end) {
+Z_String_View z_sv_substring(Z_String_View s, int start, int end)
+{
   if (end == -1) {
     return Z_SV(s.ptr + start, s.len - start);
   }
@@ -1736,7 +1812,10 @@ Z_String_View z_str_substring(Z_String_View s, int start, int end) {
   return Z_SV(s.ptr + start, end - start);
 }
 
-const char *z_sv_end(Z_String_View s) { return s.ptr + s.len; }
+const char *z_sv_end(Z_String_View s)
+{
+  return s.ptr + s.len;
+}
 
 int z_str_array_len(char **array)
 {
@@ -1766,19 +1845,25 @@ Z_String z_str_join(char **s, const char *delim)
   return ret;
 }
 
-void z_str_trim(Z_String *s) { z_str_trim_cset(s, Z_CSTR(" \f\t\v\n\r")); }
+void z_str_trim(Z_String *s)
+{
+  z_str_trim_cset(s, Z_CSTR(" \f\t\v\n\r"));
+}
 
-void z_str_trim_cset(Z_String *s, Z_String_View cset) {
+void z_str_trim_cset(Z_String *s, Z_String_View cset)
+{
   Z_String_View trimmed = z_sv_trim_cset(Z_STR(*s), cset);
   memmove(s->ptr, trimmed.ptr, trimmed.len);
   s->len = trimmed.len;
 }
 
-Z_String_View z_sv_trim(Z_String_View s) {
+Z_String_View z_sv_trim(Z_String_View s)
+{
   return z_sv_trim_cset(s, Z_CSTR(" \f\t\v\n\r"));
 }
 
-Z_String_View z_sv_trim_cset(Z_String_View s, Z_String_View cset) {
+Z_String_View z_sv_trim_cset(Z_String_View s, Z_String_View cset)
+{
   if (s.len == 0) {
     return Z_EMPTY_SV();
   }
@@ -1802,18 +1887,26 @@ Z_String_View z_sv_trim_cset(Z_String_View s, Z_String_View cset) {
   return ret;
 }
 
-void z_sv_print(Z_String_View s) { printf("%.*s", s.len, s.ptr); }
+void z_sv_print(Z_String_View s)
+{
+  printf("%.*s", s.len, s.ptr);
+}
 
-void z_sv_println(Z_String_View s) { printf("%.*s\n", s.len, s.ptr); }
+void z_sv_println(Z_String_View s)
+{
+  printf("%.*s\n", s.len, s.ptr);
+}
 
-void z_str_free(Z_String *s) {
+void z_str_free(Z_String *s)
+{
   free(s->ptr);
   s->ptr = NULL;
   s->len = 0;
   s->cap = 0;
 }
 
-void z_str_clear(Z_String *s) {
+void z_str_clear(Z_String *s)
+{
   s->len = 0;
   z_da_null_terminate(s);
 }
@@ -1824,9 +1917,8 @@ void z_str_clear(Z_String *s) {
 //
 // ----------------------------------------------------------------------
 
-bool z_should_rebuild_impl(const char *target, const char *deps[],
-                           int deps_len) {
-
+bool z_should_rebuild_impl(const char *target, const char *deps[], int deps_len)
+{
   struct stat target_stat;
   struct stat dependency_stat;
 
@@ -1846,7 +1938,8 @@ bool z_should_rebuild_impl(const char *target, const char *deps[],
   return false;
 }
 
-bool rename_log(const char *src, const char *target) {
+bool rename_log(const char *src, const char *target)
+{
   z_print_info("RENAMING %s -> %s", src, target);
   int status = rename(src, target);
 
@@ -1857,7 +1950,8 @@ bool rename_log(const char *src, const char *target) {
   return status == 0;
 }
 
-bool remove_log(const char *pathname) {
+bool remove_log(const char *pathname)
+{
   z_print_info("REMOVEING %s", pathname);
   int status = remove(pathname);
 
@@ -1868,7 +1962,8 @@ bool remove_log(const char *pathname) {
   return status == 0;
 }
 
-void z_rebuild_yourself(const char *src_pathname, char **argv) {
+void z_rebuild_yourself(const char *src_pathname, char **argv)
+{
   if (!z_should_rebuild(argv[0], src_pathname, __FILE__)) {
     return;
   }
@@ -1896,14 +1991,16 @@ void z_rebuild_yourself(const char *src_pathname, char **argv) {
   exit(status);
 }
 
-void z_cmd_append_impl(Z_Cmd *cmd, ...) {
+void z_cmd_append_impl(Z_Cmd *cmd, ...)
+{
   va_list ap;
   va_start(ap, cmd);
   z_cmd_append_implva(cmd, ap);
   va_end(ap);
 }
 
-void z_cmd_append_implva(Z_Cmd *cmd, va_list ap) {
+void z_cmd_append_implva(Z_Cmd *cmd, va_list ap)
+{
   va_list ap1;
   va_copy(ap1, ap);
 
@@ -1918,7 +2015,8 @@ void z_cmd_append_implva(Z_Cmd *cmd, va_list ap) {
   va_end(ap1);
 }
 
-void z_cmd_print_arg(const char *arg) {
+void z_cmd_print_arg(const char *arg)
+{
   if (strchr(arg, ' ')) {
     printf("'%s'", arg);
   } else {
@@ -1926,7 +2024,8 @@ void z_cmd_print_arg(const char *arg) {
   }
 }
 
-void z_cmd_print(const Z_Cmd *cmd) {
+void z_cmd_print(const Z_Cmd *cmd)
+{
   printf("[" Z_COLOR_GREEN "CMD" Z_COLOR_RESET "]:");
 
   for (int i = 0; i < cmd->len; i++) {
@@ -1937,7 +2036,8 @@ void z_cmd_print(const Z_Cmd *cmd) {
   printf("\n");
 }
 
-int z_cmd_run_sync(Z_Cmd *cmd) {
+int z_cmd_run_sync(Z_Cmd *cmd)
+{
   z_da_null_terminate(cmd);
   z_cmd_print(cmd);
 
@@ -1962,7 +2062,8 @@ int z_cmd_run_sync(Z_Cmd *cmd) {
   return status;
 }
 
-int z_cmd_run_async(Z_Cmd *cmd) {
+int z_cmd_run_async(Z_Cmd *cmd)
+{
   int pid = fork();
 
   if (pid == -1) {
@@ -1974,7 +2075,8 @@ int z_cmd_run_async(Z_Cmd *cmd) {
   }
 }
 
-void z_cmd_free(Z_Cmd *cmd) {
+void z_cmd_free(Z_Cmd *cmd)
+{
   for (int i = 0; i < cmd->len; i++) {
     free(cmd->ptr[i]);
   }
@@ -1982,7 +2084,8 @@ void z_cmd_free(Z_Cmd *cmd) {
   free(cmd->ptr);
 }
 
-void z_cmd_clear(Z_Cmd *cmd) {
+void z_cmd_clear(Z_Cmd *cmd)
+{
   for (int i = 0; i < cmd->len; i++) {
     free(cmd->ptr[i]);
   }
@@ -1996,12 +2099,14 @@ void z_cmd_clear(Z_Cmd *cmd) {
 //
 // ----------------------------------------------------------------------
 
-void *z_arena_malloc(Z_Arena *arena, size_t size) {
+void *z_arena_malloc(Z_Arena *arena, size_t size)
+{
   z_da_append(arena, malloc(size));
   return z_da_peek(arena);
 }
 
-void *z_arena_realloc(Z_Arena *arena, void *ptr, size_t new_size) {
+void *z_arena_realloc(Z_Arena *arena, void *ptr, size_t new_size)
+{
   if (!ptr) {
     return z_arena_malloc(arena, new_size);
   }
@@ -2022,7 +2127,8 @@ void *z_arena_realloc(Z_Arena *arena, void *ptr, size_t new_size) {
   return NULL;
 }
 
-void z_arena_free(Z_Arena *arena, void *ptr) {
+void z_arena_free(Z_Arena *arena, void *ptr)
+{
   if (!ptr) {
     return;
   }
@@ -2038,13 +2144,17 @@ void z_arena_free(Z_Arena *arena, void *ptr) {
   z_die_format("pointer: '%p' was not alocated in Z_Arena\n", ptr);
 }
 
-void z_arena_free_all(Z_Arena *arena) {
-  z_da_foreach(void **, ptr, arena) { free(*ptr); }
+void z_arena_free_all(Z_Arena *arena)
+{
+  z_da_foreach(void **, ptr, arena) {
+    free(*ptr);
+  }
 
   free(arena->ptr);
 }
 
-char *z_arena_strdup(Z_Arena *arena, const char *s) {
+char *z_arena_strdup(Z_Arena *arena, const char *s)
+{
   int len = strlen(s);
   char *p = z_arena_malloc(arena, len + 1);
   strcpy(p, s);
