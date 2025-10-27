@@ -334,26 +334,22 @@ typedef struct {
 #define Z_CSTR(s)     ((Z_String_View){.ptr = (s), .len = strlen(s)})
 #define Z_EMPTY_SV()  ((Z_String_View){.ptr = "", .len = 0})
 
-char *z_str_to_cstr(Z_String *s);
 Z_String z_str_new_format(const char *fmt, ...);
 Z_String z_str_new_format_va(const char *fmt, va_list ap);
 Z_String z_str_new_from(Z_String_View s);
+
 void z_str_append_format(Z_String *s, const char *fmt, ...);
 void z_str_append_format_va(Z_String *s, const char *fmt, va_list ap);
-void z_str_reset_format(Z_String *s, const char *fmt, ...);
 void z_str_append_str(Z_String *dst, Z_String_View src);
 void z_str_append_char(Z_String *s, char c);
 char z_str_pop_char(Z_String *s);
-void z_str_replace(Z_String *s, Z_String_View target,
-                   Z_String_View replacement);
-void z_str_trim(Z_String *s);
-void z_str_trim_cset(Z_String *s, Z_String_View cset);
-Z_String_View z_sv_trim(Z_String_View s);
-Z_String_View z_sv_trim_cset(Z_String_View s, Z_String_View cset);
 
-Z_String z_str_join(char **s, const char *delim);
+void z_str_reset_format(Z_String *s, const char *fmt, ...);
+void z_str_replace(Z_String *s, Z_String_View target, Z_String_View replacement);
 
-char z_str_top_char(Z_String_View s);
+char *z_str_to_cstr(Z_String *s);
+
+char z_sv_top_char(Z_String_View s);
 int z_sv_compare(Z_String_View s1, Z_String_View s2);
 bool z_sv_equal(Z_String_View s1, Z_String_View s2);
 int z_sv_compare_n(Z_String_View s1, Z_String_View s2, int n);
@@ -361,9 +357,15 @@ bool z_sv_equal_n(Z_String_View s1, Z_String_View s2, int n);
 char *z_sv_to_cstr(Z_String_View s);
 bool z_sv_ends_with(Z_String_View s, Z_String_View end);
 bool z_sv_starts_with(Z_String_View s, Z_String_View start);
-
 bool z_sv_contains(Z_String_View s, char c);
 int z_sv_chr(Z_String_View s, char c);
+
+void z_str_trim(Z_String *s);
+void z_str_trim_cset(Z_String *s, Z_String_View cset);
+Z_String_View z_sv_trim(Z_String_View s);
+Z_String_View z_sv_trim_cset(Z_String_View s, Z_String_View cset);
+
+Z_String z_str_join(char **s, const char *delim);
 
 #define z_sv_split_cset_foreach(s, cset, tok)                                  \
   for (Z_String_View tok = z_sv_split_cset_start(s, cset); tok.len > 0;        \
@@ -1648,7 +1650,7 @@ char z_str_pop_char(Z_String *s)
   return s->ptr[--s->len];
 }
 
-char z_str_top_char(Z_String_View s)
+char z_sv_top_char(Z_String_View s)
 {
   return s.ptr[s.len - 1];
 }
