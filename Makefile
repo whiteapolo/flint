@@ -1,5 +1,5 @@
 CC := cc
-CFLAGS := -Wall -Wextra -O3 -Wno-unused-result
+CFLAGS := -Wall -Wextra -O3 -Wno-unused-result -ggdb
 LIBS := -lreadline -lm
 SRC_DIR := src
 OBJ_DIR := obj

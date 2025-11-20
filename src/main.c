@@ -13,6 +13,7 @@
 #include "interpreter.h"
 #include "state.h"
 #include "cstr.h"
+#include "config.h"
 
 #define INIT_FILE_PATH "~/.config/flint/init.flint"
 
@@ -64,6 +65,7 @@ void execute_file(const char *pathname)
 
 int main(int argc, char **argv)
 {
+  initialize_config(argc, argv);
   initialize_state();
   execute_file(INIT_FILE_PATH);
 

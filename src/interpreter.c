@@ -1,4 +1,5 @@
 #include "interpreter.h"
+#include "config.h"
 #include "eval.h"
 #include "expantion.h"
 #include "libzatar.h"
@@ -13,11 +14,13 @@
 
 void interpret(const char *source)
 {
+  const Flint_Config *config = get_config();
+
   Token_Array tokens = lexer_get_tokens(Z_CSTR(source));
   expand_aliases(&tokens);
-  // lexer_print_tokens(&tokens);
+  if (config->log_tokens) print_tokens(&tokens);
   Statement_Array statements = parse(&tokens, source);
-  // print_statements(statements);
+  if (config->log_statements) print_statements(statements);
   free_tokens(&tokens);
   evaluate_statements(statements);
   free_statements(&statements);
