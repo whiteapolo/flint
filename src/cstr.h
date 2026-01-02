@@ -1,6 +1,9 @@
 #ifndef CSTR_H
 #define CSTR_H
 
+#include <stdbool.h>
+#include <stdarg.h>
+
 int str_get_format_size(const char *fmt, va_list ap);
 char *str_format_va(const char *fmt, va_list ap);
 char *str_format(const char *fmt, ...);

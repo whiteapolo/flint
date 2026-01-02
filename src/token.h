@@ -9,7 +9,7 @@
   X(TOKEN_IN,             "in",             1)   \
   X(TOKEN_BY,             "by",             1)   \
   X(TOKEN_FOR,            "for",            1)   \
-  X(TOKEN_FUN,            "fun",            1)   \
+  X(TOKEN_FUN,            "fn",             1)   \
   X(TOKEN_END,            "end",            1)   \
   X(TOKEN_AND,            "and",            0)   \
   X(TOKEN_EOD,            "eod",            0)   \

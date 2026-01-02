@@ -57,6 +57,12 @@ void action_put_alias(const char *key, const char *value)
   z_map_put(state->alias, strdup(key), strdup(value), free, free);
 }
 
+const char *get_env(const char *name, const char *fallback)
+{
+  const char *value = getenv(name);
+  return value ? value : fallback;
+}
+
 const char *select_variable(const char *name)
 {
   z_da_foreach_reversed(Scope **, scope, &state->scopes) {
@@ -65,7 +71,7 @@ const char *select_variable(const char *name)
     }
   }
 
-  return "";
+  return get_env(name, "");
 }
 
 const Statement_Function *select_function(const char *name)

@@ -10,6 +10,7 @@ Flint_Config *create_default_config()
   Flint_Config *config = malloc(sizeof(Flint_Config));
   config->log_statements = false;
   config->log_tokens = false;
+  config->init_file_path = "~/.config/flint/init.flint";
 
   return config;
 }

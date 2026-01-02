@@ -1,24 +1,41 @@
 #!./exe
 
-let C0 '\\e[0m'      # Reset
-let C3 '\\e[0;33m'   # Yellow
-let C8 '\\e[0;90m'   # Gray
+let C0 '\\e[0m'      # RESET
 
-let battery "$(cat /sys/class/power_supply/BAT0/capacity)"
+let C1 '\\e[0;31m'   # RED
+let C2 '\\e[0;32m'   # GREEN
+let C3 '\\e[0;33m'   # YELLOW
+let C4 '\\e[0;34m'   # BLUE
+let C5 '\\e[0;35m'   # MAGENTA
+let C6 '\\e[0;36m'   # CYAN
+let C7 '\\e[0;37m'   # WHITE
+let C8 '\\e[0;90m'   # GRAY
+
+let B1 '\\e[1;91m'   # BOLD RED
+let B2 '\\e[1;92m'   # BOLD GREEN
+let B3 '\\e[1;93m'   # BOLD YELLOW
+let B4 '\\e[1;94m'   # BOLD BLUE
+let B5 '\\e[1;95m'   # BOLD MAGENTA
+let B6 '\\e[1;96m'   # BOLD CYAN
+let B7 '\\e[1;97m'   # BOLD WHITE
+let B8 '\\e[1;90m'   # BOLD GRAY
+
 let os "$(cat /etc/os-release | sed -nE 's/^PRETTY_NAME="(.*)"$/\\1/p')"
+let cpu "$(awk -F': *' '/model name/ {print $2; exit}' /proc/cpuinfo)"
+let battery "$(cat /sys/class/power_supply/BAT0/capacity)"
+let kernel "$(uname -r)"
+let desktop "$DESKTOP_SESSION"
 let shell "$SHELL"
-
-echo $SHELL
 
 let LOGO """
         ${C8}#####${C0}
        ${C8}#######${C0}
-       ${C8}##${C0}0${C8}#${C0}0${C8}##${C0}
-       ${C8}#${C3}#####${C8}#${C0}
-     ${C8}##${C0}##${C3}###${C0}##${C8}##${C0}
-    ${C8}#${C0}##########${C8}##${C0}
-   ${C8}#${C0}############${C8}##${C0}
-   ${C8}#${C0}###########${C8}####${C0}
+       ${C8}##${C0}0${C8}#${C0}0${C8}##${C0}          ${B1}│ OS:${C0} ${os}
+       ${C8}#${C3}#####${C8}#${C0}          ${B2}│ CPU:${C0} ${cpu}
+     ${C8}##${C0}##${C3}###${C0}##${C8}##${C0}        ${B3}│ Battery:${C0} ${battery}%
+    ${C8}#${C0}##########${C8}##${C0}       ${B4}│ Kernel:${C0} ${kernel}
+   ${C8}#${C0}############${C8}##${C0}      ${B5}│ Desktop:${C0} ${desktop}
+   ${C8}#${C0}###########${C8}####${C0}     ${B6}│ Shell:${C0} ${shell}
   ${C3}##${C8}#${C0}###########${C8}##${C3}#${C0}
 ${C3}######${C8}#${C0}#######${C8}#${C3}######${C0}
 ${C3}#######${C8}#${C0}#####${C8}#${C3}#######${C0}

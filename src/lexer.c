@@ -106,12 +106,12 @@ static void advance_command_substitution()
 
       case '\'':
         advance_untill(&lexer_state->scanner, Z_CSTR("'"));
-        if (!z_scanner_is_at_end(lexer_state->scanner)) z_scanner_advance(&lexer_state->scanner);      
+        if (!z_scanner_is_at_end(lexer_state->scanner)) z_scanner_advance(&lexer_state->scanner);
         break;
 
       case '"':
           advance_double_quoted_string(&lexer_state->scanner);
-          if (!z_scanner_is_at_end(lexer_state->scanner)) z_scanner_advance(&lexer_state->scanner);        
+          if (!z_scanner_is_at_end(lexer_state->scanner)) z_scanner_advance(&lexer_state->scanner);
           break;
     }
   }
@@ -270,4 +270,3 @@ Token_Array lexer_get_tokens(Z_String_View source)
   lexer_free();
   return tokens;
 }
-
