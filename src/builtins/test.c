@@ -4,7 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-static bool is_number(const char *s)
+static bool builtin_test_is_number(const char *s)
 {
     if (!*s) return false;
 
@@ -14,7 +14,7 @@ static bool is_number(const char *s)
     return s != endptr && *endptr == '\0';
 }
 
-static bool compare(int cmp, const char *operator)
+static bool builtin_test_compare(int cmp, const char *operator)
 {
     if (!strcmp(operator, "=="))  return cmp == 0;
     if (!strcmp(operator, "!="))  return cmp != 0;
@@ -39,15 +39,15 @@ int builtin_test(int argc, char **argv)
     const char *operator = argv[2];
     const char *b = argv[3];
 
-    bool is_a_number = is_number(a);
-    bool is_b_number = is_number(b);
+    bool is_a_number = builtin_test_is_number(a);
+    bool is_b_number = builtin_test_is_number(b);
 
     if (is_a_number && is_b_number) {
-        return !compare(strtod(a, NULL) - strtod(b, NULL), operator);
+        return !builtin_test_compare(strtod(a, NULL) - strtod(b, NULL), operator);
     } else if (is_a_number || is_b_number) {
         fprintf(stderr, "Both operands needs to be in the same type: string | number\n");
         return 1;
     } else {
-        return !compare(strcmp(a, b), operator);
+        return !builtin_test_compare(strcmp(a, b), operator);
     }
 }

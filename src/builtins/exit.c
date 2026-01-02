@@ -4,7 +4,7 @@
 #include <ctype.h>
 #include <string.h>
 
-static bool is_number(const char *s)
+static bool builtin_exit_is_number(const char *s)
 {
   if (strlen(s) == 0) {
     return false;
@@ -26,7 +26,7 @@ int builtin_exit(int argc, char **argv)
   }
 
   if (argc == 2) {
-    if (!is_number(argv[1])) {
+    if (!builtin_exit_is_number(argv[1])) {
       fprintf(stderr, "Argument must be a number\n");
       exit(255);
     }

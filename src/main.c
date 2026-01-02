@@ -10,11 +10,31 @@
 #include <sys/ucontext.h>
 #include <unistd.h>
 
-#include "interpreter.h"
-#include "state.h"
-#include "cstr.h"
-#include "config.h"
-#include "prompt.h"
+#include "ast.c"
+#include "config.c"
+#include "error.c"
+#include "eval.c"
+#include "expantion.c"
+#include "interpreter.c"
+#include "lexer.c"
+#include "parser.c"
+#include "print_ast.c"
+#include "prompt.c"
+#include "state.c"
+#include "token.c"
+#include "builtins/alias.c"
+#include "builtins/builtin.c"
+#include "builtins/cd.c"
+#include "builtins/command.c"
+#include "builtins/exit.c"
+#include "builtins/export.c"
+#include "builtins/len.c"
+#include "builtins/let.c"
+#include "builtins/mut.c"
+#include "builtins/print.c"
+#include "builtins/println.c"
+#include "builtins/test.c"
+#include "builtins/time.c"
 
 void repl()
 {
