@@ -8,6 +8,7 @@ static Flint_Config *config = NULL;
 Flint_Config *create_default_config()
 {
   Flint_Config *config = malloc(sizeof(Flint_Config));
+  config->help = false;
   config->log_statements = false;
   config->log_tokens = false;
   config->init_file_path = "~/.config/flint/init.flint";
@@ -22,6 +23,8 @@ void parse_command_line_options(Flint_Config *config, int argc, char **argv)
       config->log_statements = true;
     } else if (!strcmp(argv[i], "--log-tokens")) {
       config->log_tokens = true;
+    } else if (!strcmp(argv[i], "-h")) {
+      config->help = true;
     }
   }
 }

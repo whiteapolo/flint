@@ -4,6 +4,7 @@
 typedef struct {
   bool log_tokens;
   bool log_statements;
+  bool help;
   const char *init_file_path;
 } Flint_Config;
 
