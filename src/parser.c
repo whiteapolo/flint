@@ -81,12 +81,12 @@ static bool check_array(Token_Type *types, int len)
 
 static bool check_keyword()
 {
-#define X(type, lexeme, is_keyword) \
-  if (is_keyword && check(type)) {  \
-     return true;                   \
+  for (int i = 0; i < TOKEN_COUNT; i++) {
+    if (keywords_lexeme[i] && check(i)) {
+      return true;
+    }
   }
-    TOKEN_TYPES
-#undef X
+
   return false;
 }
 

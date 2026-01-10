@@ -42,29 +42,18 @@ void free_tokens(Token_Array *tokens)
 
 Token_Type get_keyword_type(Z_String_View lexeme, Token_Type fallback)
 {
-#define X(type, token_lexeme, is_keyword)                       \
-  if (is_keyword && z_sv_equal(lexeme, Z_CSTR(token_lexeme))) { \
-    return type;                                                \
+  for (int i = 0; i < TOKEN_COUNT; i++) {
+    if (keywords_lexeme[i] && z_sv_equal(lexeme, Z_CSTR(keywords_lexeme[i]))) {
+      return i;
+    }
   }
-  TOKEN_TYPES
-#undef X
 
   return fallback;
 }
 
-const char *token_type_to_string(Token_Type type)
-{
-  switch (type) {
-#define X(type, lexeme, is_keyword) case type: return lexeme;
-    TOKEN_TYPES
-#undef X
-    default: return NULL;
-  }
-}
-
 void print_token(Token token)
 {
-  printf("Token(%s, \"%s\", line: %d, column: %d)\n",token_type_to_string(token.type), token.lexeme, token.line, token.column);
+  printf("Token(%s, \"%s\", line: %d, column: %d)\n",token_type_to_string[token.type], token.lexeme, token.line, token.column);
 }
 
 void print_tokens(const Token_Array *tokens)

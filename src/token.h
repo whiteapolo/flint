@@ -3,31 +3,66 @@
 
 #include "libzatar.h"
 
-#define TOKEN_TYPES                              \
-  X(TOKEN_OR,             "or",             0)   \
-  X(TOKEN_IF,             "if",             1)   \
-  X(TOKEN_IN,             "in",             1)   \
-  X(TOKEN_BY,             "by",             1)   \
-  X(TOKEN_FOR,            "for",            1)   \
-  X(TOKEN_FUN,            "fn",             1)   \
-  X(TOKEN_END,            "end",            1)   \
-  X(TOKEN_AND,            "and",            0)   \
-  X(TOKEN_EOD,            "eod",            0)   \
-  X(TOKEN_PIPE,           "pipe",           0)   \
-  X(TOKEN_WORD,           "word",           0)   \
-  X(TOKEN_ELSE,           "else",           1)   \
-  X(TOKEN_WHILE,          "while",          1)   \
-  X(TOKEN_ERROR,          "error",          0)   \
-  X(TOKEN_AMPERSAND,      "ampersand",      0)   \
-  X(TOKEN_STATEMENT_END,  "statement_end",  0)   \
-  X(TOKEN_SQUOTED_STRING, "squoted_string", 0)   \
-  X(TOKEN_DQUOTED_STRING, "dquoted_string", 0)
-
 typedef enum {
-#define X(type, lexeme, is_keyword) type,
-  TOKEN_TYPES
-#undef X
+  // keywords
+  TOKEN_IF,
+  TOKEN_ELSE,
+  TOKEN_WHILE,
+  TOKEN_FOR,
+  TOKEN_IN,
+  TOKEN_BY,
+  TOKEN_FUN,
+  TOKEN_END,
+  TOKEN_STATEMENT_END,
+
+  // logical operators
+  TOKEN_AND,
+  TOKEN_OR,
+  TOKEN_PIPE,
+  TOKEN_AMPERSAND,
+
+  // strings
+  TOKEN_WORD,
+  TOKEN_SQUOTED_STRING,
+  TOKEN_DQUOTED_STRING,
+
+  TOKEN_ERROR,
+  TOKEN_EOD,
+  TOKEN_COUNT, // always last
 } Token_Type;
+
+const char *keywords_lexeme[TOKEN_COUNT] = {
+  [TOKEN_OR]    = "or",
+  [TOKEN_IF]    = "if",
+  [TOKEN_IN]    = "in",
+  [TOKEN_BY]    = "by",
+  [TOKEN_FOR]   = "for",
+  [TOKEN_FUN]   = "fn",
+  [TOKEN_END]   = "end",
+  [TOKEN_ELSE]  = "else",
+  [TOKEN_WHILE] = "while",
+};
+
+const char *token_type_to_string[TOKEN_COUNT] = {
+  [TOKEN_OR]             = "or",
+  [TOKEN_IF]             = "if",
+  [TOKEN_IN]             = "in",
+  [TOKEN_BY]             = "by",
+  [TOKEN_FOR]            = "for",
+  [TOKEN_FUN]            = "fn",
+  [TOKEN_END]            = "end",
+  [TOKEN_AND]            = "and",
+  [TOKEN_EOD]            = "eod",
+  [TOKEN_PIPE]           = "pipe",
+  [TOKEN_WORD]           = "word",
+  [TOKEN_ELSE]           = "else",
+  [TOKEN_WHILE]          = "while",
+  [TOKEN_ERROR]          = "error",
+  [TOKEN_AMPERSAND]      = "ampersand",
+  [TOKEN_STATEMENT_END]  = "statement_end",
+  [TOKEN_SQUOTED_STRING] = "squoted_string",
+  [TOKEN_DQUOTED_STRING] = "dquoted_string",
+};
 
 typedef struct {
   Token_Type type;
@@ -47,7 +82,6 @@ void free_tokens(Token_Array *tokens);
 Token clone_token(Token token);
 Token_Array clone_tokens(Token_Array tokens);
 void print_token(Token token);
-const char *token_type_to_string(Token_Type type);
 Token_Type get_keyword_type(Z_String_View lexeme, Token_Type fallback);
 void print_tokens(const Token_Array *tokens);
 
